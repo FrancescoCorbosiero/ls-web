@@ -1,0 +1,191 @@
+{
+  "confidential": false,
+  "confidential_note": "No prices here. The names and limits come from the MOSCA price list image; confirm with the owner before showing them on public pages.",
+  "source": {
+    "names_and_limits": "tariffario_MOSCA_2024.xlsx embedded image xl/media/image1.png (anchored over Foglio1!A29:J39)",
+    "codes": "tariffario_MOSCA_2024.xlsx!Foglio1!B3:H3 (column headers of the price table)",
+    "code_to_name_mapping": "(inferred) by initials and by order: the image shows the classes left to right in the same order as columns B..H",
+    "extracted_on": "2026-10-16"
+  },
+  "image_text_per_class": "<name> / 'Peso' 'kg <max weight>' / 'Altezza <max height> cm' / 'Larghezza: 100 cm' / 'Profondità: 120 cm'",
+  "footprint_cm": {
+    "width": 100,
+    "depth": 120
+  },
+  "classes": [
+    {
+      "code": "MQP",
+      "name": "Mini Quarter Pallet",
+      "max_weight_kg": 150,
+      "max_height_cm": 60,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "B",
+      "order": 1
+    },
+    {
+      "code": "QP",
+      "name": "Quarter Pallet",
+      "max_weight_kg": 300,
+      "max_height_cm": 100,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "C",
+      "order": 2
+    },
+    {
+      "code": "ELP",
+      "name": "Extra Light Pallet",
+      "max_weight_kg": 450,
+      "max_height_cm": 150,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "D",
+      "order": 3
+    },
+    {
+      "code": "HP",
+      "name": "Half Pallet",
+      "max_weight_kg": 600,
+      "max_height_cm": 150,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "E",
+      "order": 4
+    },
+    {
+      "code": "ULP",
+      "name": "Ultra Light Pallet",
+      "max_weight_kg": 350,
+      "max_height_cm": 240,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "F",
+      "order": 5
+    },
+    {
+      "code": "LP",
+      "name": "Light Pallet",
+      "max_weight_kg": 750,
+      "max_height_cm": 240,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "G",
+      "order": 6
+    },
+    {
+      "code": "FP",
+      "name": "Full Pallet",
+      "max_weight_kg": 1200,
+      "max_height_cm": 240,
+      "width_cm": 100,
+      "depth_cm": 120,
+      "price_list_column": "H",
+      "order": 7
+    }
+  ],
+  "fit_rule": {
+    "statement": "A pallet fits a class when weight_kg <= max_weight_kg AND height_cm <= max_height_cm AND its footprint is within 100 x 120 cm.",
+    "inclusive_limits": "(inferred) the image states maxima ('Peso kg 150', 'Altezza 60 cm'); treat the limits as inclusive",
+    "height_includes_pallet_base": "(unknown)",
+    "footprint_rule": "(inferred) every class shows 100 x 120 cm; an EPAL 80 x 120 fits; longer or wider loads are outside the classes (unknown how they are priced)",
+    "weight_basis": "(inferred) real gross weight of the single pallet; the sheet does not apply a volumetric weight to pallet classes"
+  },
+  "selection_rule": "A pallet usually fits several classes and prices are not monotonic across classes: charge the CHEAPEST fitting class for the destination region (see 07-pricing.md section 3). No class fits above 1200 kg or above 240 cm: manual quote.",
+  "covers": {
+    "definition": "[A, B] means class A allows at least the weight AND at least the height of class B, so every pallet that fits B also fits A",
+    "pairs": [
+      [
+        "QP",
+        "MQP"
+      ],
+      [
+        "ELP",
+        "MQP"
+      ],
+      [
+        "ELP",
+        "QP"
+      ],
+      [
+        "HP",
+        "MQP"
+      ],
+      [
+        "HP",
+        "QP"
+      ],
+      [
+        "HP",
+        "ELP"
+      ],
+      [
+        "ULP",
+        "MQP"
+      ],
+      [
+        "ULP",
+        "QP"
+      ],
+      [
+        "LP",
+        "MQP"
+      ],
+      [
+        "LP",
+        "QP"
+      ],
+      [
+        "LP",
+        "ELP"
+      ],
+      [
+        "LP",
+        "HP"
+      ],
+      [
+        "LP",
+        "ULP"
+      ],
+      [
+        "FP",
+        "MQP"
+      ],
+      [
+        "FP",
+        "QP"
+      ],
+      [
+        "FP",
+        "ELP"
+      ],
+      [
+        "FP",
+        "HP"
+      ],
+      [
+        "FP",
+        "ULP"
+      ],
+      [
+        "FP",
+        "LP"
+      ]
+    ]
+  },
+  "incomparable_pairs": {
+    "definition": "neither class covers the other: one is heavier, the other taller",
+    "pairs": [
+      [
+        "ELP",
+        "ULP"
+      ],
+      [
+        "HP",
+        "ULP"
+      ]
+    ]
+  },
+  "not_a_total_order": "ULP (350 kg, 240 cm) is taller but lighter than ELP (450 kg, 150 cm) and HP (600 kg, 150 cm). The column order B..H is therefore not a size order, and 'first fitting column' is not a valid selection rule.",
+  "naming_conflict": "The new public site uses footprint names: 'EPAL / EUR 120 × 80 cm', 'Industriale 120 × 100 cm', 'Mezzo pallet 80 × 60 cm', 'Quarto di pallet 60 × 40 cm' (ls-home@claude/determined-lovelace-ggeitw:public/preventivo/index.html:225-228). 'Half Pallet' (HP) and 'Quarter Pallet' (QP) here are weight/height classes on a 100 x 120 cm base, not the 80 x 60 / 60 x 40 footprints."
+}

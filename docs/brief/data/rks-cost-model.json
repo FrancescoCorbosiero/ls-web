@@ -1,0 +1,654 @@
+{
+  "confidential": true,
+  "what_it_is": "Cost calculator of the partner pallet network RKS: what Logistica Sanchez PAYS the network, not what customers pay (owner). Use it only for staff-only cost/margin estimates.",
+  "source": {
+    "file": "CALCOLATORE__RKS_2024.xlsm",
+    "provided_by": "owner (uploaded during the briefing; not stored in any repository)",
+    "sheets": {
+      "CALCOLATORE KG": "visible; sheet protection on (password hash, not needed; locked cells cannot even be selected). Unlocked cells: the inputs D3, K3, K7, C8:F12, but also formula and label cells such as B8:B12, G8:G12, J3, J4, K8, which a user can overwrite by mistake",
+      "CALCOLI": "hidden (state='hidden'); protected; every cell uses number format ';;;' so values are invisible even when unhidden"
+    },
+    "macros": "none: the package has no vbaProject.bin although the extension is .xlsm",
+    "defined_names": {
+      "HUB": {
+        "refers_to": "CALCOLI!$I$4:$I$5",
+        "values": [
+          "NORD",
+          "SUD"
+        ],
+        "used_by": "nothing (no formula, no data validation references it)"
+      }
+    },
+    "data_validations": [
+      {
+        "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!D3",
+        "type": "list",
+        "source": "CALCOLI!$F$12:$F$14",
+        "values": [
+          "----",
+          "Colli",
+          "Bancale"
+        ],
+        "note": "stored in an x14 extension (openpyxl drops it; read from xl/worksheets/sheet1.xml)"
+      },
+      {
+        "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!K7",
+        "type": "list",
+        "source": "CALCOLI!$E$12:$E$13",
+        "values": [
+          "SI",
+          "NO"
+        ]
+      }
+    ],
+    "document_created": "2023-01-16T14:03:53Z",
+    "document_modified": "2024-01-04T08:04:54Z",
+    "extracted_on": "2026-10-16",
+    "citation_format": "CALCOLATORE__RKS_2024.xlsm!'<sheet>'!<cell>",
+    "verification": "Formulas read with openpyxl (data_only False and True) and the behaviour re-computed with LibreOffice headless on 13 input scenarios (see verified_examples)."
+  },
+  "title": {
+    "text": "TARIFFA A PESO",
+    "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!B1"
+  },
+  "currency": "EUR (cells K12:K18 use a euro currency format)",
+  "vat_included": null,
+  "vat_note": "(unknown)",
+  "scope_note": "(inferred) There is no destination, region or hub input: the same cost applies to every destination. Labels 'NORD' (CALCOLI!H4, CALCOLI!A19) and the unused HUB list (NORD/SUD) suggest the figures are the northern hub tariff only.",
+  "inputs": {
+    "goods_type": {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!D3",
+      "label": "Tipologia Merce",
+      "allowed": [
+        "----",
+        "Colli",
+        "Bancale"
+      ],
+      "value_in_file": "Bancale"
+    },
+    "colli_kg": {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!K3",
+      "label_formula": "=IF(D3=\"colli\",\"Inserire Kg  \",\"\")",
+      "label_shown": "Inserire Kg  ",
+      "note": "unlocked input; the user types the taxable kg (real or volumetric, computed by hand). It is read by K10 whatever the goods type, so a stale value also inflates pallet calculations."
+    },
+    "triangulation": {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!K7",
+      "label": "Triangolazione  ",
+      "allowed": [
+        "SI",
+        "NO"
+      ],
+      "value_in_file": "NO",
+      "meaning": "(inferred) an extra distribution leg, e.g. goods collected and re-delivered through the hub"
+    },
+    "pallet_rows": {
+      "cells": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!C8:F12",
+      "max_rows": 5,
+      "columns": {
+        "C": "Peso (kg)",
+        "D": "Larg. (cm)",
+        "E": "Lung. (cm)",
+        "F": "Altez. (cm)"
+      },
+      "computed_columns": {
+        "G": "mc³ = D*E*F/1000000",
+        "B": "row number 1..5 when C is filled (header 'Qta', but it is NOT a quantity: identical pallets need one row each)"
+      },
+      "headers_formula": "{=+IF(D3=\"bancale\",(CALCOLI!D23:I23),\" \")} (array formula over B7:G7)"
+    }
+  },
+  "constants": {
+    "pv_ratio_kg_per_m3": {
+      "value": 200,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!K6",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J6": "Rapporto PV  "
+      },
+      "note": "locked cell on the visible sheet"
+    },
+    "line_fixed_eur": {
+      "value": 1.1,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!B4",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!A4": "COSTI NTW",
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!B3": "fisso NTW",
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!B5": "FISSO SPED LINEA"
+      }
+    },
+    "line_per_kg_eur": {
+      "value": 0.0135,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!C4",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!C3": "KG NTW"
+      }
+    },
+    "distribution_fixed_eur": {
+      "value": 1.9,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!E4",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!E3": "fisso consegna",
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!E5": "FISSO SPED. DISTRIBUZIONE"
+      }
+    },
+    "distribution_per_kg_eur": {
+      "value": 0.0315,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!F4",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!F3": "kg consegna",
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!F5": "KG DISTRIBUZIONE"
+      }
+    },
+    "long_goods_surcharge_rate": {
+      "value": 0.5,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!J6",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!J5": "Lungha"
+      },
+      "note": "0.5 = +50% on line and distribution"
+    },
+    "hub_handling_colli_eur": {
+      "value": 0.15,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!B12",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!A12": "Passag. Magazz. Colli*"
+      },
+      "note": "unit (per collo or per kg) unknown; the '*' refers to no footnote; not used by any visible output"
+    },
+    "hub_handling_pallet_eur": {
+      "value": 1.8,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!B13",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!A13": "Passag. Magazz. Bancale"
+      },
+      "note": "used only in CALCOLI!B19 (= H7 + B17), which no visible cell shows"
+    },
+    "selected_hub_handling_eur": {
+      "value": 1.8,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!B17",
+      "labels": {},
+      "note": "hard-coded 1.8; CALCOLI!A17 = LOOKUP(B17, B12:B13, A12:A13) therefore always returns 'Passag. Magazz. Bancale', also for colli"
+    },
+    "max_weight_per_pallet_kg": {
+      "value": 1100,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!F17",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!E17": "Peso massimo"
+      },
+      "note": "not referenced: 'CALCOLATORE KG'!B20 hard-codes 1100 and checks row 8 only"
+    },
+    "long_goods_threshold_cm": {
+      "value": 220,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!F18",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!E18": "Dimensione massime"
+      },
+      "note": "not referenced: J8 and B16 hard-code 220 and check row 8 only"
+    },
+    "max_height_cm": {
+      "value": 240,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!CALCOLI!F19",
+      "labels": {
+        "CALCOLATORE__RKS_2024.xlsm!CALCOLI!E19": "Altezza massima"
+      },
+      "note": "not referenced: B18 hard-codes 240 (checks rows 8-12)"
+    },
+    "min_taxable_kg": {
+      "value": 3,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J19",
+      "text": "*Minimo tassabile 3 kg",
+      "note": "note text only; formulas just blank K12 when K10 < 3 and still compute K14 on the real kg"
+    },
+    "parcel_threshold_kg": {
+      "value": 29.9,
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J20",
+      "text": "*Fino 29,90 kg peso effettivo/volumetrico viene tassato come collo",
+      "note": "note text only; not implemented by any formula"
+    }
+  },
+  "formulas_verbatim": {
+    "CALCOLATORE KG": {
+      "J3": "=IF(D3=\"colli\",\"Inserire Kg  \",\"\")",
+      "J4": "=IF(D3=\"bancale\",\"Peso Totale Kg  \",\"\")",
+      "K4": "=IF(D3=\"bancale\",C14,\"\")",
+      "K5": "=IF(D3=\"bancale\",(G14*K6),\"\")",
+      "B7": "{=+IF(D3=\"bancale\",(CALCOLI!D23:I23),\" \")} (array formula over B7:G7)",
+      "B8": "=IF(OR(C8=\" \",C8=0), \"\", 1)",
+      "G8": "=(D8*E8*F8)/1000000",
+      "J8": "=IF(D8>220,\"Merce Lungha\",IF(E8>220,\"Merce Lungha\",\"\"))",
+      "K8": "=IF(J8=\"merce lungha\",\"50 % + costo nolo\",\"\")",
+      "K10": "=MAXA(K3:K4:K5)",
+      "K12": "=+IF(J8=\"merce lungha\",CALCOLI!F9,IF(K10<3,\" \",CALCOLI!F7))",
+      "C14": "=IF(D3=\"bancale\",SUM(C8:C12),\"\")",
+      "D14": "=IF(D3=\"bancale\",\"Totale Peso\",\"\")",
+      "F14": "=IF(D3=\"bancale\",\"Totale  m³\",\"\")",
+      "G14": "=IF(D3=\"bancale\",SUM(G8:G12),\"\")",
+      "J14": "=IF(K7=\"NO\",\"Costo spedizione / Nolo\",\" \")",
+      "K14": "=+IF(J8=\"merce lungha\",\"\",IF(K7=\"NO\",CALCOLI!H7,\"\"))",
+      "B16": "=IF(D8>220,\"⚠️Larghezza superiore 220 cm fare spediz. Singola⚠️\",IF(E8>220,\"⚠️Lunghezza superiore 220 cm fare spediz. Singola ⚠️\",\"\"))",
+      "J16": "=IF(K7=\"SI\",\"Costo Triangolazione\",\" \")",
+      "K16": "=IF(K7=\"SI\",SUM(CALCOLI!H7+K12),\"\")",
+      "B18": "=IF(F8>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F9>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F10>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F11>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F12>240,\"⚠️Altezza massima 240 cm⚠️\",\"\")))))",
+      "C18": "=IF(B17=\"⚠️\",\"concordate con la filiale\",\"\")   (inside merged range B18:G19, so never visible; read from xl/worksheets/sheet1.xml because openpyxl drops cells inside merges)",
+      "J18": "=IF(J8=\"MERCE LUNGHA\",\"Costo totale merce Lungha \",\" \")",
+      "K18": "=IF(J8=\"merce lungha\",CALCOLI!H9,\" \")",
+      "B20": "=IF(C8>1100,\"⚠️Peso massimo per singolo bancale 1100 kg⚠️\",\"\")",
+      "C20": "=IF(B19=\"⚠️\",\"concordate con la filiale\",\"\")   (inside merged range B20:G21, so never visible; read from xl/worksheets/sheet1.xml because openpyxl drops cells inside merges)"
+    },
+    "CALCOLI": {
+      "B6": "=B4",
+      "C6": "=C4*'CALCOLATORE KG'!K10",
+      "E6": "=E4",
+      "F6": "=F4*'CALCOLATORE KG'!K10",
+      "C7": "=B6+C6",
+      "F7": "=E6+F6",
+      "H7": "=B6+C6+E6+F6",
+      "B9": "=C7*J6",
+      "C9": "=C7+B9",
+      "E9": "=F7*J6",
+      "F9": "=F7+E9",
+      "H9": "=F9+C9",
+      "A17": "=LOOKUP(B17,B12:B13,A12:A13)",
+      "B19": "=H7+B17"
+    }
+  },
+  "cached_values_in_file": {
+    "note": "values saved by Excel with the inputs as shipped (D3 'Bancale', K7 'NO', no pallet rows)",
+    "CALCOLATORE KG": {
+      "K4": 0,
+      "K5": 0,
+      "K10": 0,
+      "K12": " ",
+      "K14": 3,
+      "K16": null,
+      "K18": " "
+    },
+    "CALCOLI": {
+      "C7": 1.1,
+      "F7": 1.9,
+      "H7": 3,
+      "C9": 1.6500000000000001,
+      "F9": 2.8499999999999996,
+      "H9": 4.5,
+      "B19": 4.8,
+      "A17": "Passag. Magazz. Bancale"
+    }
+  },
+  "model": {
+    "pseudocode": [
+      "m3[i]        = width_cm[i] * length_cm[i] * height_cm[i] / 1_000_000           # G8:G12",
+      "if goods_type == 'Bancale':",
+      "    real_kg  = sum(kg[i])                                                     # C14 -> K4",
+      "    vol_kg   = sum(m3[i]) * PV_RATIO (200)                                    # G14*K6 -> K5",
+      "else: real_kg = vol_kg = 0                                                    # '' counts as 0 in MAXA",
+      "taxable_kg   = max(colli_kg or 0, real_kg, vol_kg)                            # K10 = MAXA(K3:K4:K5) i.e. K3:K5",
+      "line         = 1.10 + 0.0135 * taxable_kg                                     # CALCOLI!C7",
+      "distribution = 1.90 + 0.0315 * taxable_kg                                     # CALCOLI!F7",
+      "total        = line + distribution    # = 3.00 + 0.045 * taxable_kg           # CALCOLI!H7",
+      "is_long      = width_cm[1] > 220 or length_cm[1] > 220      # ROW 8 ONLY       # J8",
+      "long_total   = 1.5 * line + 1.5 * distribution    # = 1.5 * total             # CALCOLI!H9",
+      "",
+      "# what the sheet displays",
+      "K12 'Costo Consegna / Distribuzione' = 1.5*distribution if is_long else (blank if taxable_kg < 3 else distribution)",
+      "K14 'Costo spedizione / Nolo'        = blank if is_long else (total if triangulation == 'NO' else blank)",
+      "K16 'Costo Triangolazione'           = total + K12 if triangulation == 'SI' else blank   # #VALUE! when K12 is blank",
+      "K18 'Costo totale merce Lungha '     = long_total if is_long else blank",
+      "",
+      "# computed but never displayed",
+      "CALCOLI!B19 'NORD' = total + 1.80   # hub handling per pallet"
+    ],
+    "fixed_part_is_per_consignment": "(inferred) the fixed 1.10 + 1.90 EUR is charged once for all rows together, because the formulas sum the rows before applying the tariff",
+    "warnings_displayed": [
+      {
+        "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!B16",
+        "formula": "=IF(D8>220,\"⚠️Larghezza superiore 220 cm fare spediz. Singola⚠️\",IF(E8>220,\"⚠️Lunghezza superiore 220 cm fare spediz. Singola ⚠️\",\"\"))",
+        "checks": "row 8 only"
+      },
+      {
+        "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!B18",
+        "formula": "=IF(F8>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F9>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F10>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F11>240,\"⚠️Altezza massima 240 cm⚠️\",IF(F12>240,\"⚠️Altezza massima 240 cm⚠️\",\"\")))))",
+        "checks": "rows 8-12"
+      },
+      {
+        "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!B20",
+        "formula": "=IF(C8>1100,\"⚠️Peso massimo per singolo bancale 1100 kg⚠️\",\"\")",
+        "checks": "row 8 only"
+      }
+    ],
+    "warnings_do_not_block": "costs are still computed when a warning shows (verified: 1150 kg and 250 cm on row 8 still give K14 = 54.75)"
+  },
+  "limits": {
+    "max_weight_per_pallet_kg": 1100,
+    "max_height_cm": 240,
+    "long_goods_above_cm": 220,
+    "long_goods_rule_texts": [
+      "*Oltre 220 cm larghezza/lunghezza si applica 50% costo spedizione",
+      "K8: =IF(J8=\"merce lungha\",\"50 % + costo nolo\",\"\")",
+      "B16: 'fare spediz. Singola'"
+    ],
+    "min_taxable_kg": 3,
+    "colli_up_to_kg": 29.9,
+    "max_rows": 5
+  },
+  "notes_verbatim": [
+    {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J19",
+      "text": "*Minimo tassabile 3 kg"
+    },
+    {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J20",
+      "text": "*Fino 29,90 kg peso effettivo/volumetrico viene tassato come collo"
+    },
+    {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J21",
+      "text": "*Oltre 220 cm larghezza/lunghezza si applica 50% costo spedizione"
+    },
+    {
+      "cell": "CALCOLATORE__RKS_2024.xlsm!'CALCOLATORE KG'!J22",
+      "text": "*Altezza massima 240 cm"
+    }
+  ],
+  "verified_examples": [
+    {
+      "id": "R1",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 400,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 150
+          }
+        ]
+      },
+      "outputs": {
+        "K4_real_kg": 400,
+        "K5_vol_kg": 288,
+        "K10_taxable_kg": 400,
+        "K12_distribution": 14.5,
+        "K14_total": 21.0,
+        "hidden_B19_total_plus_hub": 22.8
+      }
+    },
+    {
+      "id": "R2",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 300,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 200
+          },
+          {
+            "kg": 100,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 100
+          }
+        ]
+      },
+      "outputs": {
+        "K4_real_kg": 400,
+        "K5_vol_kg": 576,
+        "K10_taxable_kg": 576,
+        "K12_distribution": 20.044,
+        "K14_total": 28.92
+      }
+    },
+    {
+      "id": "R3",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 200,
+            "width_cm": 80,
+            "length_cm": 240,
+            "height_cm": 100
+          }
+        ]
+      },
+      "outputs": {
+        "J8": "Merce Lungha",
+        "K10_taxable_kg": 384,
+        "K12_distribution_long": 20.994,
+        "K14": "blank",
+        "K18_long_total": 30.42,
+        "B16": "⚠️Lunghezza superiore 220 cm fare spediz. Singola ⚠️"
+      }
+    },
+    {
+      "id": "R4",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "SI",
+        "rows": [
+          {
+            "kg": 400,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 150
+          }
+        ]
+      },
+      "outputs": {
+        "K14": "blank",
+        "K16_triangulation": 35.5
+      }
+    },
+    {
+      "id": "R5",
+      "inputs": {
+        "goods_type": "Colli",
+        "colli_kg": 20,
+        "triangulation": "NO"
+      },
+      "outputs": {
+        "K10_taxable_kg": 20,
+        "K12_distribution": 2.53,
+        "K14_total": 3.9
+      }
+    },
+    {
+      "id": "R6",
+      "inputs": {
+        "goods_type": "Colli",
+        "colli_kg": 2,
+        "triangulation": "NO"
+      },
+      "outputs": {
+        "K12": "blank",
+        "K14_total": 3.09
+      },
+      "shows": "minimum taxable 3 kg not applied"
+    },
+    {
+      "id": "R7",
+      "inputs": {
+        "goods_type": "Colli",
+        "colli_kg": 2,
+        "triangulation": "SI"
+      },
+      "outputs": {
+        "K16": "#VALUE!"
+      }
+    },
+    {
+      "id": "R8",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 100,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 100
+          },
+          {
+            "kg": 200,
+            "width_cm": 80,
+            "length_cm": 240,
+            "height_cm": 100
+          }
+        ]
+      },
+      "outputs": {
+        "J8": "blank (long row 9 not detected)",
+        "K14_total": 28.92
+      }
+    },
+    {
+      "id": "R9",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 100,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 100
+          },
+          {
+            "kg": 1150,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 150
+          }
+        ]
+      },
+      "outputs": {
+        "B20": "blank (1150 kg on row 9 not detected)",
+        "K14_total": 59.25
+      }
+    },
+    {
+      "id": "R10",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "SI",
+        "rows": [
+          {
+            "kg": 200,
+            "width_cm": 80,
+            "length_cm": 240,
+            "height_cm": 100
+          }
+        ]
+      },
+      "outputs": {
+        "K16_triangulation": 41.274,
+        "K18_long_total": 30.42
+      },
+      "shows": "two contradictory totals; K16 = normal total 20.28 + long distribution 20.994"
+    },
+    {
+      "id": "R11",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 1150,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 250
+          }
+        ]
+      },
+      "outputs": {
+        "B18": "⚠️Altezza massima 240 cm⚠️",
+        "B20": "⚠️Peso massimo per singolo bancale 1100 kg⚠️",
+        "K14_total": 54.75
+      }
+    },
+    {
+      "id": "R12",
+      "inputs": {
+        "goods_type": "Bancale",
+        "colli_kg_left_in_K3": 900,
+        "triangulation": "NO",
+        "rows": [
+          {
+            "kg": 400,
+            "width_cm": 80,
+            "length_cm": 120,
+            "height_cm": 150
+          }
+        ]
+      },
+      "outputs": {
+        "K10_taxable_kg": 900,
+        "K14_total": 43.5
+      },
+      "shows": "stale K3 value overrides the pallet weight"
+    },
+    {
+      "id": "R13",
+      "inputs": {
+        "goods_type": "Bancale",
+        "triangulation": "NO",
+        "rows": []
+      },
+      "outputs": {
+        "K12": "blank",
+        "K14_total": 3.0
+      },
+      "shows": "an empty sheet still shows 3,00 EUR"
+    }
+  ],
+  "bugs_and_inconsistencies": [
+    "Long goods are detected on row 8 only (J8, B16): a long pallet on rows 9-12 is priced as normal (R8).",
+    "The 1100 kg limit is checked on row 8 only (B20) (R9); limits are warnings and never block the cost (R11).",
+    "CALCOLI!F17:F19 (1100, 220, 240) are documentation only: the formulas hard-code the same numbers.",
+    "'*Minimo tassabile 3 kg' (J19) is not applied: K14 is computed on the real kg (R6, R13); K12 is merely blanked under 3 kg.",
+    "'*Fino 29,90 kg ... viene tassato come collo' (J20) is not implemented: there is no parcel tariff or branch.",
+    "Hub handling (0.15 colli / 1.80 bancale) is added only in CALCOLI!B19, which nothing displays; CALCOLI!A17 always selects the pallet value.",
+    "The HUB name (NORD/SUD) is defined but unused; no destination input exists, so the cost is identical for every destination.",
+    "The 'Qta' column is a row counter, not a quantity; at most 5 rows.",
+    "K14 is labelled 'Costo spedizione / Nolo' but contains line + distribution (H7); K12 shows the distribution again: adding K12 and K14 double-counts.",
+    "Triangulation K16 = H7 + K12: #VALUE! under 3 kg (R7); with long goods it mixes the normal total with the long distribution and is shown next to K18 (R10).",
+    "With long goods J14 still shows 'Costo spedizione / Nolo' with an empty K14 (R3).",
+    "K3 keeps its value when the goods type changes and still enters MAXA (R12).",
+    "B16 says 'fare spediz. Singola' while J21/K8 say +50%: two different instructions for the same case.",
+    "C18 and C20 test B17/B19, which are inside merged ranges and always empty, and are themselves hidden by the merges: dead formulas.",
+    "Conditional formatting: rule on B10:G11 references #REF!; rule on B9:G9 references $G6 instead of $D$3 (cosmetic).",
+    "'Lungha' / 'Merce Lungha' is a typo of 'lunga'; the formulas rely on case-insensitive comparison ('merce lungha', 'MERCE LUNGHA').",
+    "No volumetric weight for colli: the user must compute it and type it into K3.",
+    "PV ratio 200 here, 300 in the MOSCA customer list, 250 in the new site's example: different contexts, make it a per-list parameter.",
+    "Per-pallet maximum 1100 kg here vs 1200 kg for the FP class of the MOSCA list."
+  ],
+  "use_in_new_app": "Admin-only margin view (feature flag pricing.marginView). Implement the model as data (constants table with validity dates) plus the pseudocode above, but fix the bugs: check every row, apply the 3 kg minimum, show hub handling explicitly, treat limits as blocking for automatic estimates. Mark the cost as 'not applicable' for destinations the owner has not confirmed (see scope_note).",
+  "expected_after_fix": {
+    "note": "Proposed behaviour of the fixed model for the margin view (07-pricing.md section 6.8): every row checked, 3 kg minimum applied, limits blocking, hub handling shown as a separate line (not included below), parcels <= 29.9 kg not computable until the owner gives the parcel tariff.",
+    "R1": 21.0,
+    "R2": 28.92,
+    "R3": 30.42,
+    "R4": {
+      "value": 35.5,
+      "note": "legacy triangulation meaning kept (total + one more distribution leg); confirm with the owner"
+    },
+    "R5": "not computable (parcel <= 29.9 kg)",
+    "R6": "not computable (parcel <= 29.9 kg)",
+    "R7": "not computable (parcel <= 29.9 kg)",
+    "R8": {
+      "value": 43.38,
+      "note": "long goods on row 9 now detected: 1.5 x 28.92"
+    },
+    "R9": "not computable (1150 kg > 1100 kg per pallet)",
+    "R10": "owner to define triangulation together with long goods",
+    "R11": "not computable (1150 kg > 1100 kg and 250 cm > 240 cm)",
+    "R12": {
+      "value": 21.0,
+      "note": "no free-typed kg for pallets in the app, so a stale value cannot exist"
+    },
+    "R13": "nothing to compute (no rows)"
+  }
+}

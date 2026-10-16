@@ -1,0 +1,35 @@
+# Legacy checkouts and private material: never committed
+legacy/
+private/
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Real data: dumps, exports, backups, spreadsheets
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.xlsx
+*.xlsm
+!**/db/migration/*.sql
+!**/src/test/resources/**/*.sql
+!**/src/test/resources/**/*-synthetic.xlsx
+
+# Infrastructure state
+*.tfstate*
+*.tfvars
+.terraform/
+
+# Build output, tools, local files
+target/
+build/
+.gradle/
+node_modules/
+logs/
+*.log
+.idea/
+.vscode/
+.DS_Store

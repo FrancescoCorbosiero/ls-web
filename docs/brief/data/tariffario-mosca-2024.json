@@ -1,0 +1,780 @@
+{
+  "confidential": true,
+  "source": {
+    "file": "tariffario_MOSCA_2024.xlsx",
+    "provided_by": "owner (uploaded during the briefing; not stored in any repository)",
+    "sheet": "Foglio1",
+    "used_range": "A1:I85",
+    "embedded_image": "xl/media/image1.png, anchored over Foglio1!A29:J39 (the seven pallet classes; see pallet-classes.json)",
+    "document_created": "2024-01-04T14:10:14Z",
+    "document_modified": "2024-01-16T10:23:02Z",
+    "extracted_on": "2026-10-16",
+    "citation_format": "tariffario_MOSCA_2024.xlsx!Foglio1!<cell>",
+    "note": "Numbers are copied exactly as stored in the cells (int or float, e.g. 103.502). Texts are verbatim, including typos and trailing spaces."
+  },
+  "price_list": {
+    "title": "Tariffario Pallet",
+    "title_cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A1",
+    "customer": "MOSCA",
+    "customer_source": "file name only; no cell of the sheet names the customer",
+    "year": 2024,
+    "year_source": "file name only",
+    "valid_from": null,
+    "valid_to": null,
+    "validity_note": "(unknown) the sheet has no validity dates",
+    "currency": "EUR",
+    "currency_source": "the notes use '€' (A28, A43, A55, A56); the price cells have no currency format",
+    "vat_included": null,
+    "vat_note": "(unknown) not stated. Discounts apply 'sull'imponibile' (A55, A56), which suggests net-of-VAT prices (inferred).",
+    "price_unit": "EUR per pallet of the given class to the given destination region (inferred: the sheet has no unit label)",
+    "origin": "(unknown) not stated; presumably pick-up in the Seregno area / delivery via the hub (inferred)",
+    "class_codes_cell_range": "tariffario_MOSCA_2024.xlsx!Foglio1!B3:H3",
+    "region_header_cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A3",
+    "delivery_time_header_cell": "tariffario_MOSCA_2024.xlsx!Foglio1!I3"
+  },
+  "classes": [
+    "MQP",
+    "QP",
+    "ELP",
+    "HP",
+    "ULP",
+    "LP",
+    "FP"
+  ],
+  "class_columns": {
+    "MQP": "B",
+    "QP": "C",
+    "ELP": "D",
+    "HP": "E",
+    "ULP": "F",
+    "LP": "G",
+    "FP": "H"
+  },
+  "number_formats": {
+    "B,C,D,F,G (MQP, QP, ELP, ULP, LP)": "0.00",
+    "E,H (HP, FP)": "General",
+    "note": "Display only. G19 (PUGLIA, LP) stores 103.502 and Excel shows it as 103,50. Keep the stored value; round only computed totals."
+  },
+  "region_fields": {
+    "row": "sheet row",
+    "label_in_file": "cell A<row>, verbatim (CAMPANIA has a trailing space)",
+    "region": "canonical name, identical to the keys of REGION_ZONE in ls-home@claude/determined-lovelace-ggeitw:public/js/eta.js:14-19",
+    "prices_eur": "cells B..H of the row, exactly as stored",
+    "tempo_di_resa": "cell I<row> as stored (number or text)",
+    "tempo_di_resa_hours": "[min, max] parsed from tempo_di_resa"
+  },
+  "regions": [
+    {
+      "row": 4,
+      "label_in_file": "VALLE D'AOSTA",
+      "region": "Valle d'Aosta",
+      "prices_eur": {
+        "MQP": 35,
+        "QP": 43.4,
+        "ELP": 51.8,
+        "HP": 63.59,
+        "ULP": 57.4,
+        "LP": 73.78,
+        "FP": 92.87
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 5,
+      "label_in_file": "LOMBARDIA",
+      "region": "Lombardia",
+      "prices_eur": {
+        "MQP": 15,
+        "QP": 22.7,
+        "ELP": 31.8,
+        "HP": 33.91,
+        "ULP": 27.9,
+        "LP": 41.04,
+        "FP": 55.2
+      },
+      "tempo_di_resa": 24,
+      "tempo_di_resa_hours": [
+        24,
+        24
+      ]
+    },
+    {
+      "row": 6,
+      "label_in_file": "PIEMONTE",
+      "region": "Piemonte",
+      "prices_eur": {
+        "MQP": 30,
+        "QP": 39.2,
+        "ELP": 47.6,
+        "HP": 54.44,
+        "ULP": 51.8,
+        "LP": 61.15,
+        "FP": 79
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 7,
+      "label_in_file": "VENETO",
+      "region": "Veneto",
+      "prices_eur": {
+        "MQP": 30,
+        "QP": 46.6,
+        "ELP": 58.8,
+        "HP": 51.75,
+        "ULP": 67.2,
+        "LP": 66.03,
+        "FP": 73.26
+      },
+      "tempo_di_resa": 24,
+      "tempo_di_resa_hours": [
+        24,
+        24
+      ]
+    },
+    {
+      "row": 8,
+      "label_in_file": "TRENTINO-ALTO ADIGE",
+      "region": "Trentino-Alto Adige",
+      "prices_eur": {
+        "MQP": 34,
+        "QP": 42,
+        "ELP": 51.8,
+        "HP": 62.3,
+        "ULP": 56,
+        "LP": 78.24,
+        "FP": 90.1
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 9,
+      "label_in_file": "FRIULI-VENEZIA GIULIA",
+      "region": "Friuli-Venezia Giulia",
+      "prices_eur": {
+        "MQP": 31.36,
+        "QP": 37.8,
+        "ELP": 46.3,
+        "HP": 56.87,
+        "ULP": 49.7,
+        "LP": 69.62,
+        "FP": 80.24
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 10,
+      "label_in_file": "LIGURIA",
+      "region": "Liguria",
+      "prices_eur": {
+        "MQP": 32.2,
+        "QP": 38.7,
+        "ELP": 48,
+        "HP": 57.3,
+        "ULP": 69.5,
+        "LP": 69.16,
+        "FP": 81.38
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 11,
+      "label_in_file": "EMILIA-ROMAGNA",
+      "region": "Emilia-Romagna",
+      "prices_eur": {
+        "MQP": 29.2,
+        "QP": 34,
+        "ELP": 41.8,
+        "HP": 50.43,
+        "ULP": 43.8,
+        "LP": 58.99,
+        "FP": 68.69
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 12,
+      "label_in_file": "TOSCANA",
+      "region": "Toscana",
+      "prices_eur": {
+        "MQP": 31.9,
+        "QP": 39.2,
+        "ELP": 49,
+        "HP": 58.01,
+        "ULP": 57.5,
+        "LP": 71.36,
+        "FP": 82.24
+      },
+      "tempo_di_resa": "24/48",
+      "tempo_di_resa_hours": [
+        24,
+        48
+      ]
+    },
+    {
+      "row": 13,
+      "label_in_file": "MARCHE",
+      "region": "Marche",
+      "prices_eur": {
+        "MQP": 31.6,
+        "QP": 34,
+        "ELP": 41.6,
+        "HP": 54.3,
+        "ULP": 49.7,
+        "LP": 65.77,
+        "FP": 79.93
+      },
+      "tempo_di_resa": "48/72",
+      "tempo_di_resa_hours": [
+        48,
+        72
+      ]
+    },
+    {
+      "row": 14,
+      "label_in_file": "UMBRIA",
+      "region": "Umbria",
+      "prices_eur": {
+        "MQP": 32.2,
+        "QP": 39.2,
+        "ELP": 50.4,
+        "HP": 59.73,
+        "ULP": 58,
+        "LP": 74.55,
+        "FP": 85.63
+      },
+      "tempo_di_resa": "48/72",
+      "tempo_di_resa_hours": [
+        48,
+        72
+      ]
+    },
+    {
+      "row": 15,
+      "label_in_file": "LAZIO",
+      "region": "Lazio",
+      "prices_eur": {
+        "MQP": 35,
+        "QP": 43.4,
+        "ELP": 57.4,
+        "HP": 68.17,
+        "ULP": 64,
+        "LP": 88.1,
+        "FP": 100.57
+      },
+      "tempo_di_resa": "48/72",
+      "tempo_di_resa_hours": [
+        48,
+        72
+      ]
+    },
+    {
+      "row": 16,
+      "label_in_file": "ABRUZZO",
+      "region": "Abruzzo",
+      "prices_eur": {
+        "MQP": 36.4,
+        "QP": 44.4,
+        "ELP": 57.4,
+        "HP": 69.17,
+        "ULP": 68.2,
+        "LP": 89.02,
+        "FP": 98.06
+      },
+      "tempo_di_resa": "48/72",
+      "tempo_di_resa_hours": [
+        48,
+        72
+      ]
+    },
+    {
+      "row": 17,
+      "label_in_file": "MOLISE",
+      "region": "Molise",
+      "prices_eur": {
+        "MQP": 38.7,
+        "QP": 48.1,
+        "ELP": 63.5,
+        "HP": 75.6,
+        "ULP": 82.7,
+        "LP": 99.96,
+        "FP": 114.28
+      },
+      "tempo_di_resa": "48/72",
+      "tempo_di_resa_hours": [
+        48,
+        72
+      ]
+    },
+    {
+      "row": 18,
+      "label_in_file": "CAMPANIA ",
+      "region": "Campania",
+      "prices_eur": {
+        "MQP": 37.2,
+        "QP": 46.2,
+        "ELP": 60.9,
+        "HP": 72.89,
+        "ULP": 79.2,
+        "LP": 95.64,
+        "FP": 109.35
+      },
+      "tempo_di_resa": "48/72",
+      "tempo_di_resa_hours": [
+        48,
+        72
+      ]
+    },
+    {
+      "row": 19,
+      "label_in_file": "PUGLIA",
+      "region": "Puglia",
+      "prices_eur": {
+        "MQP": 39.2,
+        "QP": 49,
+        "ELP": 65.2,
+        "HP": 77.89,
+        "ULP": 85.4,
+        "LP": 103.502,
+        "FP": 118.97
+      },
+      "tempo_di_resa": 72,
+      "tempo_di_resa_hours": [
+        72,
+        72
+      ]
+    },
+    {
+      "row": 20,
+      "label_in_file": "BASILICATA",
+      "region": "Basilicata",
+      "prices_eur": {
+        "MQP": 41.9,
+        "QP": 53.4,
+        "ELP": 72.8,
+        "HP": 86.18,
+        "ULP": 65.9,
+        "LP": 116.9,
+        "FP": 132.91
+      },
+      "tempo_di_resa": 72,
+      "tempo_di_resa_hours": [
+        72,
+        72
+      ]
+    },
+    {
+      "row": 21,
+      "label_in_file": "CALABRIA",
+      "region": "Calabria",
+      "prices_eur": {
+        "MQP": 45,
+        "QP": 56.4,
+        "ELP": 78.2,
+        "HP": 92.05,
+        "ULP": 115,
+        "LP": 126.75,
+        "FP": 143.54
+      },
+      "tempo_di_resa": 72,
+      "tempo_di_resa_hours": [
+        72,
+        72
+      ]
+    },
+    {
+      "row": 22,
+      "label_in_file": "SICILIA",
+      "region": "Sicilia",
+      "prices_eur": {
+        "MQP": 55,
+        "QP": 65,
+        "ELP": 100,
+        "HP": 117.62,
+        "ULP": 125,
+        "LP": 182.19,
+        "FP": 193.59
+      },
+      "tempo_di_resa": "72/96",
+      "tempo_di_resa_hours": [
+        72,
+        96
+      ]
+    },
+    {
+      "row": 23,
+      "label_in_file": "SARDEGNA",
+      "region": "Sardegna",
+      "prices_eur": {
+        "MQP": 46.38,
+        "QP": 65,
+        "ELP": 85,
+        "HP": 102.63,
+        "ULP": 120,
+        "LP": 149.54,
+        "FP": 162.48
+      },
+      "tempo_di_resa": "72/96",
+      "tempo_di_resa_hours": [
+        72,
+        96
+      ]
+    }
+  ],
+  "delivery_time_unit": "hours (inferred: the header TEMPO DI RESA has no unit). The new site shows its own zones as '24 ore', '48 ore', '72 ore' with the note 'consegna indicativa dal ritiro, in giorni lavorativi' (ls-home@claude/determined-lovelace-ggeitw:public/js/eta.js:69); the values differ from this list in 16 of 20 regions.",
+  "rules": {
+    "excluded_areas": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A25",
+      "text": "ISOLE E LAGUNE BOLZANO E SAN MARINO DA PREVENTIVARE.",
+      "areas": [
+        {
+          "name": "isole",
+          "meaning": "islands that have no row of their own, i.e. minor islands (inferred: SICILIA and SARDEGNA have prices)"
+        },
+        {
+          "name": "lagune",
+          "meaning": "lagoon areas, e.g. the Venice lagoon (inferred)"
+        },
+        {
+          "name": "Bolzano",
+          "meaning": "the province of Bolzano/Alto Adige; the TRENTINO-ALTO ADIGE row then covers the province of Trento only (inferred)"
+        },
+        {
+          "name": "San Marino",
+          "meaning": "Republic of San Marino (CAP 47890-47899, inferred)"
+        }
+      ],
+      "treatment": "da preventivare: no list price, quote case by case"
+    },
+    "included_services": {
+      "cells": [
+        "tariffario_MOSCA_2024.xlsx!Foglio1!A26",
+        "tariffario_MOSCA_2024.xlsx!Foglio1!A27"
+      ],
+      "text": [
+        "SERVIZI ACCESSORI INCLUSI: SPONDA IDRAULICA, PREAVVISO TELEFONICO",
+        "GESTIONE EPAL, GDO"
+      ],
+      "services": [
+        {
+          "name": "sponda idraulica",
+          "price_eur": 0,
+          "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A26"
+        },
+        {
+          "name": "preavviso telefonico",
+          "price_eur": 0,
+          "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A26"
+        },
+        {
+          "name": "gestione EPAL",
+          "price_eur": 0,
+          "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A27",
+          "note": "(inferred) listed under the included services; meaning of 'gestione EPAL' (pallet exchange?) unknown"
+        },
+        {
+          "name": "GDO",
+          "price_eur": 0,
+          "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A27",
+          "note": "(inferred) deliveries to large retail (Grande Distribuzione Organizzata) included; exact scope unknown"
+        }
+      ]
+    },
+    "storage": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A28",
+      "text": "Deposito merce: €7 a bancale al giorno.",
+      "price_eur": 7,
+      "per": "bancale",
+      "period": "giorno",
+      "open_points": [
+        "free days (none stated)",
+        "how days are counted (arrival/departure day)",
+        "same price for every pallet class (not stated)"
+      ]
+    },
+    "storage_location": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A72",
+      "text": "La merce sarà stoccata presso nostra sede operativa: Via dei Meiani n. 90, Seregno 20831 (MB)",
+      "address": "Via dei Meiani n. 90, Seregno 20831 (MB)"
+    },
+    "colli": {
+      "cells": [
+        "tariffario_MOSCA_2024.xlsx!Foglio1!A41",
+        "tariffario_MOSCA_2024.xlsx!Foglio1!A43",
+        "tariffario_MOSCA_2024.xlsx!Foglio1!A45"
+      ],
+      "text": [
+        "Massimo movimentabile per singolo collo 25kg secondo la legge iso11228. Ogni 22 colli per spedizone a singolo destinatario fare  bancale.",
+        " RAPPORTO P/V 300. MINIMO TASSABILE 3KG/ Presa in carico minimo 10kg = 6€ ogni 50KG=9€",
+        "SPEDIZIONE COLLI : SOLO SU TUTTA LOMBARDIA, VENETO"
+      ],
+      "max_kg_per_collo": {
+        "value": 25,
+        "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A41"
+      },
+      "palletize_every_n_colli_single_recipient": {
+        "value": 22,
+        "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A41",
+        "note": "ambiguous: whether 22 colli trigger one pallet, how 23-43 colli are handled, and which pallet class is then charged"
+      },
+      "pv_ratio": {
+        "value": 300,
+        "unit": "kg per m3 (inferred: taxable weight = max(real kg, m3 x 300))",
+        "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A43",
+        "note": "the sheet does not say whether it applies to colli only or to pallets too"
+      },
+      "min_taxable_kg": {
+        "value": 3,
+        "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A43"
+      },
+      "presa_in_carico": {
+        "text_fragment": "Presa in carico minimo 10kg = 6€ ogni 50KG=9€",
+        "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A43",
+        "min_kg": 10,
+        "min_price_eur": 6,
+        "step_kg": 50,
+        "step_price_eur": 9,
+        "ambiguous": true,
+        "open_points": [
+          "is it a pick-up/handling fee added to the freight, or the parcel freight itself?",
+          "is 9 EUR per started 50 kg, per full 50 kg, or pro rata?",
+          "is the 6 EUR minimum added to the 9 EUR steps or replaced by them above 10 kg?",
+          "per shipment or per collo?",
+          "how does 'minimo 10kg' relate to 'MINIMO TASSABILE 3KG' in the same cell?",
+          "does it apply to pallets as well?"
+        ]
+      },
+      "allowed_regions": {
+        "regions": [
+          "Lombardia",
+          "Veneto"
+        ],
+        "source": "tariffario_MOSCA_2024.xlsx!Foglio1!A45",
+        "note": "(inferred) destination regions; the sheet does not say whether origin or destination"
+      },
+      "rate_table": null,
+      "rate_table_note": "(unknown) the sheet has no per-kg or per-collo freight price for parcels; the only parcel amounts are the 6 EUR / 9 EUR of A43"
+    },
+    "tracking": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A50",
+      "text": "Tracking incluso nel prezzo tramite nostro network.",
+      "included": true
+    },
+    "fuel_surcharge": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A51",
+      "text": "Fuel surchage non applicato tariffe fisse senza margine di variazione.",
+      "applied": false
+    },
+    "remote_area_surcharge": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A52",
+      "text": "No supplemento zone disaggiate.",
+      "applied": false
+    },
+    "private_recipient_surcharge": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A53",
+      "text": "NIENTE SUPPLEMENTO PRIVATI.",
+      "applied": false
+    },
+    "monthly_volume_discounts": [
+      {
+        "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A55",
+        "text": "Se nel mese il totale dei trasporti eseguiti a vostro favore è superiore ai €.8.000 vi sarà applicato uno sconto in fattura del 3% sull'imponibile.",
+        "threshold_eur": 8000,
+        "comparison": "greater_than",
+        "discount_pct": 3,
+        "base": "imponibile",
+        "period": "calendar month (inferred from 'nel mese')",
+        "applied_on": "invoice (in fattura)"
+      },
+      {
+        "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A56",
+        "text": "Se nel mese il totale dei trasporti eseguiti a vostro favore è superiore ai €.16.000 vi sarà applicato uno sconto in fattura del 5% sull'imponibile.",
+        "threshold_eur": 16000,
+        "comparison": "greater_than",
+        "discount_pct": 5,
+        "base": "imponibile",
+        "period": "calendar month (inferred from 'nel mese')",
+        "applied_on": "invoice (in fattura)"
+      }
+    ],
+    "monthly_volume_discounts_note": "(inferred) the tiers are alternatives (5% replaces 3% above 16.000 EUR), not cumulative; 'totale dei trasporti' presumably excludes storage. Applied on the monthly invoice, never on a single order price.",
+    "payment_terms": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A58",
+      "text": "Pagamento a 45 giorni, a cui sarà applicato 1% di sconto o a 60 giorni da emissione fattura con Ri.Ba o bonifico bancario. ",
+      "options": [
+        {
+          "days": 45,
+          "discount_pct": 1
+        },
+        {
+          "days": 60,
+          "discount_pct": 0
+        }
+      ],
+      "from": "emissione fattura (stated for the 60-day option; presumably also for 45 days, inferred)",
+      "methods": [
+        "Ri.Ba",
+        "bonifico bancario"
+      ]
+    },
+    "goods_information": {
+      "cell": "tariffario_MOSCA_2024.xlsx!Foglio1!A60",
+      "text": "Per la corretta esecuzione della gestione del materiale occorre comunicare via e-mail o telefono le reali caratteristiche della merce",
+      "meaning": "the customer must state the real characteristics of the goods by e-mail or phone"
+    },
+    "liability": {
+      "cells": [
+        "tariffario_MOSCA_2024.xlsx!Foglio1!C64",
+        "tariffario_MOSCA_2024.xlsx!Foglio1!C65",
+        "tariffario_MOSCA_2024.xlsx!Foglio1!C66"
+      ],
+      "text": [
+        "Responsabilità civile Vettoriale:",
+        "la merce viaggia con copertura assicurativa ai sensi dell’art. 1696 Cod. Civ.",
+        "come integrato dall’art. 10 del Decreto Lgs n.286/05."
+      ],
+      "legal_references": [
+        "art. 1696 Cod. Civ.",
+        "art. 10 D.Lgs. 286/2005"
+      ]
+    },
+    "not_stated_in_the_sheet": [
+      "price for pallets heavier than 1200 kg or taller than 240 cm",
+      "price for footprints other than 100 x 120 cm",
+      "non-stackable goods",
+      "appointment delivery (consegna su appuntamento)",
+      "cash on delivery (contrassegno) and extra insurance",
+      "VAT treatment and validity period"
+    ]
+  },
+  "contacts": {
+    "cells": [
+      "tariffario_MOSCA_2024.xlsx!Foglio1!A81",
+      "tariffario_MOSCA_2024.xlsx!Foglio1!A82",
+      "tariffario_MOSCA_2024.xlsx!Foglio1!A83",
+      "tariffario_MOSCA_2024.xlsx!Foglio1!A84",
+      "tariffario_MOSCA_2024.xlsx!Foglio1!A85"
+    ],
+    "text": [
+      "Per esecuzione del servizio contattare:",
+      "E-mail: logisticasanchezmb@gmail.com",
+      "Pec: [redacted: personal PEC, see Foglio1!A83]",
+      "Telefono: 32923969627 / [redacted: second mobile number, see Foglio1!A84]",
+      "P.Iva: 131130809067"
+    ],
+    "email": "logisticasanchezmb@gmail.com",
+    "pec": null,
+    "pec_note": "personal PEC in Foglio1!A83, redacted (personal data, not among the contacts confirmed by the owner)",
+    "phones_as_written": [
+      "32923969627",
+      "[redacted]"
+    ],
+    "vat_number_as_written": "131130809067",
+    "issues": [
+      "Phone '32923969627' has 11 digits; the company number is 329 239 6962 (owner): a trailing '7' was added.",
+      "Second phone in Foglio1!A84 is not among the owner-confirmed contacts (redacted).",
+      "P.Iva '131130809067' has 12 digits; the company VAT number is 13113080967 (owner, 11 digits): an extra '0' before '67'."
+    ]
+  },
+  "issues": [
+    {
+      "type": "typo",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A84",
+      "detail": "Phone number has an extra digit (see contacts.issues)."
+    },
+    {
+      "type": "typo",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A85",
+      "detail": "VAT number has an extra digit (see contacts.issues)."
+    },
+    {
+      "type": "non_monotonic_price",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!D7:E7",
+      "detail": "VENETO: HP 51.75 < ELP 58.8 although HP allows more weight (600 vs 450 kg) at the same height (150 cm). ELP is never the cheapest fitting class in VENETO."
+    },
+    {
+      "type": "non_monotonic_price",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!F7:G7",
+      "detail": "VENETO: LP 66.03 < ULP 67.2 although LP allows more weight (750 vs 350 kg) at the same height (240 cm). ULP is never the cheapest fitting class in VENETO."
+    },
+    {
+      "type": "non_monotonic_price",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!F10:G10",
+      "detail": "LIGURIA: LP 69.16 < ULP 69.5 (same reason). ULP is never the cheapest fitting class in LIGURIA."
+    },
+    {
+      "type": "possible_typo",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!F20",
+      "detail": "BASILICATA ULP 65.9 is below ELP 72.8 and HP 86.18 of the same row and far below the neighbouring regions' ULP (PUGLIA 85.4, CALABRIA 115) (inferred outlier; confirm with the owner)."
+    },
+    {
+      "type": "precision",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!G19",
+      "detail": "PUGLIA LP is 103.502 (three decimals), shown as 103,50 by the cell format."
+    },
+    {
+      "type": "formatting",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A18",
+      "detail": "Region label 'CAMPANIA ' has a trailing space; trim before matching."
+    },
+    {
+      "type": "formatting",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!I4:I23",
+      "detail": "TEMPO DI RESA mixes numbers (24, 72) and text ('24/48', '48/72', '72/96')."
+    },
+    {
+      "type": "typo",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A41",
+      "detail": "'spedizone' (spedizione), double space in 'fare  bancale'; 'legge iso11228' cites the ISO 11228 standard as a law."
+    },
+    {
+      "type": "typo",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A51",
+      "detail": "'surchage' (surcharge)."
+    },
+    {
+      "type": "typo",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A52",
+      "detail": "'disaggiate' (disagiate)."
+    },
+    {
+      "type": "inconsistency",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!I4:I23",
+      "detail": "Delivery times differ from the new site's zones (ls-home public/js/eta.js) in 16 of 20 regions; see 07-pricing.md section 2.4."
+    },
+    {
+      "type": "inconsistency",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A25",
+      "detail": "Bolzano and San Marino are 'da preventivare' here, but the new site's CAP widget gives them 24 ore (Trentino-Alto Adige / Emilia-Romagna)."
+    },
+    {
+      "type": "inconsistency",
+      "where": "tariffario_MOSCA_2024.xlsx!Foglio1!A43",
+      "detail": "P/V ratio 300 here; the RKS cost calculator uses 200 and the new site's example uses 250."
+    }
+  ]
+}
