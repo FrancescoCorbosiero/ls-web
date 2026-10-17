@@ -1,0 +1,19 @@
+# Gitleaks configuration for the secret scan (CI job "guards").
+# The default rule set applies unchanged. The only allow-listed matches are the documented,
+# local-only test credentials ("ls"/"ls" of scripts/local-db.sh and the CI service container)
+# and the placeholder values of .env.example; nothing sensitive is allow-listed.
+title = "ls-web"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Local-only test database credentials and documented placeholders"
+regexes = [
+  '''TEST_DATABASE_PASSWORD=ls\b''',
+  '''POSTGRES_PASSWORD: ls\b''',
+  '''PG_ROLE_PASSWORD="ls"''',
+]
+paths = [
+  '''^\.env\.example$''',
+]

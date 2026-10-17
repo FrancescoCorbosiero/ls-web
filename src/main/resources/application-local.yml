@@ -1,0 +1,19 @@
+# Developer machine: local PostgreSQL started by scripts/local-db.sh (role ls/ls, local only).
+spring:
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:54329/ls_web}
+    username: ${DATABASE_USER:ls}
+    password: ${DATABASE_PASSWORD:ls}
+  thymeleaf:
+    cache: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    session:
+      cookie:
+        secure: false
+
+logging:
+  level:
+    it.logisticasanchez: DEBUG

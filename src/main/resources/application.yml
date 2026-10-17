@@ -1,0 +1,91 @@
+# Logistica Sanchez web app - base configuration for every profile.
+# Everything environment-specific comes from the environment (no secret defaults):
+#   DATABASE_URL / DATABASE_USER / DATABASE_PASSWORD   JDBC connection of the app
+#   SERVER_PORT                                        HTTP port (default 8080)
+#   LS_*                                               application settings (platform module)
+# Profiles: local (developer machine), test (automated tests), staging, prod.
+spring:
+  application:
+    name: ls-web
+  main:
+    banner-mode: "off"
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USER}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      maximum-pool-size: ${LS_DB_POOL_SIZE:10}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    fail-on-missing-locations: true
+    validate-on-migrate: true
+    clean-disabled: true
+  autoconfigure:
+    # No generated in-memory user with a logged password: the auth module (stage 6)
+    # provides the user store and removes this exclusion.
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  thymeleaf:
+    cache: true
+  web:
+    locale: it
+    locale-resolver: fixed
+  messages:
+    basename: messages
+    fallback-to-system-locale: false
+    encoding: UTF-8
+  mvc:
+    problemdetails:
+      enabled: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+
+# Observability (NFR-04): /actuator/health is the only management endpoint, without details.
+# Every other endpoint is disabled (access none) and not exposed.
+management:
+  endpoints:
+    access:
+      default: none
+    web:
+      exposure:
+        include: health
+      discovery:
+        enabled: false
+  endpoint:
+    health:
+      access: read-only
+      show-details: never
+      show-components: never
+      probes:
+        enabled: false
+  info:
+    env:
+      enabled: false
+    build:
+      enabled: false
+
+logging:
+  level:
+    root: INFO
+    it.logisticasanchez: INFO

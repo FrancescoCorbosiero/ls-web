@@ -1,0 +1,3 @@
+# Production: everything comes from the environment (DATABASE_*, SERVER_PORT, LS_*).
+server:
+  forward-headers-strategy: native

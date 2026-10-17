@@ -1,0 +1,4 @@
+# Staging: same shape as production (environment-driven), with the e-mail guard added by the
+# notifications stage (the app refuses to start without a mail catcher or an allow-list).
+server:
+  forward-headers-strategy: native
