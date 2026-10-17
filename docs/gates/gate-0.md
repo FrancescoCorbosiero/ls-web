@@ -130,8 +130,11 @@ indirizzi né servire report).
 
 ## 6. Cosa succede dopo
 
-Appena confermi il Gate 0 (percorso, stack, VPS e costi di §4; le risposte di §5 che vuoi
-cambiare) parte la **Fase 1 — fondamenta**, un agente solo: scheletro del progetto, CI su
+Mi hai chiesto di procedere in autonomia (2026-10-17): quindi **non mi fermo qui**. La
+**Fase 1 — fondamenta** parte subito con i valori predefiniti di §4 e §5; puoi cambiarne
+uno in qualsiasi momento rispondendo con l'ID. Restano fermi i punti che richiedono te:
+spese (VPS, registro, backup esterni), produzione, DNS, dati reali, credenziali. La Fase 1
+è un lavoro sequenziale: scheletro del progetto, CI su
 GitHub Actions, ambiente locale, lo schema completo del database come prime migrazioni,
 accesso dello staff e accesso dei clienti con link via e-mail (finiti), layout e
 design system del nuovo sito, configurazione di sicurezza, testi, feature flag, registro
