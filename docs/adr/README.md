@@ -12,6 +12,8 @@ chapter 11 and this folder, never from the chat.
 | ADR | Title | Status | Date | Notes |
 |---|---|---|---|---|
 | [0001](0001-path-and-stack.md) | Path and stack | Proposed | 2026-10-17 | Implemented from Phase 1 on the owner's go-ahead of 2026-10-17 («puoi procedere in autonomia»), which is not an answer to Q-01/Q-52: confirmation of its Gate 0 items 1–4 still pending |
+| [0020](0020-data-model-conventions.md) | Data model conventions: PostgreSQL, Flyway, money, time, enumerations as seeded rows, normalised uniqueness, audit immutability, no legacy columns (Q-55) | Accepted | 2026-10-17 | Phase 1 stage 2; the M1 schema `V001…V009` |
+| [0025](0025-feature-flags.md) | Feature flags and the M2 scope rules; extension points for the "Later" backlog | Accepted | 2026-10-17 | Phase 1 stage 2 (table, seeds, service contract); stage 3 implements the service; Phase 5 appends a line per flag group |
 
 ## Template
 
@@ -69,12 +71,12 @@ when written; the IDs it covers must stay covered.
 | 0017 | Back-office lists, pagination, detail presentation and UX conventions | ADM-02, ADM-03, ADM-05, ADM-08; CMS-06, CMS-07, CMS-15…CMS-19, CMS-23…CMS-26 | Phase 2 · backoffice |
 | 0018 | Output escaping, CSP without `unsafe-*`, HTMX configuration, input validation | NFR-02, NFR-01; Q-22; CMS-04, CMS-27…CMS-29 (same origin, self-hosted assets, nothing ported from the CMS), OP-S3 (HTTPS only, HSTS on every host), OP-S5, SEC-13; F-15, F-16 (CORS with credentials and plain-HTTP origins not reproduced) | Phase 1 |
 | 0019 | Logging without bodies or personal data; configuration from the environment; management endpoints | NFR-02, NFR-03, NFR-04; Q-53; SEC-06, SEC-07, SEC-17, SEC-20, F-02…F-07, F-13, F-14 (configuration names from the environment, one explicit base-URL setting) | Phase 1 |
-| 0020 | Data model conventions: PostgreSQL, Flyway, money, time, enumerations as seeded rows, legacy columns | ADM-10, MIG-02; Q-52; 08 §2.1–2.5 amended by 12b §5.4 | Phase 1 |
+| 0020 | Data model conventions: PostgreSQL, Flyway, money, time, enumerations as seeded rows, normalised uniqueness, audit immutability; no legacy columns (Q-55, MIG-02 dropped) | ADM-10, ADM-01, NFR-02; Q-52, Q-55; 08 §2.1–2.5 amended by 12b §5.4 | **Written** (Phase 1 stage 2, Accepted) |
 | 0021 | Legacy import mapping and reconciliation rules | MIG-01, MIG-02; Q-02, Q-42; DQ-01…DQ-37 | Phase 2 · migration |
 | 0022 | Infrastructure and deployment baseline: new VPS, Compose, Caddy 2, backups, CI-built images, TLS | NFR-05, NFR-06, NFR-07; Q-48, Q-49, Q-52; F-08…F-12, F-17, F-18 (tests run in the image build, CI, one default branch); OP-S3 (HTTPS only on every host) | Phase 1 |
 | 0023 | Cut-over: freeze block list, final import, DNS, rollback | MIG-03; Q-16, Q-19, Q-20, Q-40, Q-41, Q-45, Q-46, Q-47 | Phase 2 · migration (runbook with the integrator) |
 | 0024 | Privacy: retention periods, export and erasure by anonymisation, processors | NFR-03; Q-18, Q-43; 10 §5 | Phase 2 · customers |
-| 0025 | Feature flags and the M2 scope rules; extension points for the "Later" backlog | ENH-01…ENH-22; 10 §2 "Feature flags"; chapter 09 "Later" and `PROMPT.md` "Later" (extension points only: the in-process domain events of `platform` — customer verified/approved/declined, order created/approved/declined, tracking changed, lead stored — to which the backlog integrations would subscribe; no subscriber code in M1/M2) | Phase 1 (table and service), Phase 5 (per flag group) |
+| 0025 | Feature flags and the M2 scope rules; extension points for the "Later" backlog | ENH-01…ENH-22; 10 §2 "Feature flags"; chapter 09 "Later" and `PROMPT.md` "Later" (extension points only: the in-process domain events of `platform` — customer verified/approved/declined, order created/approved/declined, tracking changed, lead stored — to which the backlog integrations would subscribe; no subscriber code in M1/M2) | **Written** (Phase 1 stage 2, Accepted: table, seeds, service contract); stage 3 (service), Phase 5 (per flag group) |
 | 0026 | Pricing (M2): rate precision, class selection, no price data in code or fixtures, visibility scopes | ENH-01…ENH-04, ENH-10, ENH-11; Q-14, Q-32, Q-33, Q-34; PR-01…PR-14 | Phase 5 · pricing |
 | 0027 | Business configuration as a single source (contacts, hours, VAT, social, site URL) | PUB-02; Q-15; LPS-04, 06 §7.1 | Phase 1 |
 | 0028 | Legacy admin tools not ported; post-approval corrections as audited ADMIN actions | ADM note of chapter 09, NFR-03; SEC-15, SEC-16; 12b §3.2 O6, 12c §6 | Phase 2 · orders |

@@ -157,3 +157,139 @@ that decision and re-verified; nothing in them concerns the legacy data, so no c
   tests, 18 integration tests: `ApplicationContextIT`, `HealthEndpointIT` `NFR-04`,
   `TestDatabaseTest`), `git status` clean after the commit.
 * No pin of ADR 0001 changed.
+
+## Stage 2 — The complete M1 schema, seeds, Phase 1 entities (2026-10-17)
+
+Restarted from commit `297d13b` after owner decision Q-55 (no data migration); the
+leftovers of the aborted run were not restored — the schema was designed again from chapter
+08 §2.3 amended by 12b §5.4, `docs/plan.md` §4.4 and §8.1, without any legacy column.
+
+### What was built
+
+* **Flyway migrations** `src/main/resources/db/migration/V001…V009` (one per area, README
+  there): `V001` the `set_updated_at()` trigger function; `V002` `staff_user`; `V003`
+  `customer`, `customer_pending_registration` (Q-09, D-88), `customer_user`, `login_token`;
+  `V004` `tracking_state`, `accessory_service`; `V005` `shipment_order`, `order_line`,
+  `order_internal_note`, `tracking_event`; `V006` `lead`; `V007` `email_outbox`,
+  `report_run`; `V008` `feature_flag`, `audit_log`, `audit_log_detail` with the
+  `audit_log_immutable()` trigger; `V009` seeds. 17 tables, every one with `COMMENT ON`;
+  `bigint` identities (legacy ids kept only for the two enumerations); `timestamptz`;
+  `numeric(10,2)` money plus `amount_vat_included`; named CHECKs for every state enumeration
+  and rule (`ck_<table>_<rule>`), unique indexes on `lower(btrim(email))` and
+  `lower(btrim(code))` (`ux_*`), partial unique indexes for one OWNER per customer, one
+  `is_none` service and the idempotency key; indexes for the planned queries (customer
+  status/created, order customer/status/tracking state/created, tracking history, outbox
+  queue and purge, lead status/retention, audit occurred/entity/actor). No `legacy_*`,
+  `*_raw`, `legacy_json` or `data_quality` column, no import table (Q-55). Full list and
+  reasons: **ADR 0020**.
+* **Seeds** (`V009`): the six tracking states (ids 0–5, `NON_GESTITO…CONSEGNATO`, legacy
+  labels re-read in `ls@migration` `TrackingState.java:15-20`, plus the public page's titles
+  and steps of chapter 06 §5.7), the six accessory services (`ServizioAccessorioEnum.java:16-21`,
+  `is_none` only on id 0, identity restarted at 6 for ENH-14), the 25 flag keys of chapter
+  09 §M2 with their ENH ids, all off. No staff user, customer or order anywhere.
+* **Audit immutability** (`V008`, ADR 0020): a `BEFORE UPDATE OR DELETE` trigger on
+  `audit_log` and `audit_log_detail` raises `insufficient_privilege` on every UPDATE and on
+  every DELETE outside a maintenance transaction (`SET LOCAL ls.audit_maintenance = 'on'`,
+  used only by the retention job and the erasure tool). Works with the single application
+  role; the production option of `REVOKE UPDATE, DELETE` plus a maintenance role is
+  documented in the ADR for the `deploy/` stage.
+* **JPA entities and repositories** for the Phase 1 tables only (plain classes, no Lombok):
+  `auth.StaffUser`/`StaffRole`/`StaffUserRepository`, `auth.CustomerUser`/`CustomerUserRole`/
+  `CustomerUserRepository` (holds `customer_id` as a plain column: no `Customer` entity in
+  Phase 1, the `customers` module adds it), `auth.LoginToken`/`LoginTokenPurpose`/
+  `LoginTokenRepository`, `platform.flags.FeatureFlag`/`FeatureFlagRepository`,
+  `platform.audit.AuditLog` (builder, no setters)/`AuditLogDetail`/`AuditActorType` and their
+  repositories, `notifications.EmailOutbox`/`EmailOutboxStatus`/`EmailOutboxRepository`
+  (`findDue`, `findSentBeforeWithBodies`, `countByStatus`). Enums map with
+  `@Enumerated(STRING)` + `@JdbcTypeCode(VARCHAR)`, JSON with `@JdbcTypeCode(JSON) String`,
+  `bytea` with `byte[]`, `timestamptz` with `Instant`; `ddl-auto: validate` passes.
+* **Tests** (all real; failsafe `*IT` on the local database, surefire `*Test`):
+  `schema.MigrationsIT` — all nine migrations apply to a clean schema of their own, a second
+  run applies nothing, `validate` passes, the app schema is current; `@Tag("NFR-02")` the
+  audit trigger refuses UPDATE and DELETE on both tables and allows DELETE only inside a
+  maintenance transaction. `schema.EnumerationSeedIT` `@Tag("ADM-10")` — exactly the six
+  states and six services with ids, names, labels, order, `is_none`, and the identity
+  continuing at 6. `platform.flags.FeatureFlagSeedIT` (untagged on purpose) — the seeded
+  keys equal the flags parsed from the M2 table of `docs/brief/09-features.md`, all off, with
+  the right ENH id. `schema.SchemaConformanceIT` — every M1 table exists, no legacy/raw/
+  data-quality column, every column of `src/test/resources/schema/expected-columns.txt` has
+  the expected type and nullability (and no M1 column is unlisted), every CHECK, unique
+  constraint and unique index of `expected-constraints.txt` exists, the audit triggers
+  exist, every table has a comment. `schema.PhaseOneEntitiesIT` — writes and reads every
+  Phase 1 entity through its repository (rolled back). `schema.NoSeededStaffAccountsTest`
+  `@Tag("ADM-01")` — fails if a migration writes `staff_user`. `schema.
+  NoSeedDataOutsideLocalAndTestProfilesTest` `@Tag("ADM-01")` — the migrations insert only
+  into the three seeded tables, no Spring `data.sql`/`schema.sql`/`import.sql` exists under
+  the main resources, `spring.sql.init` is not enabled in the base, staging or prod
+  configuration. `ApplicationContextIT` now asserts the current version is `009`.
+* **ADRs**: `docs/adr/0020-data-model-conventions.md` and `docs/adr/0025-feature-flags.md`
+  (both Accepted, 2026-10-17), indexed in `docs/adr/README.md`.
+
+### How to run it
+
+```sh
+scripts/local-db.sh start                  # once; reuse if running
+eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp verify                      # 7 unit + 27 integration tests, Spotless check
+./mvnw -B -ntp clean verify                # after adding, renaming or removing a migration
+scripts/local-db.sh psql ls_web_test       # \dt, \d+ customer, select * from feature_flag
+```
+
+Verified here on 2026-10-17: `./mvnw -B -ntp verify` green (BUILD SUCCESS, 34 tests),
+`tools/ci/guard-tracked-files.sh` ok, `git status` clean after the commit.
+
+### Decisions taken
+
+* Everything chapter 08 relaxed "for legacy rows" is strict now (Q-55): `customer.phone`,
+  `registered_at`, `transport_document_code`, `submitted_at` NOT NULL; five-digit CAPs;
+  line dimensions ≥ 1 and quantity ≥ 1; APPROVED orders always carry code, amount and
+  approval time. `amount >= 0` at the column, `> 0` in the approval service (the owner may
+  allow 0 without a migration, 12c §4.2).
+* Enumeration ids are the primary keys (`tracking_state.id smallint`, `accessory_service.id
+  integer` identity seeded 0–5 and restarted at 6): the row *is* the EP-20/EP-19 item, so
+  no `legacy_id`/`legacy_json` is needed to serve API-02 verbatim.
+* `tracking_state.public_title`/`step_label` seeded from chapter 06 §5.7 as chapter 08
+  asks; the Q-04 message-key seam of `docs/plan.md` §8.1 can still override the ASSEGNATO
+  title in the tracking module without a migration.
+* `audit_log_detail` is append-only by the same trigger as `audit_log` (the task asked for
+  INSERT only on both), with DELETE allowed in a maintenance transaction so the erasure tool
+  (NFR-03) and the retention job (Q-18) still work with one database role.
+* Hashes are `varchar(64)` with a length CHECK instead of `char(64)` (same content, no
+  Hibernate `bpchar` validation issue).
+* `feature_flag.requirement_id` added to the chapter 10 §2 columns so the ADMIN screen can
+  show the ENH id without a code table; `email_outbox` and `report_run` columns designed
+  from chapter 10 §2 "E-mail" and ADM-09/12c §3 (no stored report file, ADR 0001).
+* `CustomerUser` holds `customerId` as a plain column: no read-only `Customer` entity in
+  Phase 1 (the task allowed deferring it; the `customers` module owns the entity).
+* pgjdbc returns `smallint` columns as `Integer`: `EnumerationSeedIT` asserts integers.
+* `MigrationsIT` applies the migrations to a schema of its own (`migrations_it`, dropped
+  afterwards) through a programmatic Flyway, because `clean` is disabled on the app's
+  Flyway and the app schema must stay for the other tests.
+* Commit author kept as "Phase 1 agent" with the owner's e-mail, as in stage 1; nothing
+  pushed.
+
+### Open points
+
+* The staff one-time set-password link (ADM-01) needs a token row: stage 6 (auth) adds
+  `V010` (`staff_setup_token`, or a `STAFF_PASSWORD` purpose on a dedicated table) and
+  records it in ADR 0003; `staff_user.password_hash` is already nullable for it.
+* `CHANGE_EMAIL` tokens (CUS-06) have no column for the new address yet; the customers
+  stage decides (a column on `login_token` or a `customer_pending_email` row) with a
+  migration.
+* The retention and erasure code must run `SET LOCAL ls.audit_maintenance = 'on'` in its own
+  transaction (ADR 0020); Phase 3 adds a test that no other code path does.
+* `FeatureFlagSeedIT` reads `docs/brief/09-features.md` from the working directory: the
+  build must run from the repository root (Maven does; CI does).
+* The confidential-figure guard, gitleaks locally, the `/e2e` Dependabot entry and the
+  owner-side production items remain as in stage 1.
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `docs/plan.md` §4.4 and §5 item 4 still name `legacy_key_map`, `import_run`,
+  `import_issue`, `customer.legacy_payload`, `shipment_order.amount_raw`,
+  `order_line.legacy_type_raw` and "the append-only database role": trimmed by the integrator
+  at the end of Phase 1 with the other Q-55 wording (§Status). §Status updated now.
+* `CLAUDE.md` "Commands": add `scripts/local-db.sh psql ls_web_test` and the `clean verify`
+  note for migrations (stage 6/11 fills the section).
+* `deploy/` stage: document the optional `REVOKE UPDATE, DELETE` on the audit tables and the
+  maintenance role in the bootstrap script (ADR 0020).

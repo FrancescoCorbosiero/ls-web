@@ -41,12 +41,10 @@ class ApplicationContextIT extends AbstractPostgresIT {
     void flywayRanAtStartupAndNothingIsPending() throws SQLException {
         MigrationInfoService info = flyway.info();
         assertThat(info.pending()).as("pending migrations after start-up").isEmpty();
-        assertThat(info.current())
-                .as("no migration is applied before stage 2 adds V001")
-                .isNull();
-        // The schema history table is created by the start-up migrate() call even while
-        // db/migration holds no migration (stage 2 adds V001); its row count equals the
-        // applied migrations plus the baseline row, if any.
+        assertThat(info.current()).as("the M1 schema (stage 2) is applied").isNotNull();
+        assertThat(info.current().getVersion().getVersion()).isEqualTo("009");
+        // The history table holds one row per applied migration (versioned ones only: the
+        // schema is created by the test support, never by Flyway).
         try (Connection connection = dataSource.getConnection();
                 Statement statement = connection.createStatement();
                 ResultSet rows = statement.executeQuery("select count(*) from flyway_schema_history")) {
