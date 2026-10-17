@@ -7,7 +7,7 @@ CREATE TABLE shipment_order (
     customer_id                 bigint        NOT NULL REFERENCES customer (id),
     status                      varchar(16)   NOT NULL DEFAULT 'PENDING',
     temp_code                   varchar(64)   NOT NULL,
-    code                        varchar(64),
+    code                        varchar(255),
     transport_document_code     varchar(100)  NOT NULL,
     package_count               integer,
     accessory_service_id        integer REFERENCES accessory_service (id),
@@ -75,7 +75,7 @@ CREATE TRIGGER trg_shipment_order_updated_at
 COMMENT ON TABLE shipment_order IS
     'A shipment request (named to avoid the SQL keyword ORDER). States PENDING, APPROVED, DECLINED (chapter 08 §2.4); sender and recipient are snapshots taken at submission.';
 COMMENT ON COLUMN shipment_order.temp_code IS 'Temporary code given at submission (TEMP- plus random base-32 characters); unique ignoring case.';
-COMMENT ON COLUMN shipment_order.code IS 'The definitive shipment code typed by staff at approval, kept as typed; unique trimmed and ignoring case (Q-06).';
+COMMENT ON COLUMN shipment_order.code IS 'The definitive shipment code typed by staff at approval, kept as typed; unique trimmed and ignoring case (Q-06). varchar(255) per plan D-09 (chapter 08 says 64); the approval form sets the practical maximum.';
 COMMENT ON COLUMN shipment_order.transport_document_code IS 'Transport document (DDT) code, required for every order (Q-24).';
 COMMENT ON COLUMN shipment_order.package_count IS '"Numero Colli", optional count (Q-24).';
 COMMENT ON COLUMN shipment_order.accessory_service_id IS 'Null = no accessory service (the is_none row is never referenced).';

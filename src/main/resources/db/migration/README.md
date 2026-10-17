@@ -11,7 +11,7 @@ feature flags: `docs/adr/0025-feature-flags.md`.
 | `V002__staff_users.sql` | `staff_user` (never seeded, ADM-01) |
 | `V003__customers.sql` | `customer`, `customer_pending_registration`, `customer_user`, `login_token` |
 | `V004__tracking_enumerations.sql` | `tracking_state`, `accessory_service` |
-| `V005__orders.sql` | `shipment_order`, `order_line`, `order_internal_note`, `tracking_event` |
+| `V005__orders.sql` | `shipment_order` (`code varchar(255)`, plan D-09), `order_line`, `order_internal_note`, `tracking_event` |
 | `V006__leads.sql` | `lead` |
 | `V007__notifications_and_reports.sql` | `email_outbox`, `report_run` |
 | `V008__feature_flags_and_audit.sql` | `feature_flag`, `audit_log`, `audit_log_detail`, the immutability trigger |

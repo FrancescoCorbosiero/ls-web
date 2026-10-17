@@ -267,6 +267,13 @@ Verified here on 2026-10-17: `./mvnw -B -ntp verify` green (BUILD SUCCESS, 34 te
   Flyway and the app schema must stay for the other tests.
 * Commit author kept as "Phase 1 agent" with the owner's e-mail, as in stage 1; nothing
   pushed.
+* **Verifier fix (second run, 2026-10-17):** the first attempt left `shipment_order.code` at
+  `varchar(64)` (chapter 08 §2.3) without recording that `docs/plan.md` §7.1 D-09 asks for at
+  least `varchar(255)`. `V005__orders.sql` now declares `code varchar(255)` (D-09's reason —
+  legacy codes up to 255 characters — is moot under Q-55, but the plan's figure costs nothing
+  and the approval form sets the practical maximum); the choice is recorded in ADR 0020
+  ("Code lengths") and in `db/migration/README.md`. `V005` was not merged, so editing it is
+  allowed; the local instance was reset because `ls_web_test` carried the old checksum.
 
 ### Open points
 
