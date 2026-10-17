@@ -124,3 +124,36 @@ Verified here on 2026-10-17: `./mvnw -B -ntp verify` green with the local databa
 * `application.yml`: the `spring.autoconfigure.exclude` of `UserDetailsServiceAutoConfiguration`
   is removed by the auth stage once a `UserDetailsService` bean exists.
 * `BootstrapSecurityConfig` is deleted by the security stage (stage 5) when the real chain lands.
+
+### Re-run after owner decision Q-55 (2026-10-17, later the same day)
+
+The workflow restarted stage 1 after the owner decided Q-55 (no migration of the legacy
+data; `docs/plan.md` §Status, chapter 11). The stage-1 deliverables were re-checked against
+that decision and re-verified; nothing in them concerns the legacy data, so no code changed.
+
+* **Checked against Q-55.** No migration module, importer, MySQL/H2 dependency, legacy column
+  or `MIG-*` test exists in the stage-1 code, build or CI (`pom.xml`, `application*.yml`,
+  `ci.yml`, the guard script, the tests). The ADR 0001 line "the Phase 1 agent confirms the
+  fallback engine (H2 in MySQL mode)" for the importer is moot: no importer is built, no
+  fallback engine is chosen, no `mysql:8.0.35` job is added to CI. The integrator trims the
+  importer wording of ADR 0001, `docs/plan.md` §4/§5/§8 and chapter 10 §6 "Migration" row at
+  the end of Phase 1 (plan §Status).
+* **Working tree cleaned.** An aborted stage-2 run had left untracked files in the tree:
+  `src/main/resources/db/migration/V001…V013` (among them `V011__migration_tool.sql`, which
+  Q-55 forbids), JPA entities under `auth/`, `notifications/`, `platform/audit/`,
+  `platform/flags/`, schema tests and `src/test/resources/schema/*.txt`, plus an uncommitted
+  edit of `ApplicationContextIT`. None of it was committed. The tracked test was restored
+  and the untracked files were moved out of the repository (to the session scratchpad, not
+  deleted); stage 2 starts again from this commit and designs the schema under Q-55 (no
+  legacy columns, no migration-tool tables).
+* **Local database reset.** That run had applied its `V001…V013` to `ls_web_test`;
+  `scripts/local-db.sh reset` rebuilt the instance (the `reset` and `createdb` commands were
+  thereby exercised). Lesson recorded: Maven's resources plugin does not remove deleted files
+  from `target/classes`, so after removing or renaming a migration run `./mvnw clean verify`
+  (a stale `target/classes/db/migration` copy was applied by Flyway on the first attempt and
+  made `ApplicationContextIT` fail); CI always builds from a clean checkout.
+* **Re-verified on 2026-10-17:** `tools/ci/guard-tracked-files.sh` ok (78 tracked files),
+  `./mvnw -B -ntp clean verify` green (Enforcer rules passed, Spotless check ok, 3 unit
+  tests, 18 integration tests: `ApplicationContextIT`, `HealthEndpointIT` `NFR-04`,
+  `TestDatabaseTest`), `git status` clean after the commit.
+* No pin of ADR 0001 changed.
