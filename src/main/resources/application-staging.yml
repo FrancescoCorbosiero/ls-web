@@ -1,4 +1,18 @@
-# Staging: same shape as production (environment-driven), with the e-mail guard added by the
-# notifications stage (the app refuses to start without a mail catcher or an allow-list).
+# Staging: same shape as production (environment-driven). E-mail guard (chapter 10 §3): the
+# SES sink refuses to start without LS_NOTIFICATIONS_ALLOW_LIST; the default sink here is the
+# directory, so nothing leaves the server unless the owner configures the allow-list.
 server:
-  forward-headers-strategy: native
+  forward-headers-strategy: none
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+ls:
+  security:
+    proxy:
+      trust-forwarded-headers: true
+  notifications:
+    sink: ${LS_NOTIFICATIONS_SINK:directory}
+    allow-list: ${LS_NOTIFICATIONS_ALLOW_LIST:}

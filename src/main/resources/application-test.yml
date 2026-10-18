@@ -14,8 +14,20 @@ server:
   servlet:
     session:
       cookie:
+        name: LS_SESSION
         secure: false
 
 logging:
   level:
     it.logisticasanchez: DEBUG
+
+ls:
+  security:
+    ip-hash-key: test-only-ip-hash-key-not-a-secret
+  notifications:
+    sink: memory
+    worker:
+      enabled: false
+    token-encryption-key: dGVzdC1vbmx5LXRva2VuLWtleS1ub3Qtc2VjcmV0LTA=
+  retention:
+    enabled: false

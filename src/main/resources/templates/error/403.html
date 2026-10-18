@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{error/page :: head('Operazione non consentita')}"></head>
+<body>
+<main th:replace="~{error/page :: body('Operazione non consentita', 'Non hai i permessi per questa operazione, oppure la sessione è scaduta: ricarica la pagina e riprova.')}"></main>
+</body>
+</html>

@@ -175,12 +175,13 @@ public class EmailOutbox {
         return updatedAt;
     }
 
-    /** Records a successful delivery and wipes the token ciphertext. */
+    /** Records a successful delivery and wipes the token ciphertext and reference. */
     public void markSent(Instant now, String providerMessageId) {
         this.status = EmailOutboxStatus.SENT;
         this.sentAt = Objects.requireNonNull(now, "now");
         this.providerMessageId = providerMessageId;
         this.tokenCiphertext = null;
+        this.loginTokenId = null;
         this.attempts++;
         this.updatedAt = now;
     }
@@ -193,6 +194,7 @@ public class EmailOutbox {
         if (retryAt == null) {
             this.status = EmailOutboxStatus.FAILED;
             this.tokenCiphertext = null;
+            this.loginTokenId = null;
         } else {
             this.nextAttemptAt = retryAt;
         }

@@ -1,0 +1,7 @@
+# Route × role expectation table (NFR-02, ADR 0002). One line per mapped route of the app:
+# METHOD  PATTERN  anonymous  CUSTOMER  OPERATOR  ADMIN  — expected status, "|" for alternatives.
+# ANY means the mapping accepts every method (tested with GET). Path variables are replaced by
+# "1" and "/**" by "/x". A mapped route missing here, or a line without a mapping, fails the test.
+GET	/actuator/health	200	200	200	200
+GET	/actuator/health/**	404	404	404	404
+ANY	/error	404	404	404	404

@@ -1,0 +1,19 @@
+<!--
+  HTMX under the strict CSP of the private areas (chapter 06 §8.5, ADR 0018). The layout of
+  stage 5 includes `~{fragments/htmx :: meta}` in <head>: the htmx configuration (no indicator
+  styles, no eval, no script tags, same-origin requests only) and the CSRF token that
+  `hx-headers` on <body> sends as X-CSRF-TOKEN (`~{fragments/htmx :: hxHeaders}` gives the value).
+  The htmx script itself is vendored under /js/ (ADR 0001) and loaded with the nonce.
+-->
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <th:block th:fragment="meta">
+    <meta name="htmx-config" th:content="${htmxConfig}">
+    <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}">
+    <meta name="_csrf_header" th:content="${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}">
+  </th:block>
+</head>
+<body>
+  <th:block th:fragment="hxHeaders" th:text="'{&quot;' + ${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'} + '&quot;: &quot;' + ${_csrf != null ? _csrf.token : ''} + '&quot;}'"></th:block>
+</body>
+</html>
