@@ -44,6 +44,9 @@ public class CustomerUser {
     @Column(name = "disabled_at")
     private Instant disabledAt;
 
+    @Column(name = "pending_email", length = 254)
+    private String pendingEmail;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -98,6 +101,15 @@ public class CustomerUser {
 
     public boolean isDisabled() {
         return disabledAt != null;
+    }
+
+    /** The new login e-mail awaiting its {@code CHANGE_EMAIL} link (CUS-06), or null. */
+    public String getPendingEmail() {
+        return pendingEmail;
+    }
+
+    public void setPendingEmail(String pendingEmail) {
+        this.pendingEmail = pendingEmail == null ? null : normaliseEmail(pendingEmail);
     }
 
     public Instant getCreatedAt() {

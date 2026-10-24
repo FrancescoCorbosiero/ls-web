@@ -42,9 +42,9 @@ class ApplicationContextIT extends AbstractPostgresIT {
         MigrationInfoService info = flyway.info();
         assertThat(info.pending()).as("pending migrations after start-up").isEmpty();
         assertThat(info.current())
-                .as("the M1 schema (stage 2) and the auth stage are applied")
+                .as("the M1 schema (stage 2), the auth stage and step B2 are applied")
                 .isNotNull();
-        assertThat(info.current().getVersion().getVersion()).isEqualTo("010");
+        assertThat(info.current().getVersion().getVersion()).isEqualTo("011");
         // The history table holds one row per applied migration (versioned ones only: the
         // schema is created by the test support, never by Flyway).
         try (Connection connection = dataSource.getConnection();

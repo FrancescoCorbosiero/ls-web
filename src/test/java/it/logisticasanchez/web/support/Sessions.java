@@ -19,14 +19,23 @@ public final class Sessions {
         return session(Authorities.ROLE_CUSTOMER, authenticatedAt);
     }
 
+    /** A customer session with a real principal (the customer-area controllers read it). */
+    public static MockHttpSession customer(Object principal, Instant authenticatedAt) {
+        return session(principal, Authorities.ROLE_CUSTOMER, authenticatedAt);
+    }
+
     public static MockHttpSession staff(String role, Instant authenticatedAt) {
         return session("ROLE_" + role, authenticatedAt);
     }
 
     private static MockHttpSession session(String authority, Instant authenticatedAt) {
+        return session("user-1", authority, authenticatedAt);
+    }
+
+    private static MockHttpSession session(Object principal, String authority, Instant authenticatedAt) {
         MockHttpSession session = new MockHttpSession();
         UsernamePasswordAuthenticationToken authentication = UsernamePasswordAuthenticationToken.authenticated(
-                "user-1", null, List.of(new SimpleGrantedAuthority(authority)));
+                principal, null, List.of(new SimpleGrantedAuthority(authority)));
         session.setAttribute(
                 HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
                 new SecurityContextImpl(authentication));

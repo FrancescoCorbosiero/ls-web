@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
  * status. {@code GET /area-clienti/accesso?t=…} only renders the «Accedi» button and never
  * consumes the token (a mail scanner or a link preview cannot burn it); its CSRF-protected
  * {@code POST} consumes it, opens the session and redirects without the token in the URL.
- * {@code /area-clienti/registrazione/?t=…} validates a {@code REGISTER} link and renders the
- * Phase 1 stub (the form and its consuming {@code POST} are the Phase 2 {@code customers}
- * module). {@code /area-clienti/ordini/} is the Phase 1 stub home of the area.
+ * {@code /area-clienti/cambio-email?t=…} is the same two-step page for a {@code CHANGE_EMAIL}
+ * link (CUS-06). The registration page belongs to the {@code customers} module and the home
+ * ({@code /area-clienti/ordini/}) to the {@code orders} module.
  */
 @Controller
 public class CustomerSignInController {
@@ -30,12 +30,17 @@ public class CustomerSignInController {
 
     private final CustomerSignInService signIn;
     private final CustomerSessionService sessions;
+    private final CustomerAccountService accounts;
     private final ClientIpResolver clientIp;
 
     public CustomerSignInController(
-            CustomerSignInService signIn, CustomerSessionService sessions, ClientIpResolver clientIp) {
+            CustomerSignInService signIn,
+            CustomerSessionService sessions,
+            CustomerAccountService accounts,
+            ClientIpResolver clientIp) {
         this.signIn = signIn;
         this.sessions = sessions;
+        this.accounts = accounts;
         this.clientIp = clientIp;
     }
 
@@ -85,23 +90,30 @@ public class CustomerSignInController {
         return "redirect:" + AuthRoutes.CUSTOMER_HOME;
     }
 
-    @GetMapping(AuthRoutes.CUSTOMER_REGISTRATION)
-    public String registrationPage(
+    @GetMapping(AuthRoutes.CUSTOMER_CHANGE_EMAIL)
+    public String changeEmailPage(
             @RequestParam(name = "t", required = false) String token, Model model, HttpServletResponse response) {
         response.setHeader("Referrer-Policy", NO_REFERRER);
-        if (!signIn.isUsableRegistrationToken(token)) {
-            return linkInvalid(model);
-        }
-        model.addAttribute("token", token);
-        return "auth/customer-registration";
+        return accounts.peekEmailChange(token)
+                .map(change -> {
+                    model.addAttribute("token", token);
+                    model.addAttribute("newEmail", change.newEmail());
+                    return "auth/customer-change-email";
+                })
+                .orElseGet(() -> linkInvalid(model));
     }
 
-    @GetMapping(AuthRoutes.CUSTOMER_HOME)
-    public String home(
-            @CurrentSecurityContext(expression = "authentication") Authentication authentication, Model model) {
-        CustomerPrincipal principal = CustomerSessionService.current(authentication);
-        model.addAttribute("email", principal != null ? principal.email() : authentication.getName());
-        return "auth/customer-home";
+    @PostMapping(AuthRoutes.CUSTOMER_CHANGE_EMAIL)
+    public String changeEmail(
+            @RequestParam(name = "t", required = false) String token, Model model, HttpServletResponse response) {
+        response.setHeader("Referrer-Policy", NO_REFERRER);
+        try {
+            CustomerAccountService.EmailChange change = accounts.confirmEmailChange(token);
+            model.addAttribute("newEmail", change.newEmail());
+            return "auth/customer-change-email-done";
+        } catch (LoginTokenService.InvalidTokenException e) {
+            return linkInvalid(model);
+        }
     }
 
     private static String linkInvalid(Model model) {

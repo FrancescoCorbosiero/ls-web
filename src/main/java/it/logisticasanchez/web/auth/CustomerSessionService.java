@@ -2,6 +2,8 @@ package it.logisticasanchez.web.auth;
 
 import it.logisticasanchez.web.platform.security.Authorities;
 import it.logisticasanchez.web.platform.security.SessionLimitsFilter;
+import it.logisticasanchez.web.platform.web.error.ClientErrorException;
+import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Clock;
@@ -67,6 +69,15 @@ public class CustomerSessionService {
             }
         }
         return ended;
+    }
+
+    /** The principal of the current request, or 401 through the error model when it is not a customer session. */
+    public static CustomerPrincipal require(Authentication authentication) {
+        CustomerPrincipal principal = current(authentication);
+        if (principal == null) {
+            throw new ClientErrorException(ErrorCode.UNAUTHENTICATED);
+        }
+        return principal;
     }
 
     /** The principal of the current request, if it is a customer session. */

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<!-- Wizard step 3 (CUS-04; OP-16 fix: a summary with labelled buttons instead of «clicca nuovamente Avanti»). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{orders.wizard.title} + ' · ' + ${business.brandName}">Nuovo ordine · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{layout/private :: customerNav('new', true)}"></th:block>
+    <p class="kicker" th:text="#{orders.wizard.step(3, 3)}">Passo 3 di 3</p>
+    <h1 th:text="#{orders.wizard.reviewHeading}">Controlla i dati inseriti</h1>
+    <p class="lede" th:text="#{orders.wizard.reviewLead}">Se è tutto corretto premi «Conferma l'ordine»: la richiesta passa al nostro centro logistico.</p>
+    <p class="callout" th:each="w : ${warnings}" th:text="#{${w}}">Attenzione</p>
+
+    <h2 th:text="#{orders.detail.lines}">Pallet e colli</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr>
+          <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
+          <th scope="col" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
+          <th scope="col" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
+          <th scope="col" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
+          <th scope="col" th:text="#{orders.line.weightKg}">Peso (kg)</th>
+          <th scope="col" th:text="#{orders.line.quantity}">Quantità</th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="l : ${draft.lines()}">
+            <td th:text="${l.kind.label()}">Epal</td>
+            <td th:text="${l.heightCm}">0</td><td th:text="${l.lengthCm}">0</td><td th:text="${l.widthCm}">0</td>
+            <td th:text="${fmt.number(l.weightKg, 0)}">0</td><td th:text="${l.quantity}">0</td>
+          </tr>
+        </tbody>
+        <tfoot><tr><th scope="row" colspan="4" th:text="#{orders.totals}">Totale</th><td colspan="2" data-review-totals th:text="${fmt.number(draft.totalWeightKg(), 2)} + ' kg · ' + ${fmt.number(draft.totalVolumeM3(), 2)} + ' m³'">0</td></tr></tfoot>
+      </table>
+    </div>
+
+    <div class="grid-2">
+      <section class="card">
+        <h2 th:text="#{orders.wizard.detailsHeading}">Dati della spedizione</h2>
+        <dl>
+          <dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${draft.transportDocumentCode()}">-</dd>
+          <dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${draft.packageCount().isEmpty()} ? '-' : ${draft.packageCount()}">-</dd>
+          <dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${serviceLabel}">-</dd>
+          <dt th:text="#{orders.field.notes}">Note</dt><dd th:text="${draft.notes().isEmpty()} ? '-' : ${draft.notes()}">-</dd>
+        </dl>
+        <p><a href="/area-clienti/ordini/nuovo/" th:text="#{orders.wizard.editLines}">Modifica righe e dati</a></p>
+      </section>
+      <section class="card">
+        <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
+        <dl>
+          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${draft.recipient().name()}">-</dd>
+          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${draft.recipient().addressLine()} + ', ' + ${draft.recipient().postalCode()} + ' ' + ${draft.recipient().city()} + ' (' + ${draft.recipient().province()} + ')'">-</dd>
+          <dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${draft.recipient().phone() ?: '-'}">-</dd>
+          <dt th:text="#{orders.field.email}">Email</dt><dd th:text="${draft.recipient().email() ?: '-'}">-</dd>
+        </dl>
+        <p><a href="/area-clienti/ordini/nuovo/destinatario/" th:text="#{orders.wizard.editRecipient}">Modifica destinatario</a></p>
+      </section>
+    </div>
+
+    <form method="post" th:action="@{/area-clienti/ordini/nuovo/riepilogo/}" class="actions">
+      <button type="submit" class="btn btn-primary btn-lg" th:text="#{orders.wizard.confirm}">Conferma l'ordine</button>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

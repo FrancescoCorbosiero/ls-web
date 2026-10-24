@@ -1,9 +1,11 @@
 package it.logisticasanchez.web.platform.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
 import it.logisticasanchez.web.support.AbstractPostgresIT;
+import it.logisticasanchez.web.support.CustomerTestData;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +23,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpMethod;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -50,8 +55,15 @@ class RouteMatrixIT extends AbstractPostgresIT {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private JdbcTemplate jdbc;
+
+    /** The CUSTOMER role is a real signed-in customer (ACTIVE): the customer-area controllers read its principal. */
+    private CustomerTestData.Ids customer;
+
     @Test
     void everyMappedRouteBehavesAsTheTableSaysForEveryRole() throws Exception {
+        customer = CustomerTestData.customerUser(jdbc, CustomerTestData.uniqueEmail("matrice"), "ACTIVE");
         Map<String, String[]> expected = readTable();
         Set<String> mapped = mappedRoutes();
 
@@ -95,7 +107,10 @@ class RouteMatrixIT extends AbstractPostgresIT {
         HttpMethod httpMethod = "ANY".equals(method) ? HttpMethod.GET : HttpMethod.valueOf(method);
         MockHttpServletRequestBuilder builder =
                 MockMvcRequestBuilders.request(httpMethod, path).accept("text/html, application/json");
-        if (!"anonymous".equals(role)) {
+        if ("CUSTOMER".equals(role)) {
+            builder.with(authentication(UsernamePasswordAuthenticationToken.authenticated(
+                    customer.principal(), null, List.of(new SimpleGrantedAuthority(Authorities.ROLE_CUSTOMER)))));
+        } else if (!"anonymous".equals(role)) {
             builder.with(user("matrix-user").roles(role));
         }
         return builder;

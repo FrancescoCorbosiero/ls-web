@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.util.HtmlUtils;
 
 /**
- * The e-mails the auth module queues (EML-01 sign-in and registration links, EML-S1 staff
- * set-password link): Italian texts from the message bundle ({@code mail.*}), a plain-text and a
+ * The e-mails the auth module queues (EML-01 sign-in, registration and e-mail-change links and
+ * the e-mail-change notice, EML-S1 staff set-password link): Italian texts from the message bundle ({@code mail.*}), a plain-text and a
  * minimal HTML body, the link carrying {@link EmailMessage#TOKEN_PLACEHOLDER} that the outbox
  * worker replaces with the raw token. The branded templates of ADR 0015 arrive with the Phase 2
  * {@code notifications} module.
@@ -39,6 +39,19 @@ public class AuthMails {
     EmailMessage register(String recipient, Duration validity) {
         String link = business.siteUrl() + AuthRoutes.CUSTOMER_REGISTRATION + "?t=" + EmailMessage.TOKEN_PLACEHOLDER;
         return message(KIND_CUSTOMER_LINK, recipient, "mail.register", link, hours(validity));
+    }
+
+    /** EML-01 for an e-mail change (CUS-06): the confirmation link sent to the new address. */
+    EmailMessage changeEmail(String newAddress, Duration validity) {
+        String link = business.siteUrl() + AuthRoutes.CUSTOMER_CHANGE_EMAIL + "?t=" + EmailMessage.TOKEN_PLACEHOLDER;
+        return message(KIND_CUSTOMER_LINK, newAddress, "mail.changeEmail", link, minutes(validity));
+    }
+
+    /** EML-01 notice to the current address that a change to {@code newAddress} was requested. */
+    EmailMessage changeEmailNotice(String currentAddress, String newAddress) {
+        String link = business.siteUrl() + AuthRoutes.CUSTOMER_AREA;
+        return message(KIND_CUSTOMER_LINK, currentAddress, "mail.changeEmailNotice", link, newAddress)
+                .withReplyTo(business.officeEmail());
     }
 
     /** EML-S1: the set-password link of a staff account created by an ADMIN. */

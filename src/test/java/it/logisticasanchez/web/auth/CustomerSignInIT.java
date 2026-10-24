@@ -284,7 +284,7 @@ class CustomerSignInIT extends AbstractPostgresIT {
                     .andExpect(status().isOk())
                     .andExpect(header().string("Cache-Control", "no-store"))
                     .andExpect(header().string("Referrer-Policy", "no-referrer"))
-                    .andExpect(content().string(Matchers.containsString("<h1>Registrazione</h1>")));
+                    .andExpect(content().string(Matchers.containsString("Inserisci i dati dell&#39;azienda")));
         }
         assertThat(tokens.findByTokenHash(Tokens.hash(raw)).orElseThrow().getUsedAt())
                 .isNull();

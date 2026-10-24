@@ -28,9 +28,9 @@ import org.springframework.test.web.servlet.MockMvc;
 /**
  * ADM-01 / CUS-01: {@code dev-seed} exists only under the local and test profiles, creates the
  * two seed staff accounts with random passwords printed once (the ADMIN can log in with the
- * printed password) and two synthetic customers with their login identity, one ACTIVE and one
- * PENDING_APPROVAL, on {@code .example} addresses; a second run rotates the passwords and leaves
- * the customers alone.
+ * printed password), synthetic customers with their login identity in every state on
+ * {@code .example} addresses and one order per order/tracking state for the ACTIVE one; a second
+ * run rotates the passwords and leaves customers and orders alone.
  */
 @Tag("ADM-01")
 @Tag("CUS-01")
@@ -90,6 +90,18 @@ class DevSeedCommandIT extends AbstractPostgresIT {
 
         assertThat(customerStatus(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo("ACTIVE");
         assertThat(customerStatus(DevSeedCommand.PENDING_CUSTOMER_EMAIL)).isEqualTo("PENDING_APPROVAL");
+        assertThat(customerStatus(DevSeedCommand.UNVERIFIED_CUSTOMER_EMAIL)).isEqualTo("PENDING_VERIFICATION");
+        assertThat(customerStatus(DevSeedCommand.DECLINED_CUSTOMER_EMAIL)).isEqualTo("DECLINED");
+        assertThat(jdbc.queryForList(
+                        "select o.status || '/' || o.tracking_state_id from shipment_order o join customer c on c.id = o.customer_id"
+                                + " where c.email = ? order by o.id",
+                        String.class,
+                        DevSeedCommand.ACTIVE_CUSTOMER_EMAIL))
+                .containsExactly("PENDING/0", "APPROVED/1", "APPROVED/5", "DECLINED/0");
+        // first run on a fresh database: the codes are printed; on a reused one: «già presenti»
+        assertThat(out)
+                .containsPattern(
+                        "ordini del cliente ACTIVE: (già presenti|TEMP-[A-Z2-9]{8} \\(PENDING\\), TEST-0002 \\(APPROVED, PRESA\\).*)");
         assertThat(customerUsers(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(customerUsers(DevSeedCommand.PENDING_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL).endsWith(".example");
@@ -108,6 +120,7 @@ class DevSeedCommandIT extends AbstractPostgresIT {
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/gestione/?errore=1"));
         assertThat(customerUsers(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo(1);
+        assertThat(again).contains("ordini del cliente ACTIVE: già presenti");
         assertThat(jdbc.queryForObject(
                         "select count(*) from customer where email in (?, ?)",
                         Integer.class,

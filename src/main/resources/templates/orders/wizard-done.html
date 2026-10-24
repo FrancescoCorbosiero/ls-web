@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- The final screen (CUS-04; chapter 03 §6.7 «orderEmailSentFormText» with the brand corrected, Q-37; terminal, OP-02). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{orders.done.title} + ' · ' + ${business.brandName}">Ordine inviato · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <th:block th:replace="~{layout/private :: customerNav('orders', true)}"></th:block>
+    <h1 th:text="#{orders.done.title}">Ordine inviato</h1>
+    <p class="lede" data-order-done th:text="#{orders.done.text(${business.brandName})}">Il tuo ordine è stato inoltrato correttamente! Ti preghiamo di attendere la conferma via email dal nostro centro logistico. Grazie per aver scelto Logistica Sanchez!</p>
+    <p th:text="#{orders.done.code(${submittedCode})}">Codice provvisorio</p>
+    <p class="actions">
+      <a class="btn btn-primary" th:href="@{/area-clienti/ordini/{c}/(c=${submittedCode})}" th:text="#{orders.done.view}">Vedi l'ordine</a>
+      <a class="btn btn-secondary" href="/area-clienti/ordini/nuovo/" th:text="#{orders.done.another}">Effettua un nuovo ordine</a>
+    </p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

@@ -11,4 +11,6 @@ public interface CustomerUserRepository extends JpaRepository<CustomerUser, Long
     Optional<CustomerUser> findByEmail(String email);
 
     List<CustomerUser> findByCustomerId(Long customerId);
+
+    boolean existsByPendingEmail(String pendingEmail);
 }

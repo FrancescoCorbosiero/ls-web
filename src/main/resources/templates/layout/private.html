@@ -50,6 +50,13 @@
 </header>
 </th:block>
 
+<!-- customerNav(active, canOrder): the three entries of the customer area; «Nuovo ordine» only for an ACTIVE customer (CUS-03). -->
+<nav class="breadcrumbs mb-m" th:fragment="customerNav(active, canOrder)" th:aria-label="#{layout.private.customerNav}">
+  <a href="/area-clienti/ordini/" th:attr="aria-current=${active == 'orders' ? 'page' : null}" th:text="#{customers.nav.orders}">I miei ordini</a>
+  <a href="/area-clienti/ordini/nuovo/" th:if="${canOrder}" th:attr="aria-current=${active == 'new' ? 'page' : null}" th:text="#{customers.nav.newOrder}">Nuovo ordine</a>
+  <a href="/area-clienti/profilo/" th:attr="aria-current=${active == 'profile' ? 'page' : null}" th:text="#{customers.nav.profile}">Il tuo profilo</a>
+</nav>
+
 <footer class="site-footer" th:fragment="siteFooter">
   <div class="footer-bottom">
     <div class="container footer-bottom-row">

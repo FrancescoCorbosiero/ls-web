@@ -101,7 +101,8 @@ public class RouteRegistry {
                 || pattern.equals(SecurityRoutes.BACKOFFICE + "logout")
                 || pattern.equals(SecurityRoutes.BACKOFFICE + "imposta-password")
                 || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "logout")
-                || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "registrazione/");
+                || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "registrazione/")
+                || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "cambio-email");
     }
 
     /** True when the public answer may be cached (PD-02): outside the private areas and not no-store. */

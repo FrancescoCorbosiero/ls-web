@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!-- «I miei ordini» (CUS-05) and the status of a pending or declined customer (CUS-03; legacy «pendingFormText»). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{orders.list.title} + ' · ' + ${business.brandName}">I miei ordini · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
+    <h1 th:text="#{orders.list.title}">I miei ordini</h1>
+
+    <div th:if="${customer.status.name() == 'PENDING_APPROVAL' or customer.status.name() == 'PENDING_VERIFICATION'}" class="callout callout-info" role="status" data-customer-status="pending">
+      <p th:text="#{customers.status.pending.text}">La tua richiesta di registrazione è andata a buon fine, a breve verrà approvata</p>
+      <p class="muted mb-0" th:text="#{customers.status.pending.hint}">Appena l'ufficio approva la registrazione ricevi un'e-mail e puoi inserire il primo ordine.</p>
+    </div>
+    <div th:if="${customer.status.name() == 'DECLINED'}" class="callout" role="status" data-customer-status="declined">
+      <p th:text="#{customers.status.declined.text}">La tua richiesta di registrazione non è stata accettata.</p>
+      <p th:if="${customer.declineReason != null}" th:text="#{customers.status.declined.reason(${customer.declineReason})}">Motivo</p>
+      <p class="mb-0"><a class="btn btn-secondary btn-sm" href="/area-clienti/registrazione/" th:text="#{customers.status.declined.again}">Registrati di nuovo con i dati corretti</a></p>
+    </div>
+
+    <p th:if="${customer.canOrder()}" class="actions"><a class="btn btn-primary" href="/area-clienti/ordini/nuovo/" th:text="#{orders.list.newOrder}">Nuovo ordine</a></p>
+
+    <p class="muted" th:if="${orders.isEmpty()}" th:text="#{orders.list.empty}">Non hai ancora inviato ordini.</p>
+    <div class="table-wrap" th:if="${!orders.isEmpty()}">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col" th:text="#{orders.col.code}">Codice</th>
+            <th scope="col" th:text="#{orders.col.date}">Data</th>
+            <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
+            <th scope="col" th:text="#{orders.col.status}">Stato</th>
+            <th scope="col" th:text="#{orders.col.tracking}">Tracking</th>
+            <th scope="col" th:text="#{orders.col.amount}">Importo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="o : ${orders}" th:attr="data-order=${o.displayCode()}">
+            <td><a th:href="@{/area-clienti/ordini/{c}/(c=${o.displayCode()})}" th:text="${o.displayCode()}">TEMP-…</a></td>
+            <td th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+            <td th:text="${o.recipient.name} + ', ' + ${o.recipient.city}">Destinatario</td>
+            <td><span class="badge" th:text="#{'orders.status.' + ${o.status.name()}}">In attesa</span></td>
+            <td th:text="${o.status.name() == 'APPROVED'} ? ${o.trackingLabel} : '-'">-</td>
+            <td th:text="${o.amount != null} ? ${o.amountText()} : '-'">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!-- Wizard step 2 (CUS-04; chapter 03 §6.6 «Inserisci i dati del destinatario», OP-R7; its own form, OP-01; optional e-mail, OP-14). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{orders.wizard.title} + ' · ' + ${business.brandName}">Nuovo ordine · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <th:block th:replace="~{layout/private :: customerNav('new', true)}"></th:block>
+    <p class="kicker" th:text="#{orders.wizard.step(2, 3)}">Passo 2 di 3</p>
+    <h1 th:text="#{orders.wizard.recipientHeading}">Inserisci i dati del destinatario</h1>
+    <p class="callout" role="alert" th:if="${!errors.isEmpty()}" th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    <form method="post" th:action="@{/area-clienti/ordini/nuovo/destinatario/}" class="form-grid" novalidate>
+      <th:block th:each="f : ${ {'name','addressLine','province','city','postalCode','phone','email'} }">
+        <div class="field" th:classappend="${errors.get(f) != null} ? 'has-error'">
+          <label class="label" th:for="${f}" th:text="${f == 'phone' or f == 'email'} ? #{'orders.field.' + ${f} + 'Optional'} : #{'orders.field.' + ${f}}">Campo</label>
+          <input class="input" th:id="${f}" th:name="${f}" th:type="${f == 'email'} ? 'email' : 'text'" th:value="${values.get(f)}"
+                 th:maxlength="${f == 'postalCode'} ? 5 : (${f == 'phone'} ? 30 : (${f == 'email'} ? 254 : (${f == 'province'} ? 60 : (${f == 'city'} ? 100 : 200))))"
+                 th:inputmode="${f == 'postalCode' or f == 'phone'} ? 'numeric' : null"
+                 th:required="${f != 'phone' and f != 'email'}"
+                 th:attr="aria-invalid=${errors.get(f) != null}">
+          <p class="field-error" th:if="${errors.get(f) != null}" th:text="#{${errors.get(f)}}">Errore</p>
+        </div>
+      </th:block>
+      <div class="actions">
+        <a class="btn btn-secondary" href="/area-clienti/ordini/nuovo/" th:text="#{orders.wizard.back}">Indietro</a>
+        <button type="submit" class="btn btn-primary" th:text="#{orders.wizard.next}">Avanti</button>
+      </div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

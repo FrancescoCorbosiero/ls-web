@@ -10,12 +10,15 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 /**
- * Model attributes every template may use: {@code business} (ADR 0027), {@code layout}, {@code cspNonce} (the
+ * Model attributes every template may use: {@code business} (ADR 0027), {@code layout}, {@code fmt} (Italian
+ * dates and numbers), {@code cspNonce} (the
  * private-area nonce, null on public pages), {@code htmxConfig} (the meta content) and
  * {@code hxHeaders} (the {@code hx-headers} JSON carrying the CSRF token, for {@code <body>}).
  */
 @ControllerAdvice
 public class PlatformModelAttributes {
+
+    private static final Formats FORMATS = new Formats();
 
     private final BusinessProperties business;
     private final Layout layout;
@@ -28,6 +31,11 @@ public class PlatformModelAttributes {
     @ModelAttribute("layout")
     public Layout layout() {
         return layout;
+    }
+
+    @ModelAttribute("fmt")
+    public Formats formats() {
+        return FORMATS;
     }
 
     @ModelAttribute("business")

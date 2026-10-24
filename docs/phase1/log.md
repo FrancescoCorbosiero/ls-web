@@ -1041,3 +1041,195 @@ SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.ac
   have server-side tests; PUB-01/04/06/07, TRK-01 and API-03 keep an E2E part; the generator
   from test tags is still to be written (plan §5 item 11).
 * `CLAUDE.md` Commands: `python3 tools/port-ls-home-pages.py --check` next to the build commands.
+
+## Step B2 — Customers, orders and their e-mails (2026-10-24)
+
+The working tree held an interrupted attempt at this step (V011 `pending_email`, the auth-side
+`CustomerAccountService` and `CustomerEmailChangedListener`, the sign-in controller without
+the Phase 1 stub pages); it was reviewed, kept and finished: the account service gained the
+`REGISTER`-token checks and the login creation the registration needs, the two e-mail-change
+pages and their message keys were written, the stub templates `auth/customer-registration.html`
+and `auth/customer-home.html` were removed with their keys.
+
+A second resumption found the step complete but unverified in the working tree (code, tests,
+ADRs 0005–0009 and this section with placeholders, nothing committed): the build was run
+(green), the packaged jar was smoke-tested, the one gap found (the typed e-mail was checked
+against the link only at confirm) was closed with a field error, and the step was committed.
+
+### What was built
+
+* **V011** `customer_user.pending_email` (CUS-06): the new login e-mail awaiting its
+  `CHANGE_EMAIL` link, normalised by a CHECK, cleared when applied. `expected-columns.txt` and
+  `expected-constraints.txt`, `MigrationsIT` and `ApplicationContextIT` count eleven migrations.
+* **`auth` additions**: `CustomerAccountService` — the customers module's door to the login
+  identities (`findByEmail`, `isEmailInUse`, `isUsableRegistrationToken`,
+  `registrationTokenMatches` (HMAC of the typed e-mail against the `REGISTER` token),
+  `registerVerified` (consumes the token, creates the OWNER login, returns the principal to sign
+  in), `sendSignInLink`, `requestEmailChange` / `peekEmailChange` / `confirmEmailChange`);
+  `CustomerEmailChangedListener` hook; `CustomerSessionService.require()` (401 instead of an
+  NPE for a non-customer principal); `GET/POST /area-clienti/cambio-email` with the templates
+  `auth/customer-change-email.html` and `customer-change-email-done.html`; `AuthMails.changeEmail`
+  and `changeEmailNotice` (EML-01, keys `mail.changeEmail.*`, `mail.changeEmailNotice.*`).
+* **`notifications.MailLayout`** (ADR 0009): the shared e-mail shape — title, paragraphs,
+  label/value tables, one button, signature, footer — rendered as plain text and inline-styled
+  HTML from the same blocks; `customer()` sets Reply-To the office, `office()` Reply-To the
+  customer; subjects «Logistica Sanchez - …».
+* **`platform.validation.ItalianFormats`**: CAP (five digits), phone normalised to E.164
+  (Italian landlines and mobiles, `0039`, international), e-mail normalisation, VAT number, tax
+  code, decimal parsing with comma or point, positive integers, Italian number/euro/date
+  formatting in Europe/Rome; exposed to templates as `fmt` (`platform.web.Formats`).
+  `RuleViolationException` (422 with an Italian detail) for refused business moves.
+* **`tracking.TrackingCatalog`**: the seeded states and accessory services as the other modules
+  read them (no repository crosses a module); `TrackingState.PRESA` / `CONSEGNATO` constants.
+* **`customers` module** (`it.logisticasanchez.web.customers`; ADR 0005): `Customer` entity with
+  the chapter 08 §2.4 transitions (`verifyEmail`, `approve` only when verified, `decline`,
+  `registerAgain`, `changeEmail`), `CustomerStatus`, `CustomerView` DTO, `RegistrationValidator`
+  (trim, lengths, CAP, phone required — Q-36 seam —, VAT/tax code optional — Q-10 seams),
+  `CustomerMails` (EML-02, EML-03 approved/declined, EML-06 new registration), `CustomerService`
+  (`register` from a `REGISTER` link → `PENDING_APPROVAL` + login + sign-in; known e-mail → sign-in
+  link and the same page; `registerAgain` for a DECLINED customer; `approve`, `decline`,
+  `emailVerified`, `emailChanged`, `requestEmailChange`, `pendingApproval`, `find`), the auth
+  hooks `CustomerAuthHooks`, `RegistrationController` (`/area-clienti/registrazione/`: form →
+  summary → confirm; honeypot `website`; rate limit `registration` per IP; DECLINED
+  re-registration from the session), `ProfileController` (`/area-clienti/profilo/` read-only
+  + «Chiedi una modifica» mailto; `POST profilo/email`), `CustomersRouteContributor`;
+  templates `customers/registration.html`, `registration-review.html`, `profile.html`.
+* **`orders` module** (`it.logisticasanchez.web.orders`; ADR 0006, 0007, 0008): `ShipmentOrder`
+  (+ `Party` snapshots), `OrderLine`, `OrderInternalNote`, `TrackingEvent` entities and
+  repositories; `OrderStatus`, `LineKind` («Pallet Generico/Colli» / «Epal»); `OrderTotals`
+  (decimal, per-line half-up); `OrderDraft` (session state with stable line ids and the
+  idempotency key); `OrderValidator` (line: type required, integers ≥ 1 — Q-35 seams —;
+  details: DDT required — Q-24 seam —, package count digits, seeded service, notes; recipient:
+  OP-R7 plus optional phone/e-mail; Q-35 warnings); `OrderMails` (EML-04, EML-05 approved /
+  declined, EML-06 new order, EML-09); `OrderService` (`submit` idempotent with `TEMP-xxxxxxxx`,
+  sender snapshot, EML-04 + EML-06; `listForCustomer`, `findForCustomer` by code or temp code;
+  `approve` with unique code ignoring case and amount > 0 with the Italian comma, PRESA event,
+  EML-05; `decline` + EML-05 quoting the code; `setTrackingState` on approved orders, one event
+  per change, EML-09 only when it becomes CONSEGNATO; `setInternalNote` / `internalNote`;
+  `trackingHistory`; `pendingApproval`); `OrderView` DTO; `CustomerOrdersController`
+  (`/area-clienti/ordini/` with the CUS-03 status callouts, `/area-clienti/ordini/{codice}/`,
+  404 for another customer's code); `OrderWizardController` (`nuovo/`, `nuovo/destinatario/`,
+  `nuovo/riepilogo/`, `nuovo/inviato/`); `OrdersRouteContributor`; templates `orders/list.html`,
+  `detail.html`, `wizard-lines.html`, `wizard-recipient.html`, `wizard-review.html`,
+  `wizard-done.html`.
+* **Shared files touched** (integrator role): `layout/private.html` (+ `customerNav(active,
+  canOrder)` fragment), `PlatformModelAttributes` (+ `fmt`), `messages_it.properties`
+  (`customers.*`, `orders.*`, `auth.customer.changeEmail*`, `mail.changeEmail*`;
+  `auth.customer.registration.*` and `auth.customer.home.*` removed), `route-matrix.tsv` (+17
+  lines; `GET /area-clienti/registrazione/` is 302 for a signed-in non-declined customer),
+  `RouteMatrixIT` (the CUSTOMER role is now a real `CustomerPrincipal` of an inserted ACTIVE
+  customer, so the customer-area controllers run), `CustomerSignInIT` (the registration page's
+  new heading), test support `CustomerTestData` (public; `AuthTestData` delegates) and
+  `Sessions.customer(principal, at)`.
+* **`dev-seed`** now creates customers in every state (`cliente.attivo`, `cliente.in-attesa`,
+  `cliente.da-verificare`, `cliente.rifiutato` on `@cliente.example`) and, for the ACTIVE one,
+  one order per state through the real services: pending (`TEMP-…`), approved `TEST-0002`
+  (PRESA), approved and delivered `TEST-0003` (CONSEGNATO), declined; their e-mails land in the
+  local mail directory. A second run leaves them alone («già presenti»).
+* **Tests** (`./mvnw -B -ntp verify` green on the local PostgreSQL: 174 unit + 357 integration tests, none skipped):
+  `ItalianFormatsTest` (CUS-02/04: CAP, phones, e-mails, VAT, decimals, integers, rendering),
+  `RegistrationValidatorTest` (CUS-02), `OrderTotalsTest` (CUS-04: the §6.3 example 1 236 kg /
+  4,53 m³, per-line rounding, the 0,015 tie, no float artefacts, ids never reused, temp codes),
+  `MailLayoutTest` (EML-02/06 shape); `CustomerRegistrationIT` (CUS-02, EML-01/02/06: link →
+  form → summary → confirm → signed in and pending; all errors at once; e-mail must match the
+  link; known e-mail → sign-in link + same page; honeypot and 429; declined re-registration),
+  `CustomerServiceIT` (CUS-02, ADM-02, EML-03: approve only verified, decline with reason,
+  illegal moves, sign-in verifies once), `CustomerProfileIT` (CUS-06, EML-01: read-only profile,
+  two-step e-mail change, GET never consumes, audit, sessions ended, address in use → nothing),
+  `OrderWizardIT` (CUS-04, CUS-03, EML-04/06: the pages, totals, validation, stored order =
+  input, final wording, idempotency, non-ACTIVE refused), `CustomerOrdersIT` (CUS-05: own orders
+  only, detail by code/temp code, 404 for others, internal note hidden), `OrderBackofficeIT`
+  (ADM-04/06/07, EML-05/09: approve rules, unique code ignoring case, amounts, decline, tracking
+  events and EML-09 only on CONSEGNATO, internal note audited), `DevSeedCommandIT` extended.
+  Packaged jar smoke-tested on `ls_web` after `dev-seed`: sign-in link from `.local/mail` → «I miei
+  ordini» with the four seeded orders and their states, detail `TEST-0003` (Consegnato, 95,00,
+  totals), 404 for a foreign code, profile; the wizard end to end (invalid line → errors, totals
+  900,00 kg / 3,46 m³, missing DDT refused, bad CAP refused, summary, confirm → `TEMP-…`, final
+  wording, a second confirm creates nothing; EML-04 + EML-06 rows); a new address → `REGISTER`
+  mail → form (all errors at once, e-mail mismatch refused) → summary → confirm → signed in as
+  `PENDING_APPROVAL` with the CUS-03 callout and the wizard redirecting to the list; EML-02 +
+  EML-06 rows; a known address gets the same request page.
+
+### How to run it
+
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp verify
+./mvnw -B -ntp -DskipTests package
+java -jar target/ls-web-0.1.0-SNAPSHOT.jar dev-seed --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+# http://localhost:8080/area-clienti/ → type cliente.attivo@cliente.example; the sign-in link is in .local/mail/*.eml
+#   → /area-clienti/ordini/ (list with the four seeded orders), /area-clienti/ordini/nuovo/ (wizard),
+#     /area-clienti/ordini/TEST-0002/ (detail), /area-clienti/profilo/ (profile and e-mail change)
+# a new e-mail (nuovo@cliente.example) → the registration link in .local/mail → /area-clienti/registrazione/?t=…
+# cliente.in-attesa@ / cliente.rifiutato@ → the status page of CUS-03 (the declined one can register again)
+# the back office has no screens yet: CustomerService.approve/decline and OrderService.approve/decline/
+#   setTrackingState/setInternalNote are the services the Phase 2 backoffice module calls
+```
+
+### Routes added (all in `route-matrix.tsv`)
+
+`GET|POST /area-clienti/registrazione/` (public: token or session checked by the controller),
+`GET|POST /area-clienti/cambio-email` (public link page), `GET /area-clienti/profilo/`,
+`POST /area-clienti/profilo/email`, `GET /area-clienti/ordini/`, `GET /area-clienti/ordini/{codice}/`,
+`GET|POST /area-clienti/ordini/nuovo/`, `…/nuovo/destinatario/`, `…/nuovo/riepilogo/`,
+`GET …/nuovo/inviato/` (customer session).
+
+### Decisions taken
+
+* ADR 0005 (registration, state machine, re-registration, e-mail change), ADR 0006 (wizard
+  rules and decimal totals), ADR 0007 (submission, temporary codes, idempotency, approval,
+  decline, internal note), ADR 0008 (tracking events, EML-09), ADR 0009 (e-mail content).
+* **The e-mail is typed again on the registration form and checked against the link**: the
+  `REGISTER` token stores only the HMAC of the address (ADR 0004), so pre-filling is impossible
+  without putting the address in the URL; a mismatch is a field error on the form («L'indirizzo
+  deve essere quello a cui hai ricevuto il link.»), found at the packaged-jar smoke test of this
+  resumed run (the interrupted attempt refused it only at confirm with the link-invalid page).
+* **Registration from the link lands in `PENDING_APPROVAL` and signs the customer in**: the
+  consumed link proves the mailbox exactly like a sign-in link; `PENDING_VERIFICATION` and the
+  `VERIFY_EMAIL` purpose stay for customers created another way. `customer_pending_registration`
+  (V003) is unused in M1: a declined customer re-registers from its session, the data are applied
+  at once.
+* **`tracking_event` and the transitions live in `orders`** (one service, one transaction with
+  the order's state); `tracking` keeps the lookup, the API and the catalogue (plan §4.1 says
+  `tracking` owns the table: proposed change below).
+* **`MailLayout` instead of Thymeleaf e-mail templates**: the same blocks render text and HTML,
+  testable without a template engine; branded templates can replace it later behind the same
+  module calls.
+* **Audit actions** use dots only (`customer.email.changed`, `order.note`): V008's CHECK refuses
+  underscores.
+* **New Italian texts** for the owner's review: the registration hint and lead, the summary
+  pages, the re-registration callout, the profile page, the wizard field labels that were not in
+  the legacy («Tipo Pallet» select, «Email del destinatario (facoltativo)», warnings), the
+  final-screen code sentence, EML-02 and EML-04 (new, Q-07), the EML-03 and EML-05 decline
+  subjects, the customer footer «Per qualsiasi domanda rispondi pure…», the EML-01 e-mail-change
+  mails.
+
+### Open points
+
+* **Back-office screens** (ADM-02…ADM-08) are the Phase 2 `backoffice` module: the services and
+  their rules exist and are tested here; `/gestione/` still shows the stage 4 stub home.
+* **E2E** (Playwright `[CUS-02]`…`[CUS-06]`, axe on the customer pages) comes with the E2E stage;
+  the wizard's live totals without a reload are a JavaScript enhancement for that stage (the
+  server totals are the authority).
+* `RouteMatrixIT` exercises `GET /area-clienti/ordini/{codice}/` with the sample code `1` (404
+  for the matrix customer); the positive path is in `CustomerOrdersIT`.
+* The order detail does not yet show the tracking history timeline (ENH-05); `trackingHistory`
+  is ready.
+* Lead/customer/order retention and the NFR-03 export/erasure tools are later stages.
+* `ls.customers.max-users-per-customer` (Q-11) and `ls.orders.customer-changes` (Q-12) are
+  declared seams with their defaults; no code path reads them yet.
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `docs/plan.md` §4.1: `tracking_event` and the ADM-06 transitions moved to the `orders` row;
+  `TrackingCatalog` added to the `tracking` row; `customers` row: `customer_pending_registration`
+  unused in M1; `platform` row: `ItalianFormats`, `Formats` (`fmt`), `RuleViolationException`;
+  `notifications` row: `MailLayout`.
+* `docs/parity-matrix.md`: CUS-02…CUS-06, ADM-02 (service), ADM-04, ADM-06, ADM-07 (services),
+  EML-01…EML-06, EML-09 now have server-side tests; the E2E parts stay open.
+* `CLAUDE.md` Commands: the `dev-seed` line now mentions the four customers and the four orders.
+* Still open from earlier stages: confidential-figure guard, local gitleaks, `/e2e` Dependabot
+  entry, Q-55 wording trim, ADR 0015 EML-S1 line, `docs/plan.md` §4.1 items of steps 5 and B1.

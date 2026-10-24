@@ -17,6 +17,12 @@ public class TrackingState {
     /** The id of {@code NON_GESTITO}, the state of every order before approval and the «unknown» answer. */
     public static final int NON_GESTITO = 0;
 
+    /** The id of {@code PRESA}, the state an order takes at approval (ADM-04). */
+    public static final short PRESA = 1;
+
+    /** The id of {@code CONSEGNATO}, the only state that e-mails the customer in M1 (EML-09). */
+    public static final short CONSEGNATO = 5;
+
     @Id
     @Column(name = "id", columnDefinition = "smallint")
     private Short id;
