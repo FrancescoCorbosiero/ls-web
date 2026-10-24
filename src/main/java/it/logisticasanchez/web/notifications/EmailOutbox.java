@@ -133,6 +133,13 @@ public class EmailOutbox {
         return tokenCiphertext;
     }
 
+    /** Stamps creation and first attempt with the application clock (set by the service). */
+    void queuedAt(Instant now) {
+        this.createdAt = Objects.requireNonNull(now, "now");
+        this.updatedAt = now;
+        this.nextAttemptAt = now;
+    }
+
     /** Attaches the one-time link this e-mail carries; the raw token only encrypted. */
     public void attachToken(Long loginTokenId, byte[] tokenCiphertext) {
         this.loginTokenId = Objects.requireNonNull(loginTokenId, "loginTokenId");
@@ -175,12 +182,13 @@ public class EmailOutbox {
         return updatedAt;
     }
 
-    /** Records a successful delivery and wipes the token ciphertext. */
+    /** Records a successful delivery and wipes the token ciphertext and reference. */
     public void markSent(Instant now, String providerMessageId) {
         this.status = EmailOutboxStatus.SENT;
         this.sentAt = Objects.requireNonNull(now, "now");
         this.providerMessageId = providerMessageId;
         this.tokenCiphertext = null;
+        this.loginTokenId = null;
         this.attempts++;
         this.updatedAt = now;
     }
@@ -193,6 +201,7 @@ public class EmailOutbox {
         if (retryAt == null) {
             this.status = EmailOutboxStatus.FAILED;
             this.tokenCiphertext = null;
+            this.loginTokenId = null;
         } else {
             this.nextAttemptAt = retryAt;
         }

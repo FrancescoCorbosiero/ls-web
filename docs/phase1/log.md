@@ -300,3 +300,233 @@ Verified here on 2026-10-17: `./mvnw -B -ntp verify` green (BUILD SUCCESS, 34 te
   note for migrations (stage 6/11 fills the section).
 * `deploy/` stage: document the optional `REVOKE UPDATE, DELETE` on the audit tables and the
   maintenance role in the bootstrap script (ADR 0020).
+
+## Stage 3 — platform: settings, security chain, error model, headers, rate limiter, host routing, flags, audit, logging, retention; notifications skeleton (2026-10-23)
+
+Resumed from the uncommitted work of an interrupted attempt (branch `wip/phase-1-stage3`
+holds an older snapshot of it; nothing was taken from that branch): the working tree was
+reviewed file by file against the stage instructions, 24 failing tests were fixed, the parts
+the task asked for and the attempt had not finished were completed, and the five ADRs were
+written. Owner decision Q-55 applies: no `ls.migration.*` / `ls.probes.*` seams exist.
+
+### What was built
+
+* **Typed settings** (`it.logisticasanchez.web.platform.config`, `@ConfigurationProperties`
+  records, `@Validated`, registered by `PlatformPropertiesConfiguration`, which also
+  provides the application `Clock`): `BusinessProperties` (`ls.business.*`: legal and brand
+  name, slogan, VAT number, address, phone, WhatsApp, office e-mail, hours, Instagram, site
+  URL — ADR 0027, defaults from chapter 01), `SecurityProperties` (`ls.security.sessions.*`
+  customer 60 m/12 h, staff 30 m/10 h; `tokens.*` sign-in/verify/change 15 m, registration
+  24 h; `staff.lockout.*` 10 failures / 15 min (PD-10); `staff.totp.enabled=false` (Q-17);
+  `proxy.trust-forwarded-headers`; `hsts.enabled`; `ip-hash-key`), `SiteProperties`
+  (`ls.site.hosts.*`, `ls.site.cache.*` PD-02, `ls.site.form.quantity-integer-only` PD-04),
+  `CompatProperties` (`ls.compat.hosts` Q-30, `cors.allowed-origins` Q-39, `strict-json`
+  PD-09), `CustomersProperties` (`max-users-per-customer=1` Q-11, registration rules Q-10 /
+  Q-36, `approval.requires-verified-email` Q-28), `OrdersProperties` (Q-05, Q-06, Q-12,
+  Q-24, Q-35), `TrackingProperties` (Q-03, Q-38), `BackofficeProperties` (PD-06),
+  `ReportsProperties` (Q-08), `RetentionProperties` (Q-18, PD-16, login tokens 24 h, cron,
+  enabled), `RateLimitProperties` (`ls.ratelimit.<key>.permits/window`), `FlagsProperties`
+  (`cache-seconds`, `override.*`), `NotificationsProperties` (`sink`, `allow-list`,
+  `customer-confirmations.enabled` Q-07, `from-*`, `token-encryption-key`, `directory.path`,
+  `ses.region`, `worker.*`). Each seam carries its `// Q-xx` / `// PD-xx` comment.
+  `RequiredSettingsCheck` (staging/prod) fails the start-up naming the missing variable:
+  `LS_SECURITY_IP_HASH_KEY`, `LS_TOKEN_ENCRYPTION_KEY`, proxy trust; in `prod` also the SES
+  sink and no flag overrides. `SettingsDefaultsIT`, `RequiredSettingsCheckTest`.
+* **Security chain** (`platform.security`, ADR 0002): deny by default with the
+  `RouteRegistry` built from every `SecurityRouteContributor` bean (the one extension point
+  per module); `PlatformRouteContributor` declares the URL-map baseline (static resources,
+  `/actuator/health`, `/error`, the sign-in entries of both areas, `POST /api/form`,
+  `/mono/**`, the two CSRF exemptions, `noStore` for the link page); `Access`
+  PUBLIC/CUSTOMER/STAFF/ADMIN; method security on; CSRF with the session repository; session
+  fixation → new session; `SessionLimitsFilter` (idle per class, absolute invalidation);
+  cookie `__Host-LS_SESSION` (plain `LS_SESSION` in local/test); `PlatformAuthenticationEntryPoint`
+  (302 to the area's sign-in, 401 JSON for HTMX/JSON, 404 on undeclared paths) and
+  `PlatformAccessDeniedHandler` (404 undeclared, 403 CSRF, 403 role);
+  `ForwardedHeadersFilter` + `ClientIpResolver` (last `X-Forwarded-For` hop, one proxy);
+  `HostRoutingFilter` (www → apex 301 keeping path and query; ordini. → `/area-clienti/`;
+  dashboard. → `/gestione/`; apex and app. same app); `SecurityHeadersFilter` (public
+  `_headers` set with `connect-src 'self'`; private nonce CSP, `no-store`; PD-02 caching;
+  HSTS prod only) and `PublicEtagFilter` (ETag + 304 on public HTML/CSS/JS); `IpHasher`
+  (HMAC-SHA-256 for `ip_hash` columns); `CspNonce`. Tests: `RouteMatrixIT` (generated from
+  the handler mappings against `src/test/resources/security/route-matrix.tsv`),
+  `DenyByDefaultIT`, `CsrfIT`, `SessionLimitsIT`, `ForwardedHeadersIT`, `HostRoutingIT`,
+  `PublicHeadersIT` (reads `legacy/ls-home/public/_headers` at test time), `PrivateHeadersIT`,
+  `PublicPagesCookieFreeIT` (real port: no `Set-Cookie` outside the private areas).
+* **Error model** (`platform.web.error`, ADR 0002): `ErrorCode` (status, code, Italian
+  reason; the legacy `ErrorEnum` texts reused), `ApiError` JSON schema
+  `{status, code, reason, detail?, requestId, timestamp}`, `ErrorResponder` (JSON for
+  `/api/**`, `/mono/**`, `/actuator/**`, HTMX, JSON-sending and JSON-accepting requests;
+  HTML `templates/error/{401,403,404,429,error}.html` otherwise), `PlatformExceptionHandler`
+  (400/404/405/409/415/422/429 explicit, 500 generic with the trace in the log),
+  `PlatformErrorController` (`/error`, whitelabel off), `ClientErrorException`. `ErrorModelIT`.
+* **Request id and access log** (`platform.web`): `RequestIdFilter` (MDC `requestId`,
+  `X-Request-Id`, one access line without query string or body); `PlatformModelAttributes`
+  (`business`, `cspNonce`, `htmxConfig`, `hxHeaders`); `HtmxConfig`;
+  `fragments/htmx.html`. Logback ECS JSON in staging/prod
+  (`logging.structured.format.console`). `LoggingWithoutBodiesIT`.
+* **Rate limiter** (`platform.ratelimit`): in-memory token bucket keyed by (key, subject);
+  keys `signin.link.email`, `signin.link.ip`, `staff.login`, `tracking.lookup`,
+  `form.submit`, `registration` registered from `ls.ratelimit.*`; `register()` for module
+  keys; `require()` → 429 with `Retry-After`. `RateLimiterTest`, `RateLimit429IT`.
+* **Feature flags** (`platform.flags`, ADR 0025): `FlagKey` enum of the 25 seeded keys,
+  `FeatureFlags`/`FeatureFlagService` (cache `ls.flags.cache-seconds`, start-up check that
+  every key has a row, `ls.flags.override.<key>` refused in prod, ADMIN-only audited
+  `toggle`, `evictCache`, `all`). `FeatureFlagServiceIT`.
+* **Audit** (`platform.audit`): `AuditEntry` builder and `AuditService.record` (ids and
+  non-personal values in `audit_log`, personal values only in `audit_log_detail`, request
+  context when present). `AuditServiceIT` incl. the append-only trigger.
+* **Domain events** (`platform.events`, ADR 0025): sealed `DomainEvent` (eight records,
+  ids only) and `DomainEvents.publish`. `DomainEventsIT` (each event published once).
+* **Retention** (`platform.retention`, `platform.scheduling`): `RetentionJob` interface,
+  `RetentionRunner` (cron `ls.retention.cron`, off when `ls.retention.enabled=false`),
+  `SchedulingConfiguration`; first job `auth.ExpiredLoginTokenRetentionJob` (24 h after
+  expiry, skipping rows an undelivered e-mail references). `ExpiredLoginTokenRetentionJobIT`.
+* **Notifications skeleton** (`notifications`, ADR 0015 Proposed): `EmailMessage`,
+  `NotificationService.enqueue` / `OutboxNotificationService` (row in the caller's
+  transaction, stamped with the application clock, raw token only as AES-256-GCM ciphertext
+  through `TokenCipher`), `OutboxWorker` (batch, per-row transaction, exponential backoff,
+  dead after `max-attempts`, token substituted and wiped), `OutboxWorkerScheduler`,
+  `RecipientPolicy` (staging guard), `MailSender` port with `SesV2MailSender` (AWS SDK v2
+  BOM 2.56.0, `sesv2` + `url-connection-client`, Netty/Apache clients excluded),
+  `DirectoryMailSender` (`.local/mail/*.eml`), `InMemoryMailSender`; `MailSenderConfiguration`
+  picks one by `ls.notifications.sink`. `EmailOutbox` gained `queuedAt`; `LoginTokenRepository`
+  skips referenced rows. `OutboxWorkerIT`, `RecipientAllowListIT`, `StagingMailGuardIT`.
+* **Configuration files:** `application.yml` (whitelabel off, compression, cookie, forwarded
+  strategy none, `ls.*` env mappings), `application-local.yml` (plain cookie, directory sink,
+  dev keys that are not secrets), `application-test.yml` (memory sink, worker and retention
+  off, small Hikari pool), `application-staging.yml` (ECS logs, proxy trust, directory sink
+  unless `LS_NOTIFICATIONS_SINK=ses` with `LS_NOTIFICATIONS_ALLOW_LIST`),
+  `application-prod.yml` (ECS logs, proxy trust, HSTS, SES).
+* **ADRs** 0002, 0018, 0019, 0027 (Accepted) and 0015 (Proposed), indexed.
+* **Test support:** `FixtureController`/`FixtureRoutes`/`TestFixtures` (routes that exist
+  only in tests, declared like a module's), `Sessions`, `MutableClock`.
+
+### How to run it
+
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp clean verify                # 14 unit + 95 integration tests, Spotless check
+./mvnw spotless:apply                      # format
+./mvnw spring-boot:run -Dspring-boot.run.profiles=local \
+  -Dspring-boot.run.arguments="--DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls"
+curl -i http://localhost:8080/actuator/health          # 200, {"status":"UP"}
+curl -i http://localhost:8080/non-esiste               # 404 HTML page, X-Request-Id, CSP
+curl -i -H 'Accept: application/json' http://localhost:8080/api/x   # 404 JSON schema
+ls .local/mail                                         # .eml files of the directory sink
+```
+
+Verified here on 2026-10-24: `./mvnw -B -ntp clean verify` green (BUILD SUCCESS, 14 unit
+and 95 integration tests), `tools/ci/guard-tracked-files.sh` ok, the packaged jar started
+with the `local` profile answers health, the 404 page/JSON, the private-area redirect and
+the `www` 301 without setting a cookie on public paths, `git status` clean after the commit.
+
+### Extension points for the modules
+
+* **Routes:** one `@Component implements SecurityRouteContributor` per module, e.g.
+  `routes.permitGet("/tracking/").customer(HttpMethod.GET, "/area-clienti/ordini/**")
+  .staff(HttpMethod.POST, "/gestione/ordini/{id}/approva").admin(HttpMethod.POST,
+  "/gestione/impostazioni/flag")`; a route not declared answers 404. Add the line(s) to
+  `src/test/resources/security/route-matrix.tsv` (`METHOD PATTERN anon CUSTOMER OPERATOR
+  ADMIN`, `|` for alternatives) or `RouteMatrixIT` fails. CSRF exemptions only for
+  `POST /api/form` and `/mono/**`; `noStore(...)` for a public path that must not be cached.
+* **Errors:** throw `new ClientErrorException(ErrorCode.X, detail?)`; add an `ErrorCode`
+  (4xx, Italian reason) when none fits; never catch-and-500.
+* **Rate limits:** `rateLimiter.require(RateLimitKeys.TRACKING_LOOKUP,
+  clientIpResolver.resolve(request))`; a module key: `rateLimiter.register("orders.create",
+  new Limit(…))` at start-up (or a new `ls.ratelimit.*` entry proposed to the integrator).
+* **Audit:** `auditService.record(AuditEntry.of(STAFF, staffId, "order.approve")
+  .entity("shipment_order", id, code).change(before, after).personal(beforePd, afterPd))` in
+  the business transaction.
+* **Flags:** inject `FeatureFlags` and read `isEnabled(FlagKey.X)` at the single entry point
+  of the feature; tests set `ls.flags.override.[key]=true`.
+* **Events:** `domainEvents.publish(new DomainEvent.OrderApproved(orderId, staffId))` in the
+  owning service's transaction; no subscriber in M1/M2.
+* **E-mail:** build the `EmailMessage` (kind `EML-0x`, both bodies, Reply-To; `{{token}}`
+  placeholder and `withTokenLink(loginTokenId, rawToken)` for links) and call
+  `notificationService.enqueue(message)` inside the business transaction.
+* **Retention:** a `@Component implements RetentionJob` per rule; the runner collects it.
+* **Settings:** inject the record (`OrdersProperties`, …); never read `ls.*` from the
+  `Environment`.
+* **Templates:** private pages include `~{fragments/htmx :: meta}` in `<head>`, set
+  `<body th:attr="hx-headers=${hxHeaders}">` and give inline scripts
+  `th:attr="nonce=${cspNonce}"`; `${business}` is available everywhere.
+
+### Decisions taken
+
+* **Outbox statuses stay `QUEUED` / `SENT` / `FAILED`** (stage 2 schema) instead of the five
+  states named in the stage text (NEW/SENDING/SENT/FAILED/DEAD): one worker instance with one
+  transaction per row needs no `SENDING` lock, a retry is a `QUEUED` row with `attempts > 0`,
+  and `FAILED` is the dead state; recorded in ADR 0015 with the upgrade path. No migration
+  was edited.
+* **Token-key variable is `LS_TOKEN_ENCRYPTION_KEY`** (as the stage text names it), bound to
+  `ls.notifications.token-encryption-key`; the IP-hash key is `LS_SECURITY_IP_HASH_KEY`.
+* **`ls.notifications.sink`** has three values — `ses`, `directory`, `memory`; the local
+  "mail catcher" is the directory sink (`.eml` files), so no SMTP dependency is added now;
+  an SMTP catcher adapter is a Phase 2 option if staging runs one (ADR 0015).
+* **An undeclared path answers 404 even when the CSRF filter refused it first** (a `POST`
+  without token to a path that does not exist): the route does not exist, nothing is
+  revealed.
+* **A request that sent JSON gets JSON back** in the error model, also without an `Accept`
+  header (API clients and HTMX rarely send one).
+* **JSON error bodies carry `Content-Type: application/json` without a charset parameter**
+  (JSON is UTF-8 by definition).
+* **The outbox row is stamped with the application `Clock`** (`EmailOutbox.queuedAt`), so
+  tests drive the worker with `MutableClock` and no row's `next_attempt_at` depends on the
+  wall clock.
+* **Public pages set no cookie:** two causes found by a smoke run of the packaged jar (MockMvc
+  cannot show the container's session cookie): the `hxHeaders` model attribute read Spring
+  Security's deferred CSRF token on every handler, actuator included, which creates the
+  session that stores it — now computed only inside the private areas; and the default saved
+  request (`HttpSessionRequestCache`) created a session on every refused anonymous request
+  whose `Accept` was not exactly `application/json` (curl's `*/*`, a browser's 404) — the
+  chain now uses `NullRequestCache` (after sign-in the user lands on the area's home). Hence
+  the real-port test `PublicPagesCookieFreeIT` over several paths and `Accept` headers.
+* **Error-page fragments are named `pageHead` / `pageBody`**: a fragment named `body`
+  collides with the `<body>` element in Thymeleaf's fragment selector (the cause of the
+  interrupted attempt's template failures).
+* **Hikari pool of 3 in the test profile:** the cached test contexts share one PostgreSQL
+  with `max_connections = 100`; the default 10 per context exhausted it.
+* **`StagingMailGuardIT` starts the real servlet app on port 0** with the staging profile and
+  command-line arguments standing for the environment variables; the SES client is never
+  built in a test (the allow-list path is proven on `RecipientPolicy` alone).
+* **New Italian texts** (owner review at the next gate): the CSRF, 405, 415 and 429 reasons
+  and the five error-page titles/leads (ADR 0002).
+* HSTS is sent only in `prod` (`ls.security.hsts.enabled`), where TLS terminates at Caddy;
+  `includeSubDomains` waits for the deploy stage.
+* The stage-1 bootstrap `BootstrapSecurityConfig` was replaced by `SecurityConfig`.
+
+### Open points
+
+* The `auth` stage (6) adds the login handlers to the chain (staff form login on
+  `POST /gestione/login`, customer one-time-token `POST /area-clienti/accesso`), stamps
+  `SessionLimitsFilter.AUTHENTICATED_AT` at login, registers the `UserDetailsService` and
+  removes the `UserDetailsServiceAutoConfiguration` exclusion; the per-account lock-out
+  (PD-10) lives there with `staff.login` as the per-IP limit.
+* `/gestione/` and `/area-clienti/` are declared public (sign-in entries) but have no handler
+  yet: they answer 404 until stage 6; the matrix table gains their lines then.
+* `ls.notifications.sink=catcher` (SMTP) is not implemented; `directory` is the local
+  catcher. The retention job for outbox bodies (Q-18) and the `report_run`/audit jobs come
+  with their modules on the `RetentionRunner`.
+* `includeSubDomains` on HSTS, `X-Robots-Tag: noindex` on staging and the `REVOKE` option on
+  the audit tables belong to the deploy stage (ADR 0022).
+* The record-style accessors of `BusinessProperties` are read by Thymeleaf through SpEL
+  (`${business.brandName}`): works on Spring Framework 7 (asserted by `ErrorModelIT`).
+* `RouteMatrixIT` and `PublicHeadersIT` read files from the working directory
+  (`src/test/resources/security/route-matrix.tsv`, `legacy/ls-home/public/_headers`): the
+  build runs from the repository root with the legacy checkout present (CI needs the
+  `ls-home` checkout or the `PublicHeadersIT` fixture copy of `_headers` — the integrator
+  decides at stage 11; a copy of the six header lines under `src/test/resources/` is the
+  simplest).
+* Still from stages 1–2: confidential-figure guard, gitleaks locally, `/e2e` Dependabot
+  entry, Q-55 wording to trim in `docs/plan.md`, owner-side production items.
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `deploy/.env.example` (stage 10): `DATABASE_URL`, `DATABASE_USER`, `DATABASE_PASSWORD`,
+  `SERVER_PORT`, `LS_SECURITY_IP_HASH_KEY`, `LS_TOKEN_ENCRYPTION_KEY`, `LS_NOTIFICATIONS_SINK`,
+  `LS_NOTIFICATIONS_ALLOW_LIST`, `LS_NOTIFICATIONS_FROM_ADDRESS`, `AWS_REGION`,
+  `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `LS_BUSINESS_*` overrides.
+* `CLAUDE.md` "Commands": the `clean verify` note and `scripts/local-db.sh env` (stage 11).
+* `docs/brief/11-open-questions.md`: nothing new; the stage applies the recorded defaults.
+* Message bundles (stage 5): the error-page titles and leads can move from the templates to
+  `messages.properties` keys `error.<status>.title` / `.lead` once the bundle exists.

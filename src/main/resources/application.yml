@@ -49,17 +49,30 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
+  # Forwarded headers are handled by the platform's ForwardedHeadersFilter (one trusted hop,
+  # ls.security.proxy.trust-forwarded-headers), never by the container.
+  forward-headers-strategy: none
   error:
+    whitelabel:
+      enabled: false
     include-message: never
     include-binding-errors: never
     include-stacktrace: never
     include-exception: false
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: text/html,text/css,text/plain,text/javascript,application/javascript,application/json,application/xml,image/svg+xml
   servlet:
     session:
       cookie:
+        # __Host- prefix: Secure, Path=/, no Domain (chapter 10 §2). The local and test
+        # profiles use a plain name because browsers refuse __Host- cookies over http://.
+        name: __Host-LS_SESSION
         http-only: true
         secure: true
         same-site: lax
+        path: /
 
 # Observability (NFR-04): /actuator/health is the only management endpoint, without details.
 # Every other endpoint is disabled (access none) and not exposed.
@@ -89,3 +102,11 @@ logging:
   level:
     root: INFO
     it.logisticasanchez: INFO
+
+# Application settings (platform module, ADR 0027 and plan §8): every ls.* key has a typed
+# default in it.logisticasanchez.web.platform.config; profiles and the environment override.
+ls:
+  security:
+    ip-hash-key: ${LS_SECURITY_IP_HASH_KEY:}
+  notifications:
+    token-encryption-key: ${LS_TOKEN_ENCRYPTION_KEY:}

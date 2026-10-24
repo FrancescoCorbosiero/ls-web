@@ -1,3 +1,17 @@
 # Production: everything comes from the environment (DATABASE_*, SERVER_PORT, LS_*).
 server:
-  forward-headers-strategy: native
+  forward-headers-strategy: none
+
+logging:
+  structured:
+    format:
+      console: ecs
+
+ls:
+  security:
+    proxy:
+      trust-forwarded-headers: true
+    hsts:
+      enabled: true
+  notifications:
+    sink: ses

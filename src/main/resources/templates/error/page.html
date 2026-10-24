@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!--
+  Error page fragment shared by every status (ADR 0002; restyled with the layout in stage 5).
+  No inline script or style: the public CSP of PUB-05 applies to these pages too.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="pageHead(title)">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title th:text="${title} + ' · ' + ${business.brandName}">Errore · Logistica Sanchez</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<main id="main" th:fragment="pageBody(title, lead)">
+  <section class="container">
+    <p class="eyebrow" th:text="${status}">404</p>
+    <h1 th:text="${title}">Pagina non trovata</h1>
+    <p th:text="${lead}">La pagina che cerchi non esiste o è stata spostata.</p>
+    <p th:if="${detail != null}" th:text="${detail}"></p>
+    <p><a class="btn" href="/">Torna alla home</a></p>
+    <p class="muted">
+      Se il problema continua, scrivici a
+      <a th:href="'mailto:' + ${business.officeEmail}" th:text="${business.officeEmail}">ufficio</a>
+      o chiamaci al <a th:href="'tel:' + ${business.phoneDigits()}" th:text="${business.phone}">telefono</a>.
+      <span th:if="${requestId != null}">Codice richiesta: <code th:text="${requestId}"></code></span>
+    </p>
+  </section>
+</main>
+</body>
+</html>

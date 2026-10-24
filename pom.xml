@@ -25,7 +25,21 @@
     <!-- Plugins not managed by the Spring Boot parent (pinned, see ADR 0001). -->
     <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
     <palantir-java-format.version>2.102.0</palantir-java-format.version>
+    <!-- AWS SDK v2 BOM (ADR 0001): SESv2 only in M1, used by the notifications outbox worker. -->
+    <awssdk.version>2.56.0</awssdk.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${awssdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <!-- Web, templates, validation -->
@@ -69,6 +83,27 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
+    </dependency>
+
+    <!-- E-mail delivery: SESv2 (staging/prod only; the HTTP client is the JDK one, the
+         default Netty and Apache clients are excluded to keep the footprint small) -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sesv2</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>netty-nio-client</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>software.amazon.awssdk</groupId>
+          <artifactId>apache-client</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>url-connection-client</artifactId>
     </dependency>
 
     <!-- Observability: only /actuator/health is exposed (application.yml) -->

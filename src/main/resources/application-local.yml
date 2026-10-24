@@ -12,8 +12,22 @@ server:
   servlet:
     session:
       cookie:
+        # Plain name without Secure: __Host- cookies are refused over http://localhost.
+        name: LS_SESSION
         secure: false
 
 logging:
   level:
     it.logisticasanchez: DEBUG
+
+ls:
+  security:
+    # Development-only values (not secrets): HMAC key for IP hashes and the AES key of the
+    # outbox token cipher, so queued rows survive a restart. Staging and production take them
+    # from the environment and refuse to start without them.
+    ip-hash-key: ${LS_SECURITY_IP_HASH_KEY:local-dev-ip-hash-key-not-a-secret}
+  notifications:
+    sink: ${LS_NOTIFICATIONS_SINK:directory}
+    directory:
+      path: ${LS_NOTIFICATIONS_DIRECTORY_PATH:.local/mail}
+    token-encryption-key: ${LS_TOKEN_ENCRYPTION_KEY:bG9jYWwtZGV2LXRva2VuLWtleS1ub3Qtc2VjcmV0LTA=}
