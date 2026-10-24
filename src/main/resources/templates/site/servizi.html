@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Servizi di spedizione pallet e logistica | Logistica Sanchez</title>
+<meta name="description" content="Spedizione pallet espresso in 24–72h, groupage e collettame, carichi completi, magazzino e cross-docking a Seregno (MB). Servizi accessori su richiesta.">
+<link rel="canonical" th:href="|${business.siteUrl}/servizi/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Servizi di spedizione pallet e logistica | Logistica Sanchez">
+<meta property="og:description" content="Spedizione pallet espresso in 24–72h, groupage e collettame, carichi completi, magazzino e cross-docking a Seregno (MB). Servizi accessori su richiesta.">
+<meta property="og:url" th:content="|${business.siteUrl}/servizi/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/servizi.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Servizi di spedizione pallet e logistica | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"CollectionPage","@id":[(${layout.json(business.siteUrl + '/servizi/#webpage')})],"url":[(${layout.json(business.siteUrl + '/servizi/')})],"name":"Servizi di spedizione pallet e logistica | Logistica Sanchez","description":"Spedizione pallet espresso in 24–72h, groupage e collettame, carichi completi, magazzino e cross-docking a Seregno (MB). Servizi accessori su richiesta.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/servizi.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/servizi/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/servizi/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Servizi","item":[(${layout.json(business.siteUrl + '/servizi/')})]}]},{"@type":"ItemList","@id":[(${layout.json(business.siteUrl + '/servizi/#list')})],"itemListElement":[{"@type":"ListItem","position":1,"url":[(${layout.json(business.siteUrl + '/servizi/spedizione-pallet/')})],"name":"Spedizione pallet espresso"},{"@type":"ListItem","position":2,"url":[(${layout.json(business.siteUrl + '/servizi/groupage/')})],"name":"Groupage e collettame"},{"@type":"ListItem","position":3,"url":[(${layout.json(business.siteUrl + '/servizi/carico-completo/')})],"name":"Carico completo"},{"@type":"ListItem","position":4,"url":[(${layout.json(business.siteUrl + '/servizi/magazzino/')})],"name":"Magazzino e cross-docking"}]}]}</script>
+</head>
+<body data-page="servizi">
+<th:block th:replace="~{layout/public :: siteHeader('servizi')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Servizi</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Servizi</p>
+          <h1>Un servizio per ogni spedizione, dal pallet al camion</h1>
+          <p class="lede">Spedizioni di pallet in tutta Italia, groupage, carichi completi e magazzino nel nostro hub di Seregno. Se non sai quale scegliere, ti consigliamo noi: basta un messaggio.</p>
+          <div class="page-hero-actions">
+            <a class="btn btn-accent btn-lg" href="/preventivo/">Richiedi un preventivo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+            <a class="btn btn-outline-light btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20un%20consiglio%20su%20quale%20servizio%20scegliere%20per%20una%20spedizione.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Chiedi un consiglio</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside" aria-labelledby="chooser-title">
+          <h2 id="chooser-title">Quale servizio fa per te?</h2>
+          <div class="chooser">
+            <a href="/servizi/groupage/"><span><strong>Pochi colli o 1–2 pallet</strong><small>Vuoi spendere il giusto</small></span><span class="go">Groupage<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></a>
+            <a href="/servizi/spedizione-pallet/"><span><strong>Da 1 a qualche pallet</strong><small>Con tempi rapidi e tracking</small></span><span class="go">Pallet espresso<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></a>
+            <a href="/servizi/carico-completo/"><span><strong>Un camion pieno o quasi</strong><small>Oppure merce molto delicata</small></span><span class="go">Carico completo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></a>
+            <a href="/servizi/magazzino/"><span><strong>Merce da stoccare o smistare</strong><small>Prima di ripartire</small></span><span class="go">Magazzino<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="I nostri servizi">
+    <div class="container">
+      <div class="service-block" id="spedizione-pallet" data-reveal>
+        <div>
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></div>
+          <p class="kicker">Il servizio che ci dà il nome</p>
+          <h2>Spedizione pallet espresso</h2>
+          <p class="lede">Uno o più pallet ritirati alla tua sede e consegnati in tutte le regioni italiane in 24–72 ore. Ogni spedizione ha il suo codice di tracking e si chiude con la prova di consegna.</p>
+          <a class="btn btn-primary" href="/servizi/spedizione-pallet/">Scopri spedizione pallet espresso<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+        </div>
+        <div class="panel panel-alt">
+          <h3>Cosa include</h3>
+          <ul class="ticks"><li>Pallet EUR, industriali, mezzi e quarti di pallet</li><li>Ritiro alla tua sede, anche con ritiri programmati</li><li>Tempi indicativi: 24 ore al Nord, 48 al Centro, 72 al Sud e nelle isole</li><li>Tracking e prova di consegna digitale</li></ul>
+          <h3>Ideale per</h3>
+          <p class="mb-0">Aziende che spediscono con regolarità, e-commerce con ordini voluminosi, produttori che consegnano a rivenditori in tutta Italia.</p>
+        </div>
+      </div>
+      <div class="service-block" id="groupage" data-reveal>
+        <div>
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-boxes"/></svg></div>
+          <p class="kicker">Per spedizioni piccole e frequenti</p>
+          <h2>Groupage e collettame</h2>
+          <p class="lede">Quando la merce non basta a riempire un mezzo, la facciamo viaggiare insieme ad altre spedizioni dirette nella stessa zona. I costi del viaggio si dividono: tu paghi solo lo spazio che occupi.</p>
+          <a class="btn btn-primary" href="/servizi/groupage/">Scopri groupage e collettame<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+        </div>
+        <div class="panel panel-alt">
+          <h3>Cosa include</h3>
+          <ul class="ticks"><li>Tariffa calcolata su peso e ingombro</li><li>Consolidamento nel nostro hub di Seregno</li><li>Adatto a colli, mezzi pallet e pochi pallet</li><li>Stessa cura e stesso tracking di ogni spedizione</li></ul>
+          <h3>Ideale per</h3>
+          <p class="mb-0">Chi spedisce pochi colli alla volta, campionature, ricambi, riassortimenti ai punti vendita.</p>
+        </div>
+      </div>
+      <div class="service-block" id="carico-completo" data-reveal>
+        <div>
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></div>
+          <p class="kicker">Quando i volumi crescono</p>
+          <h2>Carico completo</h2>
+          <p class="lede">Un mezzo dedicato solo alla tua merce: caricato alla tua sede e scaricato a destinazione, senza passaggi intermedi. Meno movimentazioni, tempi più prevedibili, orari concordati.</p>
+          <a class="btn btn-primary" href="/servizi/carico-completo/">Scopri carico completo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+        </div>
+        <div class="panel panel-alt">
+          <h3>Cosa include</h3>
+          <ul class="ticks"><li>Viaggio diretto, senza trasbordi</li><li>Mezzo scelto in base a volume e peso del carico</li><li>Orari di carico e scarico concordati</li><li>Ideale per merce delicata o di valore</li></ul>
+          <h3>Ideale per</h3>
+          <p class="mb-0">Produttori e distributori con volumi importanti, merci voluminose o delicate, consegne urgenti di molti pallet.</p>
+        </div>
+      </div>
+      <div class="service-block" id="magazzino" data-reveal>
+        <div>
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></div>
+          <p class="kicker">Il tuo punto d'appoggio in Brianza</p>
+          <h2>Magazzino e cross-docking</h2>
+          <p class="lede">Il nostro hub di Seregno può diventare un pezzo della tua logistica: riceviamo la merce, la stocchiamo per il tempo che serve e la rispediamo quando e dove ti occorre.</p>
+          <a class="btn btn-primary" href="/servizi/magazzino/">Scopri magazzino e cross-docking<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+        </div>
+        <div class="panel panel-alt">
+          <h3>Cosa include</h3>
+          <ul class="ticks"><li>Stoccaggio di breve e medio periodo</li><li>Cross-docking: la merce arriva e riparte senza fermarsi</li><li>Consolidamento di più spedizioni in un unico invio</li><li>A pochi minuti da SS36 e Milano–Meda</li></ul>
+          <h3>Ideale per</h3>
+          <p class="mb-0">Aziende senza spazio proprio, picchi stagionali, merce in arrivo da fornitori diversi da riunire e ridistribuire.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="accessori" aria-labelledby="accessori-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Servizi accessori</p>
+        <h2 id="accessori-title">Le opzioni che fanno la differenza alla consegna</h2>
+        <p class="lede">Si aggiungono a qualsiasi spedizione, su richiesta. Indicali nel preventivo: il costo è chiaro fin da subito.</p>
+      </div>
+      <div class="features features-3" data-stagger>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-down-to-line"/></svg></span>
+          <h3>Sponda idraulica</h3>
+          <p>Il pallet viene calato a terra con la pedana del mezzo: indispensabile se a destinazione non ci sono muletto o banchina di carico.</p>
+        </div><div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calendar-clock"/></svg></span>
+          <h3>Consegna su appuntamento</h3>
+          <p>Concordiamo con il destinatario giorno e fascia oraria: utile per cantieri, negozi, magazzini con orari ristretti e privati.</p>
+        </div><div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone-call"/></svg></span>
+          <h3>Preavviso al destinatario</h3>
+          <p>Avvisiamo il destinatario prima dell'arrivo, così trova qualcuno pronto a ricevere la merce.</p>
+        </div><div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-repeat"/></svg></span>
+          <h3>Ritiri programmati</h3>
+          <p>Per chi spedisce spesso: passiamo a ritirare nei giorni fissi che preferisci, senza doverlo prenotare ogni volta.</p>
+        </div><div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-file-check"/></svg></span>
+          <h3>Prova di consegna digitale</h3>
+          <p>A consegna avvenuta ricevi la POD firmata dal destinatario, da archiviare o girare al tuo cliente.</p>
+        </div><div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-shield-check"/></svg></span>
+          <h3>Copertura assicurativa integrativa</h3>
+          <p>Per merci di valore puoi richiedere una copertura che va oltre i limiti di responsabilità previsti per legge.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="confronto-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">A colpo d'occhio</p>
+        <h2 id="confronto-title">Pallet espresso, groupage o carico completo?</h2>
+        <p class="lede">Un confronto rapido per orientarti. Per i casi intermedi decidiamo insieme, in base a quantità, tempi e budget.</p>
+      </div>
+      <div class="table-wrap" data-reveal>
+        <table class="table">
+          <caption class="visually-hidden">Confronto tra i servizi di spedizione</caption>
+          <thead><tr><th scope="col"></th><th scope="col">Pallet espresso</th><th scope="col">Groupage</th><th scope="col">Carico completo</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">Quantità tipica</th><td>Da 1 a qualche pallet</td><td>Colli, mezzi pallet, pochi pallet</td><td>Un mezzo pieno o quasi</td></tr>
+            <tr><th scope="row">Come si calcola il prezzo</th><td>Per pallet, in base a formato e peso</td><td>Su peso e ingombro effettivi</td><td>Per viaggio</td></tr>
+            <tr><th scope="row">Tempi</th><td>24–72 ore in base alla destinazione</td><td>Variabili in base alla tratta</td><td>I più rapidi: viaggio diretto</td></tr>
+            <tr><th scope="row">Passaggi intermedi</th><td>Possibili, tramite hub</td><td>Sì, consolidamento in hub</td><td>Nessuno</td></tr>
+            <tr><th scope="row">Tracking e POD</th><td>Sì</td><td>Sì</td><td>Sì</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Vuoi capire meglio? Leggi la guida <a href="/blog/groupage-o-carico-completo/">groupage o carico completo: come scegliere</a>.</p>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

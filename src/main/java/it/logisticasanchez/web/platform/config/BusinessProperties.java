@@ -66,6 +66,11 @@ public record BusinessProperties(
             @DefaultValue("https://www.instagram.com/sanchez_logistica_mb")
             String instagram) {}
 
+    /** The phone number with non-breaking spaces, as the static site prints it ({@code +39&nbsp;329…}). */
+    public String phoneDisplay() {
+        return phone.replace(' ', '\u00a0');
+    }
+
     /** The phone number in {@code tel:} form: digits with the leading plus. */
     public String phoneDigits() {
         return "+" + phone.replaceAll("[^0-9]", "");

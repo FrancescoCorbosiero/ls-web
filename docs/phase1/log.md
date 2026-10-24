@@ -867,3 +867,177 @@ immutable, PNG one week, `security.txt` as `text/plain`.
 * `docs/plan.md` §4.1 `platform` row: `config.js` moved from `site` to `platform` (generated here);
   `site` keeps `security.txt`, `robots.txt`, `sitemap.xml`, the redirect table and `/grazie/`.
 * `messages_it.properties`: modules add their `<module>.*` keys; the file is the only locale.
+
+## Step B1 — Public site, tracking and compatibility API (2026-10-24)
+
+### What was built
+
+* **`site` module — the 25 pages of the static site** (`it.logisticasanchez.web.site`, PUB-01):
+  `tools/port-ls-home-pages.py` turns every `legacy/ls-home/public/**/index.html` into
+  `templates/site/<key>.html` (and `404.html` into `templates/error/404.html`): the four partial
+  blocks become the stage-5 fragment calls (`htmlHead`, `siteHeader(<data-page>)`, `cta`,
+  `siteFooter`), the rest of the page — title, description, canonical, Open Graph, JSON-LD,
+  `<body data-page>`, `<main>` — is verbatim. Business data go through `${business}` (canonical,
+  `og:url`, `og:image` and every JSON-LD URL from `business.siteUrl`; `tel:`, `wa.me`, `mailto:`,
+  visible phone/e-mail/VAT/Instagram, the contact page's meta description); the home hero's
+  «Effettua un ordine» → «Area clienti» `/area-clienti/`. JSON-LD blocks render with text
+  inlining and the new `Layout.json()` helper (Thymeleaf's JavaScript inlining writes `\/`).
+  `--check` reports drift from a fresh port; the templates are committed, so the build never
+  needs the checkout. `SitePages` is the inventory (path, key, template, indexable):
+  `SitePageMappings` registers `GET <path>` for every page programmatically, `SiteRouteContributor`
+  declares them, `SitePageController` renders the template (and sends `X-Robots-Tag` on
+  `/grazie/`).
+* **Redirects** (PUB-04, ADR 0013): `SiteRedirectFilter` after host routing — the ten
+  `_redirects` rules (the `/mono/*` proxy line excluded), `/index.html` → `/`, every page's URL
+  without the trailing slash and its `index.html` form, 301 keeping the query string. Host rules
+  stay in the platform's `HostRoutingFilter`.
+* **Generated files** (PUB-03): `SiteMetaController` — `sitemap.xml` (24 indexable pages, home
+  first then alphabetical, priorities 1.0/0.3/0.8/0.6, `lastmod` = the inventory's content date,
+  byte-equal to the legacy file modulo whitespace), `robots.txt` (legacy text, configured site
+  URL), `/.well-known/security.txt` and `/security.txt` (`Contact` = `ls.business.office-email`,
+  `Expires` = first day of the month eleven months ahead, renewed by the app). The copied static
+  `robots.txt` and `security.txt` are removed. `SecurityHeadersFilter` now sends
+  `X-Robots-Tag: noindex, nofollow` on `/area-clienti/`, `/gestione/`, `/api/`, `/mono/`.
+* **404 page** (PUB-09): the legacy `404.html` is the app's `error/404.html` (through the error
+  model, status 404 for every unknown URL and for `/404.html` itself), with `htmlHead(false)` and
+  `siteHeader('404')`; `/grazie/` is `noindex` (meta + header) and out of the sitemap.
+* **`POST /api/form`** (PUB-06, PUB-07, PUB-11, EML-08; ADR 0014): `FormController` runs the
+  `form.mjs` pipeline — JSON mode on `Accept: application/json` (`{"ok":true}` /
+  `{"ok":false,"error":…}`), native mode otherwise (303 → `/grazie/`, or the «Invio non riuscito»
+  page `site/form-error.html` with the same status), 413 over 20,000 characters, honeypot
+  `bot-field` → fake success, 400 `unknown_form`, 422 `invalid:<field>` in the legacy check
+  order, 502 `send_failed`. New in the monolith: `Origin`/`Referer` check against the site's
+  origins or the request's own origin (403 `forbidden`), rate limit `form.submit` per client IP
+  (429 `too_many_requests` + `Retry-After`). `FormValidator` ports the field table of chapter
+  06 §5.5–5.6 with the deliberate fix: over-long values and CAPs that are not exactly five
+  digits are refused (422) instead of truncated; decimal comma in `numero` kept (PD-04 seam
+  `ls.site.form.quantity-integer-only`). `LeadService` writes the `lead` row (`LeadRepository`,
+  plain SQL: typed columns, `extras`, `payload` jsonb, `ip_hash`, `user_agent`, `retain_until`
+  from `ls.retention.leads-months`) and queues the EML-08 e-mail (`FormMail` = `compose()` of
+  `form.mjs`: subject, text, HTML with the Italian-mobile WhatsApp rule, Europe/Rome footer,
+  Reply-To = customer, recipient = office e-mail) in one transaction, then publishes
+  `DomainEvent.LeadStored`.
+* **CAP dataset** (PUB-08): `site.zones.DeliveryZones` — prefixes, regions, zones, minor islands,
+  Venice lagoon and `lookup()` as `eta.js`; `DeliveryZonesTest` parses `static/js/eta.js` and
+  fails on any drift. Legends and tables stay verbatim HTML in M1.
+* **`tracking` module — compatibility API** (`it.logisticasanchez.web.tracking`; ADR 0010, 0011):
+  `TrackingState` and `AccessoryService` entities over the V004/V009 tables; `ShipmentCode`
+  (whitespace removed, case-folded by default — Q-03 seam `ls.tracking.match.case-insensitive`);
+  `TrackingLookupService` (one SQL statement over `shipment_order` joined with `tracking_state`,
+  approved orders only → temporary codes of pending orders and declined orders answer nothing,
+  Q-38; result = label + `tracking_updated_at`); `CompatApiController`: `POST
+  /mono/api/order/trace/state` → `200 {"status": <label>}` (+ `updatedAt` when known), `200
+  {"status":"Non gestito"}` for anything unmatched, 400 (platform JSON schema) for a missing,
+  blank or non-string `codice`, rate limit `tracking.lookup` per IP (429), unknown JSON fields
+  ignored (PD-09 seam `ls.compat.strict-json`); `GET /mono/api/enumeration/statoTracking` and
+  `/servizioAccessorio` byte-equal to chapter 02 §9. `CompatCorsFilter` on the three kept paths
+  only: exact origins of `ls.compat.cors.allowed-origins`, `GET, POST, OPTIONS`, `Content-Type`,
+  max-age 3600, no credentials, 204 on an allowed preflight, no CORS header for any other origin.
+  `MonoGoneController` on `/mono/**`: 410 JSON (`detail` = «Servizio non più disponibile: usa
+  https://logisticasanchez.com/area-clienti/») for every retired path and method, the Italian
+  page `compat/gone.html` (status 410, noindex, «Link non più valido» → «Vai all'area clienti»)
+  for `GET /mono/email-confirm`, `/mono/report`, `/mono/download-report`,
+  `/mono/request-success.html`, `/mono/mono/*.html` on every host, and
+  `/mono/img/logistica-sanchez-logo.jpg` served as `image/png` from `img/brand/logo-square.png`.
+* **`/tracking/`** is the ported page (site module) with the ls-home widget over the local
+  endpoint of `config.js` (TRK-01 server side; the E2E over the six states is the E2E stage).
+* **Shared files touched**: `BusinessProperties.phoneDisplay()` (phone with non-breaking spaces,
+  as the pages print it), `Layout.json()`, `SecurityHeadersFilter` (`X-Robots-Tag`),
+  `layout/public.html` (JSON-LD via `layout.json()`), `messages_it.properties` (`site.form.error.*`,
+  `compat.gone.*`), `route-matrix.tsv` (+34 lines), `CsrfIT` (the exempt endpoints now have
+  handlers: 400 instead of 404), `LayoutIT` (+1 test: PUB-02 on `/contatti/`).
+* **Tests** (122 unit + 333 integration, `./mvnw -B -ntp verify` green on the local PostgreSQL):
+  `SitePagesTest`, `DeliveryZonesTest` (PUB-08: the §5.3 cases + `eta.js` parity),
+  `FormValidatorTest` (PUB-06/07: 47 cases — field rules, check order, over-long refusals,
+  decimal comma seam), `FormMailTest` (EML-08: the chapter 06 plain-text sample verbatim,
+  contact e-mail, escaping, WhatsApp rule, subject length), `ShipmentCodeTest` (TRK-02);
+  `SitePagesIT` (PUB-01/03/05/09, TRK-01: every page 200 with its legacy title, description,
+  canonical, one `<h1>`, `data-page`, active menu, JSON-LD ids, no inline script/style, and —
+  when the checkout is present — `<title>`, description, canonical, `<h1>` and the whole `<main>`
+  equal to the legacy file modulo the ADR 0012 allow-list; sitemap, robots, security.txt,
+  `X-Robots-Tag`, the 404 page, the tracking widget), `SiteRedirectsIT` (PUB-04, table-driven
+  over the filter's table plus the chapter 06 rules), `FormEndpointIT` (PUB-06/07/11, EML-08:
+  JSON and native mode, lead + outbox rows and their columns, honeypot, the §5.6 server cases,
+  the HTML error page, 413, Origin/Referer refusals, 429 per IP), `CompatApiIT` (API-01/02/03,
+  ADM-10, TRK-02/03/04: FX-01…FX-14 on both hosts with synthetic orders written by SQL, CORS
+  preflights, 33 retired mappings × 2 hosts writing nothing, the old-link page, the logo).
+  Packaged jar smoke-tested (home, `/zone?cap=` 301, sitemap 24 URLs, robots, security.txt,
+  `/404.html` 404, enumerations, trace, preflight 204, 410 JSON, old link 410 page, logo PNG,
+  form 200/303/413/422).
+
+### How to run it
+
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp verify
+python3 tools/port-ls-home-pages.py --check      # templates still equal a fresh port of legacy/ls-home
+./mvnw -B -ntp -DskipTests package
+SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+# http://localhost:8080/  /zone?cap=20831 (301)  /sitemap.xml  /robots.txt  /.well-known/security.txt  /404.html
+# curl -H 'Content-Type: application/json' -d '{"codice":"LS-2024-0118"}' http://localhost:8080/mono/api/order/trace/state
+# curl http://localhost:8080/mono/api/enumeration/statoTracking ; curl -i http://localhost:8080/mono/email-confirm?email=x
+# curl -i -X POST http://localhost:8080/api/form -H 'Origin: http://localhost:8080' -H 'Accept: application/json' \
+#   --data 'form-name=contatti&nome=Giulia+Bianchi&email=giulia@cliente.example&messaggio=Buongiorno%2C+vorrei+informazioni.&privacy=accettata'
+# the office e-mail lands in .local/mail/*.eml once the outbox worker runs (local profile)
+```
+
+### Decisions taken
+
+* ADR 0010 (compatibility tracking API), ADR 0011 (retired endpoints and old links), ADR 0012
+  (public-site port and the PUB-01 allow-list), ADR 0013 (redirects), ADR 0014 (`/api/form`).
+* **Pages are verbatim templates, not data-driven**: the simplest way to PUB-01; the zone and
+  blog families stay five and four files. Owner copy changes (Q-31) are edits to the templates;
+  from then on the port script is run with `--check` only on untouched pages, or retired.
+* **JSON-LD through `layout.json()` with text inlining** instead of `th:inline="javascript"`,
+  which escapes every `/` and would make the graph differ from the static site; the helper
+  escapes `"`, `\`, control characters and `<`.
+* **Handler mappings registered programmatically** from `SitePages` (`RequestMappingHandlerMapping
+  .registerMapping`) rather than repeating 25 paths in an annotation; the route × role matrix test
+  sees them like any mapping.
+* **The form endpoint keeps the `form.mjs` answer shapes** (`{ok, error}` / HTML page) also for
+  the two new refusals (403 Origin, 429 rate limit), so `forms.js` and `quote.js` keep reading
+  `{ok:false}`; the platform error schema is for `/mono/**` and HTMX.
+* **A request without `Origin` and `Referer` is refused**: the endpoint has no CSRF token;
+  every current browser sends `Origin` on POST, and `strict-origin-when-cross-origin` sends the
+  same-origin `Referer`.
+* **`TrackingLookupService` reads `shipment_order` by SQL inside the `tracking` module**: the
+  `orders` module does not exist yet; the lookup is one method to move behind an `orders` service
+  if plan §4.1 prefers it.
+* **Retired `/mono/**` paths carry no CORS headers**; CORS only on the three kept paths.
+* **`GET` on a kept POST path falls into the 410 catch-all** (not 405); no legacy client does that.
+* **`tracking_state.id` is mapped as `Short`** (`smallint`): Hibernate's schema validation refuses
+  `Integer` on an `int2` column.
+* **New Italian texts** for the owner's review: `compat.gone.*` («Link non più valido», lead,
+  «Vai all'area clienti»), the 410 `detail` sentence, the form refusal «La richiesta non arriva
+  dal nostro sito: torna al modulo e riprova.».
+
+### Open points
+
+* **E2E** (Playwright, `[PUB-01]`, `[PUB-04]` anchors, `[PUB-06]` wizard with JS on and off,
+  `[TRK-01]` six states, `[API-03]` old link) and Lighthouse/axe (PUB-10) are the E2E stage; the
+  429/5xx handling of `tracking.js` (PD-01) is decided there.
+* **Lead retention job** (anonymisation after `retain_until`, Q-18) is not written yet: the
+  `site` module registers it with the platform scheduler in the retention stage.
+* Address and opening hours inside page bodies stay literal (header, footer, JSON-LD read the
+  configuration); the WhatsApp prefilled texts stay in the pages (ADR 0027).
+* The `/tracking/?code=` and `/zone/?cap=` results are client-side only (as on the static site);
+  server-side rendering without JavaScript is optional per chapter 06 §5.3/§5.7.
+* `multipart/form-data` posts to `/api/form` rely on the servlet's multipart parsing (no form on
+  the site uses it); the body-length re-check after reading is not reproduced (the container's
+  limit applies).
+* `ls.compat.hosts` (Q-30) is declared but unused: the old-link page is served on every host.
+* `/mono/api/order/trace/state` with a missing `Content-Type` answers 415 from Spring (the
+  legacy clients send JSON); a `GET` on a kept POST path answers 410.
+* Q-29 crawl list (redirects of the live site) still to be appended as data when it exists.
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `docs/plan.md` §4.1: `tracking` row — the `/tracking/` page is rendered by `site` (verbatim
+  page); `tracking` owns the API, the enumerations and the lookup. `site` row — `config.js` is
+  the platform's (stage 5), `security.txt`/`robots.txt`/`sitemap.xml`/redirects/`/grazie/`/404
+  are here now.
+* `docs/parity-matrix.md`: PUB-01…09, PUB-11, TRK-02…04, API-01…03, ADM-10, EML-08 (form e-mail)
+  have server-side tests; PUB-01/04/06/07, TRK-01 and API-03 keep an E2E part; the generator
+  from test tags is still to be written (plan §5 item 11).
+* `CLAUDE.md` Commands: `python3 tools/port-ls-home-pages.py --check` next to the build commands.

@@ -53,14 +53,21 @@ class CsrfIT extends AbstractPostgresIT {
 
     @Test
     void theSessionFreePublicEndpointsAreExemptAndNothingElseIs() throws Exception {
-        // No handler exists yet for /api/form and /mono/** (Phase 2): the point is that the CSRF
-        // filter lets the request through (404 from the router, never 403).
-        mvc.perform(post("/api/form").contentType(MediaType.APPLICATION_JSON).content("{}"))
-                .andExpect(status().isNotFound());
+        // The CSRF filter lets the request through to the handlers: /api/form answers its own 400
+        // «unknown form» (the Origin header satisfies its Origin/Referer check, ADR 0014) and the
+        // tracking lookup its 400 for an empty code — never the 403 of a missing token.
+        mvc.perform(post("/api/form")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON)
+                        .header("Origin", "http://localhost")
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("unknown_form"));
         mvc.perform(post("/mono/api/order/trace/state")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("bad_request"));
         // A public POST route that is not on the exemptable list still needs the token.
         mvc.perform(post("/fixture/form").param("email", "a@ls.example")).andExpect(status().isForbidden());
         mvc.perform(post("/fixture/form").param("email", "a@ls.example").with(csrf()))

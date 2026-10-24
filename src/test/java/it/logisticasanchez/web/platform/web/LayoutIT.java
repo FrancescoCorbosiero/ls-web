@@ -84,6 +84,29 @@ class LayoutIT extends AbstractPostgresIT {
     }
 
     @Test
+    void thePublicPagesRenderTheConfiguredBusinessDataInTheirBodyToo() throws Exception {
+        // PUB-02 on a real page (site module): the contact page's hero, cards, meta description and
+        // JSON-LD read the same configuration as the fragments; the defaults never appear.
+        String html = mvc.perform(get("/contatti/"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(html)
+                .contains("href=\"tel:+390212345678\"")
+                .contains("+39\u00a002\u00a01234\u00a05678")
+                .contains("href=\"mailto:ufficio@logistica.example\"")
+                .contains("https://wa.me/390212345678?text=")
+                .contains("<link rel=\"canonical\" href=\"https://sito.example/contatti/\">")
+                .contains("\"@id\":\"https://sito.example/contatti/#webpage\"")
+                .contains("telefono +39 02 1234 5678, email ufficio@logistica.example")
+                .doesNotContain(DEFAULT_PHONE_DIGITS)
+                .doesNotContain("logisticasanchezmb@gmail.com")
+                .doesNotContain("https://logisticasanchez.com")
+                .doesNotContain("wa.me/393292396962");
+    }
+
+    @Test
     void configJsIsGeneratedFromTheConfigurationWithTheSameOriginEndpoints() throws Exception {
         String js = mvc.perform(get("/js/config.js"))
                 .andExpect(status().isOk())

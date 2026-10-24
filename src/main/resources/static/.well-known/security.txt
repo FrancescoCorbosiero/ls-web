@@ -1,5 +1,0 @@
-# https://securitytxt.org — RFC 9116. Renew "Expires" before it lapses (keep it < 1 year out).
-Contact: mailto:logisticasanchezmb@gmail.com
-Expires: 2027-10-01T00:00:00.000Z
-Preferred-Languages: it, en
-Canonical: https://logisticasanchez.com/.well-known/security.txt

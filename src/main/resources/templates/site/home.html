@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Spedizione pallet in Italia in 24–72h | Logistica Sanchez</title>
+<meta name="description" content="Il pallet espresso dalla Brianza: spedizioni di pallet in tutta Italia in 24–72 ore, groupage, carichi completi e magazzino a Seregno (MB). Preventivo gratuito.">
+<link rel="canonical" th:href="|${business.siteUrl}/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Logistica Sanchez – Il pallet espresso, in tutta Italia in 24–72h">
+<meta property="og:description" content="Spedizioni di pallet dalla Brianza a tutta Italia: pallet espresso, groupage, carichi completi e magazzino. Tracking e preventivo gratuito.">
+<meta property="og:url" th:content="|${business.siteUrl}/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/og-default.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Logistica Sanchez, il pallet espresso">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/#webpage')})],"url":[(${layout.json(business.siteUrl + '/')})],"name":"Spedizione pallet in Italia in 24–72h | Logistica Sanchez","description":"Il pallet espresso dalla Brianza: spedizioni di pallet in tutta Italia in 24–72 ore, groupage, carichi completi e magazzino a Seregno (MB).","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/og-default.png')})]}}]}</script>
+</head>
+<body data-page="home">
+<th:block th:replace="~{layout/public :: siteHeader('home')}"></th:block>
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="container hero-grid">
+      <div class="hero-copy">
+        <p class="hero-kicker"><span class="dot-live" aria-hidden="true"></span><span>Hub di Seregno (MB)<span class="hide-mobile"> · Ritiri in Lombardia, consegne in tutta Italia</span></span></p>
+        <h1 class="hero-title" id="hero-title">
+          <span class="hero-title-main">Il pallet <span class="hl">espresso<svg class="hl-route" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M6 25 C 76 6, 136 6, 192 22 S 300 39, 364 23 S 492 4, 594 15"/></svg></span>.</span>
+          <span class="hero-title-sub">Spedizioni di pallet in tutta Italia in 24–72 ore.</span>
+        </h1>
+        <p class="hero-lede">Specializzati nella distribuzione di merce su tutto il territorio nazionale, con una rete capillare di partner professionisti. Consegne garantite da 24 a 72 ore, con tracking in tempo reale.</p>
+        <div class="hero-actions">
+          <a class="btn btn-accent btn-lg" href="/preventivo/">Richiedi un preventivo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          <a class="btn btn-outline-light btn-lg" href="/area-clienti/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-box"/></svg>Area clienti</a>
+        </div>
+        <ul class="hero-trust" role="list">
+          <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-circle-check"/></svg>Copertura nazionale</li>
+          <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-circle-check"/></svg>Partner certificati</li>
+          <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-circle-check"/></svg>Tracking in tempo reale</li>
+        </ul>
+      </div>
+      <div class="hero-media">
+        <div class="hero-photo">
+          <picture>
+            <source type="image/avif" srcset="/img/photos/hero-trucks-520.avif 520w, /img/photos/hero-trucks-800.avif 800w, /img/photos/hero-trucks-1200.avif 1200w" sizes="(min-width: 1280px) 530px, (min-width: 1024px) 42vw, (min-width: 600px) 560px, calc(100vw - 32px)">
+            <source type="image/webp" srcset="/img/photos/hero-trucks-520.webp 520w, /img/photos/hero-trucks-800.webp 800w, /img/photos/hero-trucks-1200.webp 1200w" sizes="(min-width: 1280px) 530px, (min-width: 1024px) 42vw, (min-width: 600px) 560px, calc(100vw - 32px)">
+            <img src="/img/photos/hero-trucks-800.jpg" srcset="/img/photos/hero-trucks-520.jpg 520w, /img/photos/hero-trucks-800.jpg 800w, /img/photos/hero-trucks-1200.jpg 1200w" sizes="(min-width: 1280px) 530px, (min-width: 1024px) 42vw, (min-width: 600px) 560px, calc(100vw - 32px)" width="1200" height="1020" alt="Camion in viaggio su una strada extraurbana al tramonto" fetchpriority="high" decoding="async">
+          </picture>
+        </div>
+        <div class="hero-badge">
+          <span class="hero-badge-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-timer"/></svg></span>
+          <span><strong>24–72h</strong><small>consegna in tutta Italia</small></span>
+        </div>
+        <div class="hero-badge hero-badge-alt">
+          <span><strong>100%</strong><small>Italia coperta</small></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="quick" data-tabs id="strumenti">
+        <div class="quick-tabs" role="tablist" aria-label="Strumenti rapidi">
+          <button class="quick-tab" type="button" role="tab" id="qt-track" aria-controls="qp-track" aria-selected="true"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg><span class="tab-long">Traccia spedizione</span><span class="tab-short">Traccia</span></button>
+          <button class="quick-tab" type="button" role="tab" id="qt-eta" aria-controls="qp-eta" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-timer"/></svg><span class="tab-long">Tempi di consegna</span><span class="tab-short">Tempi</span></button>
+          <button class="quick-tab" type="button" role="tab" id="qt-quote" aria-controls="qp-quote" aria-selected="false" tabindex="-1"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calculator"/></svg><span class="tab-long">Preventivo veloce</span><span class="tab-short">Preventivo</span></button>
+        </div>
+        <div class="quick-panel" role="tabpanel" id="qp-track" aria-labelledby="qt-track">
+          <p class="quick-panel-title">Traccia la spedizione</p>
+          <form action="/tracking/" method="get">
+            <label class="label" for="q-code">Codice di spedizione</label>
+            <div class="input-group">
+              <input class="input input-code" id="q-code" name="code" type="text" placeholder="Codice di riferimento" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+              <button class="btn btn-primary" type="submit">Traccia<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></button>
+            </div>
+            <p class="hint">Lo trovi sul documento di trasporto (DDT) o nel messaggio di conferma del ritiro.</p>
+          </form>
+        </div>
+        <div class="quick-panel" role="tabpanel" id="qp-eta" aria-labelledby="qt-eta">
+          <p class="quick-panel-title">Tempi di consegna</p>
+          <form data-eta-form action="/zone/" method="get">
+            <label class="label" for="q-cap">CAP di destinazione</label>
+            <div class="input-group">
+              <input class="input" id="q-cap" name="cap" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Es. 40121" autocomplete="postal-code" required>
+              <button class="btn btn-primary" type="submit">Verifica</button>
+            </div>
+            <p class="hint eta-result" data-eta-result aria-live="polite"></p>
+            <p class="hint">Tempi indicativi in giorni lavorativi, a partire dal ritiro.</p>
+          </form>
+        </div>
+        <div class="quick-panel" role="tabpanel" id="qp-quote" aria-labelledby="qt-quote">
+          <p class="quick-panel-title">Preventivo veloce</p>
+          <form class="quick-grid" action="/preventivo/" method="get">
+            <div class="field">
+              <label for="q-from">CAP di ritiro</label>
+              <input class="input" id="q-from" name="da" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Es. 20831" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="q-to">CAP di consegna</label>
+              <input class="input" id="q-to" name="a" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Es. 40121" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="q-qty">N. di pallet</label>
+              <input class="input" id="q-qty" name="pallet" type="number" min="1" max="99" value="1" inputmode="numeric">
+            </div>
+            <button class="btn btn-primary" type="submit">Continua<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="stats" aria-label="Logistica Sanchez in breve">
+    <div class="container">
+      <ul class="stats-grid" role="list" data-stagger>
+        <li class="stat"><p class="stat-value">2000+</p><p class="stat-label">spedizioni effettuate</p></li>
+        <li class="stat"><p class="stat-value">100+</p><p class="stat-label">città servite</p></li>
+        <li class="stat"><p class="stat-value">100+</p><p class="stat-label">clienti soddisfatti</p></li>
+        <li class="stat"><p class="stat-value">10+</p><p class="stat-label">anni di esperienza</p></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="servizi" aria-labelledby="servizi-title">
+    <div class="container">
+      <div class="section-head-row">
+        <div class="section-head" data-reveal>
+          <p class="kicker">I nostri servizi</p>
+          <h2 id="servizi-title">Soluzioni logistiche complete</h2>
+          <p class="lede">Offriamo servizi integrati per soddisfare ogni esigenza di trasporto e logistica.</p>
+        </div>
+        <a class="link-arrow" href="/servizi/">Tutti i servizi<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+      <div class="services-grid" data-stagger>
+        <article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></div>
+          <h3><a href="/servizi/spedizione-pallet/">Spedizione pallet espresso</a></h3>
+          <p>Uno o più pallet ritirati alla tua sede e consegnati in tutta Italia in 24–72 ore, con tracking per ogni spedizione.</p>
+          <ul class="ticks">
+            <li>EUR, industriali, mezzi e quarti</li>
+            <li>Ritiro alla tua sede, anche programmato</li>
+          </ul>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article>
+        <article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-boxes"/></svg></div>
+          <h3><a href="/servizi/groupage/">Groupage e collettame</a></h3>
+          <p>Poche unità o qualche collo? Viaggiano insieme ad altre spedizioni sulla stessa direttrice: paghi solo lo spazio che occupi.</p>
+          <ul class="ticks">
+            <li>Tariffa in base a peso e ingombro</li>
+            <li>Ideale per spedizioni frequenti</li>
+          </ul>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article>
+        <article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></div>
+          <h3><a href="/servizi/carico-completo/">Carico completo</a></h3>
+          <p>Un mezzo dedicato solo alla tua merce, dal ritiro alla consegna senza trasbordi: più rapido e con meno movimentazioni.</p>
+          <ul class="ticks">
+            <li>Mezzo scelto in base al carico</li>
+            <li>Viaggio diretto, orari concordati</li>
+          </ul>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article>
+        <article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></div>
+          <h3><a href="/servizi/magazzino/">Magazzino e cross-docking</a></h3>
+          <p>Il nostro hub di Seregno come punto d'appoggio: stocchiamo, smistiamo e ripartiamo la tua merce quando serve.</p>
+          <ul class="ticks">
+            <li>Stoccaggio di breve e medio periodo</li>
+            <li>Cross-docking e consolidamento</li>
+          </ul>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article>
+      </div>
+      <div class="extras" data-reveal>
+        <p class="extras-title">Servizi accessori, su richiesta:</p>
+        <ul class="chips" role="list">
+          <li class="chip"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-down-to-line"/></svg>Sponda idraulica</li>
+          <li class="chip"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calendar-clock"/></svg>Consegna su appuntamento</li>
+          <li class="chip"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone-call"/></svg>Preavviso al destinatario</li>
+          <li class="chip"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-repeat"/></svg>Ritiri programmati</li>
+          <li class="chip"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-file-check"/></svg>Prova di consegna digitale</li>
+          <li class="chip"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-shield-check"/></svg>Copertura assicurativa integrativa</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="come-title">
+    <div class="container">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Come funziona</p>
+        <h2 id="come-title">Spedire con noi, in quattro passaggi</h2>
+        <p class="lede">Niente moduli infiniti né attese al telefono: dal preventivo alla prova di consegna, sai sempre a che punto sei.</p>
+      </div>
+      <ol class="steps" data-stagger>
+        <li class="step">
+          <span class="step-num">1</span>
+          <h3>Chiedi il preventivo</h3>
+          <p>Online in due minuti, su WhatsApp o al telefono. Ricevi un prezzo chiaro con i tempi di ritiro e di consegna.</p>
+        </li>
+        <li class="step">
+          <span class="step-num">2</span>
+          <h3>Organizziamo il ritiro</h3>
+          <p>Fissiamo giorno e fascia oraria e passiamo a prendere la merce alla tua sede o al tuo magazzino.</p>
+        </li>
+        <li class="step">
+          <span class="step-num">3</span>
+          <h3>Viaggio tracciato</h3>
+          <p>Ogni spedizione ha il suo codice: la segui online o ci chiedi lo stato quando vuoi.</p>
+        </li>
+        <li class="step">
+          <span class="step-num">4</span>
+          <h3>Consegna e POD</h3>
+          <p>Consegniamo al destinatario e ti inviamo la prova di consegna firmata, pronta da archiviare.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section-dark" id="copertura" aria-labelledby="copertura-title">
+    <div class="container coverage-grid">
+      <div data-reveal>
+        <p class="kicker">Copertura nazionale</p>
+        <h2 id="copertura-title">Tutta Italia, in 24–72 ore</h2>
+        <p class="lede">Dal nostro hub di Seregno raggiungiamo ogni regione, isole comprese. Ecco i tempi indicativi dal momento del ritiro.</p>
+        <ul class="zones-legend" role="list">
+          <li data-zone="1"><span class="swatch" aria-hidden="true"></span><strong>24 ore</strong><span>Lombardia, Piemonte, Valle d'Aosta, Liguria, Veneto, Trentino-Alto Adige, Friuli-Venezia Giulia, Emilia-Romagna</span></li>
+          <li data-zone="2"><span class="swatch" aria-hidden="true"></span><strong>48 ore</strong><span>Toscana, Umbria, Marche, Lazio, Abruzzo, Molise, Campania, Puglia</span></li>
+          <li data-zone="3"><span class="swatch" aria-hidden="true"></span><strong>72 ore</strong><span>Basilicata, Calabria, Sicilia e Sardegna</span></li>
+        </ul>
+        <form class="eta-box" data-eta-form action="/zone/" method="get">
+          <label class="label" for="cov-cap">Verifica il tuo CAP</label>
+          <div class="input-group">
+            <input class="input" id="cov-cap" name="cap" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Es. 70121" autocomplete="postal-code" required>
+            <button class="btn btn-accent" type="submit">Verifica</button>
+          </div>
+          <p class="eta-result" data-eta-result aria-live="polite"></p>
+        </form>
+        <p class="note mt-s">Giorni lavorativi. Isole minori, località disagiate e consegne su appuntamento: tempi su richiesta.</p>
+        <a class="link-arrow" href="/zone/">Zone servite e tempi di consegna<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+      <figure class="coverage-map" data-coverage data-reveal>
+        <img src="/img/italia-copertura.svg" width="440" height="565" alt="Mappa dell'Italia con i tempi di consegna da Seregno: 24 ore al Nord, 48 ore al Centro, in Campania e in Puglia, 72 ore in Basilicata, Calabria, Sicilia e Sardegna" loading="lazy">
+        <figcaption>Tempi indicativi dal ritiro. Confini regionali: ISTAT.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="perche-title">
+    <div class="container why-grid">
+      <div class="why-head" data-reveal>
+        <p class="kicker">Perché sceglierci</p>
+        <h2 id="perche-title">Affidabili come un orologio, veloci come un espresso</h2>
+        <p class="lede">Ci affidi merce, clienti e scadenze. Per questo lavoriamo con poche regole chiare, e le rispettiamo sempre.</p>
+        <div class="actions mt-m">
+          <a class="btn btn-primary" href="/chi-siamo/">Chi siamo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          <a class="btn btn-secondary" href="/contatti/">Parla con noi</a>
+        </div>
+      </div>
+      <div class="features" data-stagger>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calendar-check"/></svg></span>
+          <h3>Tempi chiari, prima di partire</h3>
+          <p>Data di ritiro e tempi di consegna li concordiamo nel preventivo. Niente «dipende».</p>
+        </div>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg></span>
+          <h3>Spedizioni tracciate</h3>
+          <p>Ogni pallet ha il suo codice: sai sempre dov'è e, a destinazione, ricevi la prova di consegna.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-headset"/></svg></span>
+          <h3>Un referente, non un call center</h3>
+          <p>Parli con chi segue davvero la tua spedizione, al telefono o su WhatsApp.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-shield-check"/></svg></span>
+          <h3>Merce in buone mani</h3>
+          <p>Carico, fissaggio e scarico eseguiti con cura, con il mezzo adatto al tipo di merce.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-down-to-line"/></svg></span>
+          <h3>Consegne anche senza muletto</h3>
+          <p>Su richiesta, sponda idraulica per destinatari senza banchina o carrello elevatore.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-receipt-text"/></svg></span>
+          <h3>Prezzi trasparenti</h3>
+          <p>Il preventivo dice cosa è incluso e cosa no. Quello che concordiamo è quello che paghi.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="band-title">
+    <svg class="band-route" viewBox="0 0 1440 300" preserveAspectRatio="none" aria-hidden="true">
+      <path class="route-base" d="M-40 220 C 160 60, 330 60, 470 170 S 760 280, 930 150 S 1200 30, 1480 90"/>
+      <path class="route-line" d="M-40 220 C 160 60, 330 60, 470 170 S 760 280, 930 150 S 1200 30, 1480 90"/>
+    </svg>
+    <span class="band-square" aria-hidden="true"></span>
+    <div class="container">
+      <div class="band-inner" data-reveal>
+        <p class="kicker">La nostra idea</p>
+        <h2 class="band-quote" id="band-title">Spedire un pallet dovrebbe essere semplice come ordinare <em>un espresso</em>.</h2>
+        <p>Chiedi, confermi, è fatto: pochi passaggi, tempi chiari e qualcuno che risponde. È la promessa che portiamo nel nome.</p>
+        <a class="btn btn-accent" href="/chi-siamo/">Scopri chi siamo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="guida-pallet" aria-labelledby="pallet-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Guida rapida ai formati</p>
+        <h2 id="pallet-title">Che pallet devi spedire?</h2>
+        <p class="lede">I formati più comuni a confronto, disegnati in scala. Il tuo carico è fuori standard? Indicalo nel preventivo: troviamo noi la soluzione.</p>
+      </div>
+      <div class="pallet-guide" data-tabs data-reveal>
+        <div class="pallet-tabs" role="tablist" aria-label="Formati di pallet">
+          <button class="pallet-tab" type="button" role="tab" id="pt-eur" aria-controls="pallet-eur" aria-selected="true">EPAL / EUR<small>120 × 80 cm</small></button>
+          <button class="pallet-tab" type="button" role="tab" id="pt-ind" aria-controls="pallet-industriale" aria-selected="false" tabindex="-1">Industriale<small>120 × 100 cm</small></button>
+          <button class="pallet-tab" type="button" role="tab" id="pt-mezzo" aria-controls="pallet-mezzo" aria-selected="false" tabindex="-1">Mezzo pallet<small>80 × 60 cm</small></button>
+          <button class="pallet-tab" type="button" role="tab" id="pt-quarto" aria-controls="pallet-quarto" aria-selected="false" tabindex="-1">Quarto di pallet<small>60 × 40 cm</small></button>
+        </div>
+        <div class="pallet-panel" role="tabpanel" id="pallet-eur" aria-labelledby="pt-eur">
+          <figure class="pallet-figure"><img src="/img/pallets/eur.svg" width="405" height="447" alt="Pallet EPAL 120 × 80 cm carico di cartoni, disegnato in scala" loading="lazy"></figure>
+          <div class="pallet-specs">
+            <h3>Pallet EPAL (EUR)</h3>
+            <p>Lo standard europeo e il formato più spedito: grande distribuzione, food &amp; beverage, e-commerce e gran parte delle merci industriali.</p>
+            <dl class="specs">
+              <div><dt>Base</dt><dd>120 × 80 cm</dd></div>
+              <div><dt>Superficie</dt><dd>0,96 m²</dd></div>
+              <div><dt>Rispetto all'EUR</dt><dd>Formato di riferimento</dd></div>
+              <div><dt>Posti a terra su un bilico</dt><dd>33</dd></div>
+            </dl>
+            <a class="btn btn-primary" href="/preventivo/?tipo=eur">Preventivo per pallet EUR<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          </div>
+        </div>
+        <div class="pallet-panel" role="tabpanel" id="pallet-industriale" aria-labelledby="pt-ind">
+          <figure class="pallet-figure"><img src="/img/pallets/industriale.svg" width="405" height="447" alt="Pallet industriale 120 × 100 cm carico di cartoni, disegnato in scala" loading="lazy"></figure>
+          <div class="pallet-specs">
+            <h3>Pallet industriale</h3>
+            <p>Più largo dell'EUR, sostiene bene carichi pesanti e voluminosi: materiali edili, sacchi, fusti, componenti e semilavorati.</p>
+            <dl class="specs">
+              <div><dt>Base</dt><dd>120 × 100 cm</dd></div>
+              <div><dt>Superficie</dt><dd>1,20 m²</dd></div>
+              <div><dt>Rispetto all'EUR</dt><dd>+25% di superficie</dd></div>
+              <div><dt>Posti a terra su un bilico</dt><dd>26</dd></div>
+            </dl>
+            <a class="btn btn-primary" href="/preventivo/?tipo=industriale">Preventivo per pallet industriale<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          </div>
+        </div>
+        <div class="pallet-panel" role="tabpanel" id="pallet-mezzo" aria-labelledby="pt-mezzo">
+          <figure class="pallet-figure"><img src="/img/pallets/mezzo.svg" width="405" height="447" alt="Mezzo pallet 80 × 60 cm carico di cartoni, disegnato in scala" loading="lazy"></figure>
+          <div class="pallet-specs">
+            <h3>Mezzo pallet</h3>
+            <p>Metà di un EUR: perfetto per spedizioni più piccole o per merce pesante in poco spazio, come bevande, vernici e ricambi.</p>
+            <dl class="specs">
+              <div><dt>Base</dt><dd>80 × 60 cm</dd></div>
+              <div><dt>Superficie</dt><dd>0,48 m²</dd></div>
+              <div><dt>Rispetto all'EUR</dt><dd>Metà</dd></div>
+              <div><dt>Posti a terra su un bilico</dt><dd>66</dd></div>
+            </dl>
+            <a class="btn btn-primary" href="/preventivo/?tipo=mezzo">Preventivo per mezzo pallet<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          </div>
+        </div>
+        <div class="pallet-panel" role="tabpanel" id="pallet-quarto" aria-labelledby="pt-quarto">
+          <figure class="pallet-figure"><img src="/img/pallets/quarto.svg" width="405" height="447" alt="Quarto di pallet 60 × 40 cm carico di cartoni, disegnato in scala" loading="lazy"></figure>
+          <div class="pallet-specs">
+            <h3>Quarto di pallet</h3>
+            <p>Il formato più piccolo: piccoli quantitativi, campionature e materiale espositivo per i punti vendita.</p>
+            <dl class="specs">
+              <div><dt>Base</dt><dd>60 × 40 cm</dd></div>
+              <div><dt>Superficie</dt><dd>0,24 m²</dd></div>
+              <div><dt>Rispetto all'EUR</dt><dd>Un quarto</dd></div>
+              <div><dt>Posti a terra su un bilico</dt><dd>132</dd></div>
+            </dl>
+            <a class="btn btn-primary" href="/preventivo/?tipo=quarto">Preventivo per quarto di pallet<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          </div>
+        </div>
+      </div>
+      <p class="note mt-s">Vuoi approfondire? Leggi la guida <a href="/blog/misure-pallet-epal-industriale/">alle misure dei pallet</a> e quella su <a href="/blog/come-preparare-un-pallet-per-la-spedizione/">come preparare un pallet</a>.</p>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="settori-title">
+    <div class="container">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Settori</p>
+        <h2 id="settori-title">Spediamo per chi produce, vende e costruisce</h2>
+        <p class="lede">Dalla Brianza del mobile alle imprese che vendono online: muoviamo merce di ogni tipo, con il servizio più adatto.</p>
+      </div>
+      <ul class="sectors" role="list" data-stagger>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-sofa"/></svg>Arredo e design</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-wine"/></svg>Food &amp; beverage</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-shopping-cart"/></svg>E-commerce e retail</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-hard-hat"/></svg>Edilizia e materiali</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-factory"/></svg>Industria e meccanica</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-shirt"/></svg>Tessile e moda</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-cpu"/></svg>Elettronica</li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-box"/></svg>Carta e imballaggi</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="blog-title">
+    <div class="container">
+      <div class="section-head-row">
+        <div class="section-head" data-reveal>
+          <p class="kicker">Blog e guide</p>
+          <h2 id="blog-title">Spedire meglio, spendere meno</h2>
+          <p class="lede">Consigli pratici per preparare la merce, scegliere il servizio giusto e capire cosa fa il prezzo.</p>
+        </div>
+        <a class="link-arrow" href="/blog/">Tutti gli articoli<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+      <div class="posts" data-stagger>
+        <article class="card card-link post-card">
+          <div class="post-cover is-light"><img src="/img/pallets/eur.svg" width="405" height="447" alt="" loading="lazy"></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Guide</span><time datetime="2026-10-06">6 ottobre 2026</time><span>4 min</span></p>
+            <h3><a href="/blog/come-preparare-un-pallet-per-la-spedizione/">Come preparare un pallet per la spedizione: la guida pratica</a></h3>
+            <p>Dalla scelta del bancale al film estensibile, fino all'etichetta: i passaggi per far arrivare la merce integra.</p>
+            <span class="card-more">Leggi la guida<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article>
+        <article class="card card-link post-card">
+          <div class="post-cover"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-ruler"/></svg></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Guide</span><time datetime="2026-09-29">29 settembre 2026</time><span>4 min</span></p>
+            <h3><a href="/blog/misure-pallet-epal-industriale/">Misure dei pallet: EPAL, industriale, mezzo e quarto a confronto</a></h3>
+            <p>Dimensioni, superfici e quanti ne stanno su un camion: la tabella per scegliere il formato giusto.</p>
+            <span class="card-more">Leggi la guida<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article>
+        <article class="card card-link post-card">
+          <div class="post-cover is-teal"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calculator"/></svg></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Costi</span><time datetime="2026-09-22">22 settembre 2026</time><span>3 min</span></p>
+            <h3><a href="/blog/quanto-costa-spedire-un-pallet/">Quanto costa spedire un pallet? I fattori che fanno il prezzo</a></h3>
+            <p>Peso, ingombro, destinazione e servizi extra: cosa incide sul costo e come ottenere un preventivo preciso.</p>
+            <span class="card-more">Leggi l'articolo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="faq-title">
+    <div class="container container-narrow">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Domande frequenti</p>
+        <h2 id="faq-title">Le risposte alle domande più comuni</h2>
+      </div>
+      <div class="faq" data-reveal>
+        <details name="faq-home">
+          <summary><h3 class="faq-q">Quanto costa spedire un pallet?</h3></summary>
+          <div class="faq-a"><p>Dipende da peso, ingombro, destinazione e servizi richiesti, come la sponda idraulica o la consegna su appuntamento. Ti diamo un prezzo chiaro e senza sorprese: <a href="/preventivo/">chiedi un preventivo gratuito</a> online o su WhatsApp. In <a href="/blog/quanto-costa-spedire-un-pallet/">questo articolo</a> spieghiamo cosa incide sul costo.</p></div>
+        </details>
+        <details name="faq-home">
+          <summary><h3 class="faq-q">In quanto tempo arriva la spedizione?</h3></summary>
+          <div class="faq-a"><p>I tempi standard sono di 24–72 ore per le principali città italiane; per le zone più remote possono arrivare fino a 96 ore. Offriamo anche un servizio express con consegna garantita in 24 ore. <a href="/zone/">Verifica il tuo CAP</a>.</p></div>
+        </details>
+        <details name="faq-home">
+          <summary><h3 class="faq-q">Posso spedire un solo pallet, o anche mezzo pallet?</h3></summary>
+          <div class="faq-a"><p>Certo. Spediamo anche un singolo pallet, un mezzo pallet o un quarto di pallet. Per poche unità il <a href="/servizi/groupage/">groupage</a> è spesso la soluzione più conveniente.</p></div>
+        </details>
+        <details name="faq-home">
+          <summary><h3 class="faq-q">Come seguo la mia spedizione?</h3></summary>
+          <div class="faq-a"><p>Ogni spedizione ha un codice: inseriscilo nella pagina <a href="/tracking/">Traccia la spedizione</a> oppure chiedici un aggiornamento su WhatsApp. A consegna avvenuta ricevi la prova di consegna (POD).</p></div>
+        </details>
+        <details name="faq-home">
+          <summary><h3 class="faq-q">Consegnate anche ai privati?</h3></summary>
+          <div class="faq-a"><p>Sì. Per i privati consigliamo la consegna su appuntamento e, se a destinazione non c'è un muletto, la sponda idraulica: il pallet viene scaricato a terra in sicurezza.</p></div>
+        </details>
+        <details name="faq-home">
+          <summary><h3 class="faq-q">Venite a ritirare direttamente in azienda?</h3></summary>
+          <div class="faq-a"><p>Sì: ritiriamo alla tua sede o al tuo magazzino nel giorno e nella fascia oraria concordati. Se spedisci spesso, organizziamo ritiri programmati in giorni fissi.</p></div>
+        </details>
+      </div>
+      <p class="text-center mt-m"><a class="link-arrow" href="/faq/">Tutte le domande frequenti<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a></p>
+    </div>
+  </section>
+
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

@@ -17,3 +17,40 @@ GET	/gestione/imposta-password	200	200	200	200
 POST	/gestione/imposta-password	403	403	403	403
 GET	/js/config.js	200	200	200	200
 GET	/site.webmanifest	200	200	200	200
+# site module (ADR 0012, 0013, 0014): the public pages of chapter 06 §3.1, the generated files, the form endpoint.
+GET	/	200	200	200	200
+GET	/servizi/	200	200	200	200
+GET	/servizi/spedizione-pallet/	200	200	200	200
+GET	/servizi/groupage/	200	200	200	200
+GET	/servizi/carico-completo/	200	200	200	200
+GET	/servizi/magazzino/	200	200	200	200
+GET	/zone/	200	200	200	200
+GET	/zone/monza-brianza/	200	200	200	200
+GET	/zone/milano/	200	200	200	200
+GET	/zone/como/	200	200	200	200
+GET	/zone/lecco/	200	200	200	200
+GET	/zone/bergamo/	200	200	200	200
+GET	/tracking/	200	200	200	200
+GET	/preventivo/	200	200	200	200
+GET	/contatti/	200	200	200	200
+GET	/chi-siamo/	200	200	200	200
+GET	/faq/	200	200	200	200
+GET	/blog/	200	200	200	200
+GET	/blog/come-preparare-un-pallet-per-la-spedizione/	200	200	200	200
+GET	/blog/misure-pallet-epal-industriale/	200	200	200	200
+GET	/blog/quanto-costa-spedire-un-pallet/	200	200	200	200
+GET	/blog/groupage-o-carico-completo/	200	200	200	200
+GET	/privacy/	200	200	200	200
+GET	/cookie/	200	200	200	200
+GET	/grazie/	200	200	200	200
+GET	/sitemap.xml	200	200	200	200
+GET	/robots.txt	200	200	200	200
+GET	/.well-known/security.txt	200	200	200	200
+GET	/security.txt	200	200	200	200
+# POST /api/form without Origin or Referer is refused by the controller's own check (ADR 0014)
+POST	/api/form	403	403	403	403
+# tracking module (ADR 0010, 0011): the kept legacy endpoints and the 410 catch-all
+POST	/mono/api/order/trace/state	400	400	400	400
+GET	/mono/api/enumeration/statoTracking	200	200	200	200
+GET	/mono/api/enumeration/servizioAccessorio	200	200	200	200
+ANY	/mono/**	410	410	410	410

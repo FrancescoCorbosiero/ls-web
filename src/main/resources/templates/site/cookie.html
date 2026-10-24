@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Cookie policy | Logistica Sanchez</title>
+<meta name="description" content="Cookie policy di Logistica Sanchez: nessun cookie di profilazione o di analisi, solo archiviazione tecnica e Google Maps caricato su tua richiesta.">
+<link rel="canonical" th:href="|${business.siteUrl}/cookie/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cookie policy | Logistica Sanchez">
+<meta property="og:description" content="Cookie policy di Logistica Sanchez: nessun cookie di profilazione o di analisi, solo archiviazione tecnica e Google Maps caricato su tua richiesta.">
+<meta property="og:url" th:content="|${business.siteUrl}/cookie/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/cookie.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Cookie policy | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/cookie/#webpage')})],"url":[(${layout.json(business.siteUrl + '/cookie/')})],"name":"Cookie policy | Logistica Sanchez","description":"Cookie policy di Logistica Sanchez: nessun cookie di profilazione o di analisi, solo archiviazione tecnica e Google Maps caricato su tua richiesta.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/cookie.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/cookie/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/cookie/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Cookie policy","item":[(${layout.json(business.siteUrl + '/cookie/')})]}]}]}</script>
+</head>
+<body data-page="cookie">
+<th:block th:replace="~{layout/public :: siteHeader('cookie')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Cookie policy</span></li></ol></nav>
+      <p class="kicker">Informazioni legali</p>
+      <h1>Cookie policy</h1>
+      <p class="lede">Quali informazioni salva il sito sul tuo dispositivo e come puoi gestirle.</p>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container container-narrow">
+      <div class="prose legal">
+        <p class="legal-meta">Ultimo aggiornamento: 12 ottobre 2026</p>
+        
+<h2 id="in-breve">In breve</h2>
+<p>Questo sito <strong>non utilizza cookie di profilazione né strumenti di analisi statistica</strong> e non installa cookie di terze parti senza una tua azione. Per questo non ti chiediamo il consenso all'apertura della pagina.</p>
+
+<h2 id="tecnici">Archiviazione tecnica sul tuo dispositivo</h2>
+<p>Alcune funzioni salvano piccole informazioni nella memoria locale del browser (<em>localStorage</em>). Restano sul tuo dispositivo, non vengono inviate a noi e puoi cancellarle in qualsiasi momento dalle impostazioni del browser.</p>
+<div class="table-wrap"><table class="table">
+<caption class="visually-hidden">Dati salvati nel browser</caption>
+<thead><tr><th scope="col">Nome</th><th scope="col">A cosa serve</th><th scope="col">Durata</th></tr></thead>
+<tbody>
+<tr><th scope="row"><code>ls_recent_codes</code></th><td>Ricorda gli ultimi codici di tracking che hai cercato, per ritrovarli con un clic</td><td>Fino alla cancellazione</td></tr>
+<tr><th scope="row"><code>ls_maps_ok</code></th><td>Ricorda la tua scelta di caricare automaticamente Google Maps, solo se l'hai attivata</td><td>Fino alla revoca</td></tr>
+</tbody></table></div>
+
+<h2 id="terze-parti">Servizi di terze parti, solo su richiesta</h2>
+<ul>
+<li><strong>Google Maps</strong>: la mappa viene caricata solo quando premi «Mostra la mappa interattiva». Da quel momento Google può installare i propri cookie, secondo la sua <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">informativa</a>.</li>
+<li><strong>WhatsApp e LinkedIn</strong>: i pulsanti di contatto e condivisione sono semplici link che aprono i rispettivi servizi, soggetti alle loro informative.</li>
+<li><strong>Caratteri tipografici</strong>: sono ospitati sul nostro sito, quindi la loro visualizzazione non comporta richieste a servizi esterni.</li>
+</ul>
+
+<h2 id="gestione">Come gestire le tue preferenze</h2>
+<p>Se in passato hai scelto di caricare sempre la mappa, puoi revocare la scelta qui:</p>
+<p><button class="btn btn-secondary btn-sm" type="button" data-maps-revoke>Revoca il consenso alle mappe</button></p>
+<p>Puoi inoltre cancellare i dati salvati e bloccare i cookie dalle impostazioni del tuo browser. Per qualsiasi domanda scrivi a <a th:href="|mailto:${business.officeEmail}|">[[${business.officeEmail}]]</a>. Maggiori informazioni sul trattamento dei dati sono nella <a href="/privacy/">privacy policy</a>.</p>
+
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Grazie, richiesta ricevuta | Logistica Sanchez</title>
+<meta name="description" content="Abbiamo ricevuto la tua richiesta: ti ricontattiamo al più presto con tutte le informazioni sulla tua spedizione.">
+<meta name="robots" content="noindex, follow">
+</head>
+<body data-page="grazie">
+<th:block th:replace="~{layout/public :: siteHeader('grazie')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <div class="notfound">
+        <span class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-circle-check"/></svg></span>
+        <h1>Grazie, richiesta ricevuta!</h1>
+        <p class="lede">Ti ricontattiamo al più presto, negli orari d'ufficio (lunedì–venerdì 8–18, sabato 8–12). Se la spedizione è urgente, scrivici anche su WhatsApp.</p>
+        <div class="page-hero-actions">
+          <a class="btn btn-accent btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20ho%20appena%20inviato%20una%20richiesta%20dal%20sito.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Scrivici su WhatsApp</a>
+          <a class="btn btn-outline-light btn-lg" href="/">Torna alla home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <div class="section-head center"><p class="kicker">Nel frattempo</p><h2>Prepara al meglio la tua spedizione</h2></div>
+      <div class="services-grid cols-3">
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></div><h3><a href="/blog/come-preparare-un-pallet-per-la-spedizione/">Come preparare il pallet</a></h3><p>I passaggi per far arrivare la merce integra.</p><span class="card-more">Leggi la guida<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></article>
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-timer"/></svg></div><h3><a href="/zone/">Tempi di consegna</a></h3><p>Verifica i tempi indicativi per il tuo CAP.</p><span class="card-more">Verifica<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></article>
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg></div><h3><a href="/tracking/">Traccia una spedizione</a></h3><p>Segui i tuoi pallet con il codice di spedizione.</p><span class="card-more">Vai al tracking<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span></article>
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

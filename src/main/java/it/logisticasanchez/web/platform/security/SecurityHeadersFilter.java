@@ -35,6 +35,9 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
     public static final String PERMISSIONS_POLICY =
             "camera=(), microphone=(), geolocation=(), payment=(), browsing-topics=()";
 
+    /** PUB-03: the private areas, the API and the compatibility paths are never indexed. */
+    public static final String X_ROBOTS_TAG = "noindex, nofollow";
+
     public static final String NO_STORE = "no-store";
     public static final String NO_CACHE = "no-cache";
 
@@ -66,6 +69,9 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
             response.setHeader("Strict-Transport-Security", HSTS);
         }
         String path = request.getRequestURI();
+        if (RouteRegistry.isPrivateArea(path) || path.startsWith("/api/") || path.startsWith("/mono/")) {
+            response.setHeader("X-Robots-Tag", X_ROBOTS_TAG); // PUB-03
+        }
         if (RouteRegistry.isPrivateArea(path)) {
             String nonce = CspNonce.generate();
             request.setAttribute(CspNonce.ATTRIBUTE, nonce);
