@@ -1,20 +1,20 @@
 <!DOCTYPE html>
+<!-- A used, expired or unknown set-password link (ADM-01). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <meta name="referrer" content="no-referrer">
   <title th:text="#{auth.staff.linkInvalid.title} + ' · ' + ${business.brandName}">Il link non è più valido · Logistica Sanchez</title>
-  <link rel="stylesheet" href="/css/main.css">
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
 </head>
 <body>
-<main id="main">
-  <section class="container">
+<th:block th:replace="~{layout/private :: siteHeader('staff', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
     <h1 th:text="#{auth.staff.linkInvalid.title}">Il link non è più valido</h1>
-    <p th:text="#{auth.staff.linkInvalid.lead}">Chiedi a un amministratore un nuovo link.</p>
-    <p><a class="btn" th:href="@{/gestione/}" th:text="#{auth.staff.login.title}">Login</a></p>
-  </section>
+    <p class="lede" th:text="#{auth.staff.linkInvalid.lead}">Chiedi a un amministratore un nuovo link.</p>
+    <p><a class="btn btn-primary" th:href="@{/gestione/}" th:text="#{auth.staff.login.title}">Login</a></p>
+  </div>
 </main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
 </body>
 </html>

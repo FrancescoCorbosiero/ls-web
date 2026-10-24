@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{error/page :: pageHead('Troppe richieste')}"></head>
-<body>
-<main th:replace="~{error/page :: pageBody('Troppe richieste', 'Hai fatto troppe richieste in poco tempo. Riprova tra qualche minuto.')}"></main>
-</body>
+<head th:replace="~{error/page :: pageHead(#{error.429.title})}"></head>
+<body th:replace="~{error/page :: pageBody(#{error.429.title}, #{error.429.lead})}"></body>
 </html>

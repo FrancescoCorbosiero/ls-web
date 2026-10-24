@@ -1,6 +1,8 @@
 package it.logisticasanchez.web.platform.web.error;
 
 import it.logisticasanchez.web.platform.config.BusinessProperties;
+import it.logisticasanchez.web.platform.security.CspNonce;
+import it.logisticasanchez.web.platform.web.Layout;
 import it.logisticasanchez.web.platform.web.RequestId;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,13 +32,14 @@ import tools.jackson.databind.ObjectMapper;
 @Component
 public class ErrorResponder {
 
-    private static final Set<Integer> PAGES = Set.of(401, 403, 404, 429);
+    private static final Set<Integer> PAGES = Set.of(401, 403, 404, 410, 429);
     private static final List<String> JSON_PATH_PREFIXES = List.of("/api/", "/mono/", "/actuator/");
 
     private final ObjectMapper json;
     private final SpringTemplateEngine templates;
     private final LocaleResolver localeResolver;
     private final BusinessProperties business;
+    private final Layout layout;
     private final Clock clock;
 
     public ErrorResponder(
@@ -49,6 +52,7 @@ public class ErrorResponder {
         this.templates = templates;
         this.localeResolver = localeResolver;
         this.business = business;
+        this.layout = new Layout(clock);
         this.clock = clock;
     }
 
@@ -111,6 +115,8 @@ public class ErrorResponder {
             context.setVariable("detail", detail);
             context.setVariable("requestId", requestId);
             context.setVariable("business", business);
+            context.setVariable("layout", layout);
+            context.setVariable("cspNonce", CspNonce.of(request));
             String template = PAGES.contains(code.status().value())
                     ? "error/" + code.status().value()
                     : "error/error";

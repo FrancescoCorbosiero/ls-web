@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<!--
+  Base layout of the private areas (customer area and back office) and of their sign-in pages:
+  the design system of the public site (main.css), a compact header with the brand and the area
+  name, the strict nonce CSP of ADR 0018 (no inline script without th:attr="nonce=${cspNonce}"),
+  the HTMX meta tags. Usage:
+    <head><title>…</title><th:block th:replace="~{layout/private :: htmlHead}"/></head>
+    <body th:attr="hx-headers=${hxHeaders}">
+      <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"/>
+      <main id="main" class="section"><div class="container-narrow">…</div></main>
+      <th:block th:replace="~{layout/private :: siteFooter}"/>
+    </body>
+  siteHeader(area, user, logoutUrl): area is 'customer' or 'staff'; user and logoutUrl may be null (sign-in pages).
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:fragment="htmlHead">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preload" href="/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="theme-color" content="#04233b">
+  <meta name="format-detection" content="telephone=no">
+  <th:block th:replace="~{fragments/htmx :: meta}"></th:block>
+</th:block>
+</head>
+<body>
+
+<th:block th:fragment="siteHeader(area, user, logoutUrl)">
+<a class="skip-link" href="#main" th:text="#{layout.skip}">Vai al contenuto</a>
+<header class="site-header" data-header>
+  <div class="container header-row">
+    <a class="brand" th:href="${area == 'staff' ? '/gestione/' : '/area-clienti/'}">
+      <img class="brand-mark" src="/img/brand/mark.svg" width="46" height="46" alt="">
+      <span class="brand-text"><span class="brand-name" th:text="${business.brandName}">Logistica Sanchez</span><span class="brand-tag" th:text="${area == 'staff'} ? #{layout.private.backoffice} : #{layout.private.customerArea}">Area clienti</span></span>
+    </a>
+    <div class="header-actions">
+      <span class="muted hide-xs" th:if="${user != null}" th:text="#{layout.private.signedInAs(${user})}">Collegato come</span>
+      <a class="btn btn-secondary btn-sm" href="/" th:if="${logoutUrl == null}" th:text="#{layout.private.backToSite}">Torna al sito</a>
+      <form method="post" th:action="@{${logoutUrl}}" th:if="${logoutUrl != null}">
+        <button type="submit" class="btn btn-secondary btn-sm" th:text="${area == 'staff'} ? #{auth.staff.logout} : #{auth.customer.logout}">Esci</button>
+      </form>
+    </div>
+  </div>
+</header>
+</th:block>
+
+<footer class="site-footer" th:fragment="siteFooter">
+  <div class="footer-bottom">
+    <div class="container footer-bottom-row">
+      <p th:text="#{layout.footer.copyright(${layout.year()}, ${business.legalName}, ${business.slogan}, ${business.vatNumber}, ${business.address.line + ', ' + business.address.postalCode + ' ' + business.address.city + ' (' + business.address.province + ')'})}">© Logistica Sanchez S.r.l.</p>
+      <ul role="list">
+        <li><a href="/privacy/" th:text="#{layout.footer.privacy}">Privacy</a></li>
+        <li><a href="/cookie/" th:text="#{layout.footer.cookie}">Cookie</a></li>
+        <li><a th:href="'mailto:' + ${business.officeEmail}" th:text="${business.officeEmail}">ufficio</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

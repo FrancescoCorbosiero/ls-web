@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{error/page :: pageHead('Accesso richiesto')}"></head>
-<body>
-<main th:replace="~{error/page :: pageBody('Accesso richiesto', 'Per vedere questa pagina devi prima accedere.')}"></main>
-</body>
+<head th:replace="~{error/page :: pageHead(#{error.401.title})}"></head>
+<body th:replace="~{error/page :: pageBody(#{error.401.title}, #{error.401.lead})}"></body>
 </html>

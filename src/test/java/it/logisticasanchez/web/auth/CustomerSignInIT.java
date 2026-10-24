@@ -72,7 +72,7 @@ class CustomerSignInIT extends AbstractPostgresIT {
             Pattern.compile("https://logisticasanchez\\.com/area-clienti/accesso\\?t=([A-Za-z0-9_-]+)");
     private static final Pattern REGISTER_LINK =
             Pattern.compile("https://logisticasanchez\\.com/area-clienti/registrazione/\\?t=([A-Za-z0-9_-]+)");
-    private static final Pattern CSRF_VALUE = Pattern.compile("name=\"_csrf\"[^>]*value=\"[^\"]*\"");
+    private static final Pattern CSRF_VALUE = Pattern.compile("name=\"_csrf\"[^>]*(value|content)=\"[^\"]*\"");
 
     @Autowired
     private MockMvc mvc;
@@ -370,7 +370,7 @@ class CustomerSignInIT extends AbstractPostgresIT {
         return post("/area-clienti/accesso").param("t", raw).with(csrf()).accept("text/html");
     }
 
-    /** The answer page with the per-request CSRF token blanked, so pages can be compared. */
+    /** The answer page with the per-request CSRF token (hidden field and HTMX meta) blanked, so pages can be compared. */
     private String page(MockHttpServletRequestBuilder request) throws Exception {
         MvcResult result = mvc.perform(request.accept("text/html"))
                 .andExpect(status().isOk())

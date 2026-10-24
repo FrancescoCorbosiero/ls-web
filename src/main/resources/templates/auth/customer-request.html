@@ -6,27 +6,26 @@
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
   <title th:text="#{auth.customer.request.title} + ' · ' + ${business.brandName}">Area clienti · Logistica Sanchez</title>
-  <link rel="stylesheet" href="/css/main.css">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
 </head>
 <body>
-<main id="main">
-  <section class="container">
+<th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
     <h1 th:text="#{auth.customer.request.heading}">Inserisci la tua e-mail</h1>
-    <p class="notice" role="status" th:if="${sent}" th:text="#{auth.customer.request.sent}">Ti abbiamo inviato un'email: segui il link per continuare</p>
-    <form method="post" th:action="@{/area-clienti/}">
-      <p>
-        <label for="email" th:text="#{auth.customer.request.email}">Email</label>
-        <input id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required autofocus>
-      </p>
-      <p class="muted" th:text="#{auth.customer.request.hint}">Assicurati di aver inserito la mail corretta.</p>
-      <p><button type="submit" class="btn" th:text="#{auth.customer.request.submit}">Avanti</button></p>
+    <p class="callout callout-info" role="status" th:if="${sent}" th:text="#{auth.customer.request.sent}">Ti abbiamo inviato un'email: segui il link per continuare</p>
+    <form method="post" th:action="@{/area-clienti/}" class="form-grid">
+      <div class="field">
+        <label class="label" for="email" th:text="#{auth.customer.request.email}">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required autofocus>
+        <p class="field-hint" th:text="#{auth.customer.request.hint}">Assicurati di aver inserito la mail corretta.</p>
+      </div>
+      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{auth.customer.request.submit}">Avanti</button></div>
     </form>
-    <p class="muted"><a th:href="@{/privacy/}" th:text="#{auth.customer.request.privacy}">Informativa privacy</a></p>
-  </section>
+    <p class="muted mt-m"><a th:href="@{/privacy/}" th:text="#{auth.customer.request.privacy}">Informativa privacy</a></p>
+  </div>
 </main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
 </body>
 </html>

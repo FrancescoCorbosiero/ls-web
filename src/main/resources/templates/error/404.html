@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{error/page :: pageHead('Pagina non trovata')}"></head>
-<body>
-<main th:replace="~{error/page :: pageBody('Pagina non trovata', 'La pagina che cerchi non esiste o è stata spostata.')}"></main>
-</body>
+<head th:replace="~{error/page :: pageHead(#{error.404.title})}"></head>
+<body th:replace="~{error/page :: pageBody(#{error.404.title}, #{error.404.lead})}"></body>
 </html>

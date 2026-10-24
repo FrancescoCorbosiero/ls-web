@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{error/page :: pageHead('Qualcosa è andato storto')}"></head>
-<body>
-<main th:replace="~{error/page :: pageBody('Qualcosa è andato storto', ${reason})}"></main>
-</body>
+<head th:replace="~{error/page :: pageHead(#{error.500.title})}"></head>
+<body th:replace="~{error/page :: pageBody(#{error.500.title}, #{error.500.lead})}"></body>
 </html>

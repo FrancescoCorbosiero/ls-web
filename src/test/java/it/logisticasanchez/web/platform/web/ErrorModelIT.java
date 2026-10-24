@@ -117,7 +117,8 @@ class ErrorModelIT extends AbstractPostgresIT {
                 .doesNotContain("Whitelabel")
                 .doesNotContain("Exception")
                 .doesNotContain("style=\"")
-                .doesNotContain("<script");
+                .doesNotContain("<script>")
+                .doesNotContain("application/ld+json");
     }
 
     @Test

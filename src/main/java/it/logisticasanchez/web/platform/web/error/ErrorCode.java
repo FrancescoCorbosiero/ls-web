@@ -22,6 +22,8 @@ public enum ErrorCode {
     /** New text: a CSRF token missing or stale (the session changed or expired). */
     CSRF_REJECTED(HttpStatus.FORBIDDEN, "csrf_rejected", "La sessione non è più valida. Ricarica la pagina e riprova."),
     NOT_FOUND(HttpStatus.NOT_FOUND, "not_found", "Impossibile recuperare i dati richiesti."),
+    /** New text: a page or resource that existed and was removed (PUB-04 redirects). */
+    GONE(HttpStatus.GONE, "gone", "Questa pagina non esiste più."),
     /** New text. */
     METHOD_NOT_ALLOWED(
             HttpStatus.METHOD_NOT_ALLOWED, "method_not_allowed", "Operazione non consentita per questa risorsa."),
@@ -79,6 +81,7 @@ public enum ErrorCode {
             case 401 -> UNAUTHENTICATED;
             case 403 -> FORBIDDEN;
             case 404 -> NOT_FOUND;
+            case 410 -> GONE;
             case 405 -> METHOD_NOT_ALLOWED;
             case 409 -> CONFLICT;
             case 415 -> UNSUPPORTED_MEDIA_TYPE;

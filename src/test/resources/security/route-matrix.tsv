@@ -15,3 +15,5 @@ GET	/area-clienti/ordini/	302	200	403	403
 GET	/gestione/	200	200	200	200
 GET	/gestione/imposta-password	200	200	200	200
 POST	/gestione/imposta-password	403	403	403	403
+GET	/js/config.js	200	200	200	200
+GET	/site.webmanifest	200	200	200	200

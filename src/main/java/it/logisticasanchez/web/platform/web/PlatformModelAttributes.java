@@ -4,12 +4,13 @@ import it.logisticasanchez.web.platform.config.BusinessProperties;
 import it.logisticasanchez.web.platform.security.CspNonce;
 import it.logisticasanchez.web.platform.security.RouteRegistry;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.Clock;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 /**
- * Model attributes every template may use: {@code business} (ADR 0027), {@code cspNonce} (the
+ * Model attributes every template may use: {@code business} (ADR 0027), {@code layout}, {@code cspNonce} (the
  * private-area nonce, null on public pages), {@code htmxConfig} (the meta content) and
  * {@code hxHeaders} (the {@code hx-headers} JSON carrying the CSRF token, for {@code <body>}).
  */
@@ -17,9 +18,16 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class PlatformModelAttributes {
 
     private final BusinessProperties business;
+    private final Layout layout;
 
-    public PlatformModelAttributes(BusinessProperties business) {
+    public PlatformModelAttributes(BusinessProperties business, Clock clock) {
         this.business = business;
+        this.layout = new Layout(clock);
+    }
+
+    @ModelAttribute("layout")
+    public Layout layout() {
+        return layout;
     }
 
     @ModelAttribute("business")

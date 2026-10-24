@@ -5,23 +5,22 @@
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex">
-  <meta name="referrer" content="no-referrer">
   <title th:text="#{auth.customer.link.title} + ' · ' + ${business.brandName}">Accedi all'area clienti · Logistica Sanchez</title>
-  <link rel="stylesheet" href="/css/main.css">
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
 </head>
 <body>
-<main id="main">
-  <section class="container">
+<th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
     <h1 th:text="#{auth.customer.link.title}">Accedi all'area clienti</h1>
-    <p th:text="#{auth.customer.link.lead}">Premi il pulsante per entrare nella tua area clienti.</p>
+    <p class="lede" th:text="#{auth.customer.link.lead}">Premi il pulsante per entrare nella tua area clienti.</p>
     <form method="post" th:action="@{/area-clienti/accesso}">
       <input type="hidden" name="t" th:value="${token}">
-      <p><button type="submit" class="btn" th:text="#{auth.customer.link.submit}">Accedi</button></p>
+      <div class="actions"><button type="submit" class="btn btn-primary btn-lg" th:text="#{auth.customer.link.submit}">Accedi</button></div>
     </form>
-  </section>
+  </div>
 </main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
 </body>
 </html>

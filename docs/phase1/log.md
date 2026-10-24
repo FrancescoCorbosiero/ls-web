@@ -738,3 +738,132 @@ rendered «Il link non è più valido».
 * `deploy/` runbook (stage 10): the first-ADMIN step runs the command inside the app container
   with the production environment and the owner opens the printed link once.
 * ADR 0015: add `EML-S1` to the catalogue table.
+
+## Stage 5 — Layout, static resources, `config.js`, message bundle, `dev-seed` (2026-10-24)
+
+### What was built
+
+* **Static resources of the legacy site** (`legacy/ls-home/public` at the commit of `PROMPT.md`)
+  copied unchanged into `src/main/resources/static/`: `css/`, `js/` (except `config.js`, now
+  generated), `img/`, `fonts/`, the icons and `apple-touch-icon.png`, `favicon.*`,
+  `site.webmanifest`, `robots.txt`, `.well-known/security.txt` — same URLs, same bytes
+  (`diff -r` against the checkout is clean). They are served by Spring Boot's static handler with
+  the stage-3 cache rules (fonts immutable one year, images one week, the rest `no-cache` + ETag)
+  and the public header set; `site.webmanifest` goes through `WebManifestController` only to get
+  the `application/manifest+json` type the default type registry does not know.
+* **`/js/config.js` generated from configuration** (`ConfigJsController`, PUB-02): the same
+  exports as the legacy file (`BUSINESS`, `TRACKING`, `waLink`, `mailLink`, `escapeHtml`, `icon`)
+  plus `FORMS`; values from `ls.business.*` (brand and legal name, VAT, address, phone, WhatsApp,
+  office e-mail, hours, site URL), `TRACKING.endpoint = /mono/api/order/trace/state` (same
+  origin, no more `app.` host) and `FORMS.endpoint = /api/form`. Values are emitted as escaped JS
+  string literals; the answer is `text/javascript` whatever the `Accept` header, like a file.
+* **Layout fragments** `templates/layout/public.html` — `htmlHead(seo)`, `siteHeader(nav)`,
+  `cta`, `siteFooter` — ported from `legacy/ls-home/partials/{head,header,cta,footer}.html`:
+  business data from `${business}`, every text from the message bundle, «Portale ordini» /
+  «Effettua un ordine» → «Area clienti» `/area-clienti/` (chapter 06 §7.1), the active-menu rule
+  of `tools/sync.mjs` as `Layout.ariaCurrent(page, key)` (`aria-current="page"` on the exact
+  key, `"true"` on an ancestor section, attribute omitted otherwise) on every `data-nav` link,
+  `{{year}}` as `Layout.year()`. `htmlHead(false)` leaves out the JSON-LD and the speculation
+  rules (error pages); the speculation-rules script is also omitted under the private nonce CSP.
+  `templates/layout/private.html` — `htmlHead`, `siteHeader(area, user, logoutUrl)`, `siteFooter`
+  — is the base of the customer area and back office: same design system (`main.css`, fonts,
+  icons), `noindex`, compact header with the brand and the area name («Area clienti» /
+  «Gestione»), «Torna al sito» or the logout button, the HTMX meta of stage 3, no script at all
+  (the strict CSP of ADR 0018 stays script-free until a page needs one with the nonce). The
+  stage-4 `auth` pages and the error pages (`error/page.html`, now with the «notfound» block of
+  the static 404; new `error/410.html` and `ErrorCode.GONE` for PUB-04) use them. `Layout` is a
+  model attribute of every page (`PlatformModelAttributes`) and of the error renderer.
+* **`messages_it.properties`** replaces `messages.properties` (`spring.web.locale=it` fixed, no
+  system-locale fallback): every UI text of the layout (`layout.*`), the error pages (`error.*`),
+  the auth screens and e-mails (`auth.*`, `mail.*`), seeded with the wording of the legacy
+  partials and portal (reader notes 03, 04, 06). `MessageBundleTest` fails on any `#{key}` or
+  `#messages.msg('key')` of a template that the bundle does not define.
+* **`dev-seed` command** (`dev.DevSeedCommand`, `@Profile({"local","test"})`): `java -jar app.jar
+  dev-seed --spring.profiles.active=local` creates `admin.seed` (ADMIN) and `operatore.seed`
+  (OPERATOR) with random 20-character passwords printed once (bcrypt in the database; re-running
+  rotates them), and two synthetic customers with their `customer_user` — `cliente.attivo@cliente.example`
+  (ACTIVE) and `cliente.in-attesa@cliente.example` (PENDING_APPROVAL) — left alone when present.
+  Outside `local`/`test` the bean does not exist: the app prints «dev-seed è disponibile solo con
+  il profilo local o test.» and exits with code 2 (the required-settings check of the real
+  profiles fails even earlier without the environment).
+* **Tests**: `LayoutTest` (unit, PUB-02: `aria-current` on the 14 nav keys, ancestor rule, year as
+  digits), `ConfigJsControllerTest` (unit: literal escaping incl. `</script>`), `MessageBundleTest`
+  (unit), `LayoutIT` (PUB-02: a context with overridden phone, WhatsApp, office e-mail, VAT and
+  site URL — header, footer and `config.js` show the overrides and never the defaults, one
+  WhatsApp number per page, «Area clienti» link and no «Portale ordini», no `aria-current` on an
+  error page, no SEO scripts there, the 13 static URLs with their types and cache rules, the
+  private layout without `<script>` and with the HTMX meta), `DevSeedCommandIT` (ADM-01, CUS-01:
+  profiles, passwords printed and valid for login, roles, bcrypt, customers in the two states with
+  one login each, second run rotates and keeps). `route-matrix.tsv` gained `/js/config.js` and
+  `/site.webmanifest`. `./mvnw -B -ntp verify`: 35 unit + 139 integration tests green.
+
+### How to run it
+
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp verify
+./mvnw -B -ntp -DskipTests package
+# synthetic accounts for a local session (passwords printed once; local and test profiles only)
+java -jar target/ls-web-0.1.0-SNAPSHOT.jar dev-seed --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+# http://localhost:8080/gestione/ (admin.seed), http://localhost:8080/area-clienti/ (cliente.attivo@cliente.example:
+# the link lands in .local/mail), http://localhost:8080/js/config.js, http://localhost:8080/pagina-che-non-esiste/
+```
+
+Verified here with the packaged jar: `dev-seed` printed the four lines and exit 0; the running
+app served `/gestione/` and `/area-clienti/` with the private layout (nonce CSP, `no-store`), the
+404 page with the public header, footer «© 2026 …» and no `aria-current`, `/js/config.js` as
+`text/javascript` `no-cache`, `/site.webmanifest` as `application/manifest+json`, fonts
+immutable, PNG one week, `security.txt` as `text/plain`.
+
+### Decisions taken
+
+* **Fragment names differ from tag names** (`htmlHead`, `siteHeader`, `siteFooter`): a Thymeleaf
+  selector `head` matches the `<head>` element before the `th:fragment="head"` block and nested
+  the whole head; found by the first run of the restyled pages.
+* **Error pages carry no SEO script** (`htmlHead(false)`): no JSON-LD and no speculation rules on
+  a `noindex` page; `main.js` stays so the menu works. `ErrorModelIT` now forbids inline scripts
+  (`<script>` without `src`, `application/ld+json`) instead of any `<script`.
+* **403 keeps the legacy sentence** «Operazione non consentita» as title (stage 3 wording, asserted
+  by `DenyByDefaultIT`); the lead explains the expired-session case.
+* **`config.js` is a controller, not a template**: the file is small, the values are a dozen
+  strings, and a template engine for JavaScript would need its own escaping rules anyway.
+* **`site.webmanifest` type**: `ResourceHandlerRegistration.setMediaTypes` no longer exists in
+  Spring 7 and the default registries (Spring `mime.types`, servlet context) do not know
+  `webmanifest`; a two-line controller is simpler than a custom resource handler.
+* **The footer year is a string**: `#{…({0})}` is a `MessageFormat`, which prints an `int` as
+  «2.026» in Italian.
+* **`dev-seed` writes `customer` rows by SQL** (like the auth tests): the `customer` entity belongs
+  to the Phase 2 `customers` module; the seed grows with the modules (customers in every state,
+  orders in every order and tracking state — `CLAUDE.md`).
+* **`.well-known/security.txt` stays the copied file** (task: copy unchanged); PUB-02 wants its
+  contact to follow `ls.business.office-email` — the `site` module renders it from configuration
+  when it takes over `robots.txt`, `sitemap.xml` and the redirect table.
+* **New Italian texts** for the owner's review at the next gate: private header («Torna al
+  sito», «Collegato come …»), error leads (401, 403, 410, 429, 500, support line), `dev-seed`
+  console lines.
+
+### Open points
+
+* The public pages themselves (home, services, zones, blog, tracking, quote, contacts, 404 routing
+  of `_redirects`, sitemap) are the Phase 2 `site` module: this stage ships the fragments they
+  include and the assets they reference; `aria-current` is exercised by the unit test and by the
+  error page (no key) until a public page passes a key.
+* `security.txt` from configuration (see Decisions); the `Expires` line of the copied file is
+  2027-10-01.
+* E2E (Playwright) over the layout — drawer, mega menu, action bar at phone width, axe on
+  `/gestione/` and `/area-clienti/` — comes with the E2E stage.
+* `htmx.min.js` is not vendored yet under `/js/` (no page uses HTMX in Phase 1); the private
+  layout includes the meta tags only. ADR 0001 pins htmx 2.0.11 for the module that first needs it.
+* Still from stages 1–4: confidential-figure guard, gitleaks locally, `/e2e` Dependabot entry,
+  Q-55 wording to trim in `docs/plan.md`, owner-side production items, ADR 0015 `EML-S1` line.
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `CLAUDE.md` "Commands" (stage 11): `java -jar app.jar dev-seed --spring.profiles.active=local`
+  next to `create-staff-user`.
+* `docs/plan.md` §4.1 `platform` row: `config.js` moved from `site` to `platform` (generated here);
+  `site` keeps `security.txt`, `robots.txt`, `sitemap.xml`, the redirect table and `/grazie/`.
+* `messages_it.properties`: modules add their `<module>.*` keys; the file is the only locale.
