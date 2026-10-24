@@ -62,4 +62,22 @@ public class LeadService {
         events.publish(new DomainEvent.LeadStored(id));
         return id;
     }
+
+    /** Erasure on request (NFR-03): anonymises every lead of the address; returns how many. */
+    @Transactional
+    public int anonymiseByEmail(String email) {
+        return leads.anonymiseByEmail(email.trim().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /** Export on request (NFR-03): the leads of the address, as rows of plain values. */
+    @Transactional(readOnly = true)
+    public java.util.List<java.util.Map<String, Object>> exportByEmail(String email) {
+        return leads.exportByEmail(email.trim().toLowerCase(java.util.Locale.ROOT));
+    }
+
+    /** Retention (Q-18): anonymises every lead past its {@code retain_until}; returns how many. */
+    @Transactional
+    public int anonymiseExpired(Instant now) {
+        return leads.anonymiseExpired(now.atZone(ZoneOffset.UTC).toLocalDate());
+    }
 }

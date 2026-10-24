@@ -28,6 +28,11 @@ public final class Sessions {
         return session("ROLE_" + role, authenticatedAt);
     }
 
+    /** A staff session with a real {@code StaffPrincipal} (the back-office actions read its id). */
+    public static MockHttpSession staff(Object principal, String role, Instant authenticatedAt) {
+        return session(principal, "ROLE_" + role, authenticatedAt);
+    }
+
     private static MockHttpSession session(String authority, Instant authenticatedAt) {
         return session("user-1", authority, authenticatedAt);
     }

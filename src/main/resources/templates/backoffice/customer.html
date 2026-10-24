@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- Customer page (ADM-03): the registration data and the customer's orders; actions for a pending customer. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="${customer.companyName} + ' · ' + #{layout.private.backoffice}">Cliente · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{backoffice/layout :: nav('customers')}"></th:block>
+    <h1 th:text="${customer.companyName}">Cliente</h1>
+    <p><span class="badge" th:text="#{'customers.status.' + ${customer.status.name()}}">Attivo</span>
+      <span class="muted" th:text="#{backoffice.customer.registeredAt(${fmt.dateTime(customer.registeredAt)})}">Registrato il</span></p>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <p class="actions" th:if="${customer.status.isPending()}">
+      <a class="btn btn-primary" th:href="@{/gestione/clienti/{id}/approva(id=${customer.id})}" th:text="#{backoffice.customers.approve}">Approva</a>
+      <a class="btn btn-secondary" th:href="@{/gestione/clienti/{id}/rifiuta(id=${customer.id})}" th:text="#{backoffice.customers.decline}">Rifiuta</a>
+    </p>
+    <div class="grid-2">
+      <section class="card">
+        <h2 th:text="#{backoffice.customer.data}">Dati del cliente</h2>
+        <dl>
+          <dt th:text="#{backoffice.customers.col.id}">ID</dt><dd th:text="${customer.id}">1</dd>
+          <dt th:text="#{customers.field.email}">Email</dt><dd th:text="${customer.email}">-</dd>
+          <dt th:text="#{customers.field.addressLine}">Via</dt><dd th:text="${customer.addressLine}">-</dd>
+          <dt th:text="#{customers.field.city}">Città</dt><dd th:text="${customer.city} + ' (' + ${customer.province} + ') ' + ${customer.postalCode}">-</dd>
+          <dt th:text="#{customers.field.phone}">Telefono</dt><dd th:text="${customer.phone}">-</dd>
+          <dt th:text="#{customers.field.vatNumber}">Partita IVA</dt><dd th:text="${customer.vatNumber ?: '-'}">-</dd>
+          <dt th:text="#{customers.field.taxCode}">Codice fiscale</dt><dd th:text="${customer.taxCode ?: '-'}">-</dd>
+          <dt th:text="#{backoffice.customers.col.emailVerified}">Email confermata</dt><dd th:text="${customer.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</dd>
+          <dt th:if="${customer.declineReason != null}" th:text="#{backoffice.customer.declineReason}">Motivo del rifiuto</dt><dd th:if="${customer.declineReason != null}" th:text="${customer.declineReason}">-</dd>
+        </dl>
+      </section>
+      <section class="card">
+        <h2 th:text="#{backoffice.customer.orders}">Ordini del cliente</h2>
+        <p class="muted" th:if="${orders.isEmpty()}" th:text="#{backoffice.customer.noOrders}">Nessun ordine.</p>
+        <div class="table-wrap" th:if="${!orders.isEmpty()}">
+          <table class="table" data-table="customer-orders">
+            <thead><tr>
+              <th scope="col" th:text="#{orders.col.code}">Codice</th>
+              <th scope="col" th:text="#{orders.col.date}">Data</th>
+              <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
+              <th scope="col" th:text="#{orders.col.status}">Stato</th>
+              <th scope="col" th:text="#{orders.col.tracking}">Tracking</th>
+              <th scope="col" th:text="#{orders.col.amount}">Importo</th>
+            </tr></thead>
+            <tbody>
+              <tr th:each="o : ${orders}" th:attr="data-order=${o.displayCode()}">
+                <td><a th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.displayCode()}">codice</a></td>
+                <td th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+                <td th:text="${o.recipient.name} + ', ' + ${o.recipient.city}">dest</td>
+                <td th:text="#{'orders.status.' + ${o.status.name()}}">stato</td>
+                <td th:text="${o.status.name() == 'APPROVED'} ? ${o.trackingLabel} : '-'">-</td>
+                <td th:text="${o.amountText()}">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <p><a href="/gestione/clienti/" th:text="#{backoffice.customer.back}">Torna ai clienti registrati</a></p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

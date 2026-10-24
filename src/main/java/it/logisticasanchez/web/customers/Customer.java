@@ -83,6 +83,9 @@ public class Customer {
     @Column(name = "decline_reason")
     private String declineReason;
 
+    @Column(name = "anonymised_at")
+    private Instant anonymisedAt;
+
     @Column(name = "source", nullable = false, length = 16, updatable = false)
     private String source = "CUSTOMER_AREA";
 
@@ -169,6 +172,32 @@ public class Customer {
         status = emailVerifiedAt == null ? CustomerStatus.PENDING_VERIFICATION : CustomerStatus.PENDING_APPROVAL;
     }
 
+    /**
+     * Erasure (NFR-03, ADR 0024): every personal value replaced by a placeholder, the row marked
+     * and closed as DECLINED so that nothing can be ordered or approved again; the orders keep
+     * their own snapshots. Idempotent.
+     */
+    void anonymise(String placeholderEmail, Instant at) {
+        this.email = Objects.requireNonNull(placeholderEmail, "placeholderEmail");
+        this.companyName = "Cliente anonimizzato";
+        this.addressLine = "-";
+        this.city = "-";
+        this.province = "-";
+        this.postalCode = "00000";
+        this.phone = "-";
+        this.vatNumber = null;
+        this.taxCode = null;
+        this.declineReason = null;
+        if (status != CustomerStatus.DECLINED) {
+            this.status = CustomerStatus.DECLINED;
+            this.declinedAt = at;
+            this.declinedBy = null;
+        }
+        if (anonymisedAt == null) {
+            this.anonymisedAt = at;
+        }
+    }
+
     void changeEmail(String newEmail) {
         this.email = Objects.requireNonNull(newEmail, "newEmail");
     }
@@ -243,6 +272,10 @@ public class Customer {
 
     public String getDeclineReason() {
         return declineReason;
+    }
+
+    public Instant getAnonymisedAt() {
+        return anonymisedAt;
     }
 
     public Instant getCreatedAt() {

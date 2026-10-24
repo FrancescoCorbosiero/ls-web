@@ -24,6 +24,7 @@ audit_log_detail before jsonb NULL
 audit_log_detail after jsonb NULL
 customer id int8 NOT NULL
 customer email varchar NOT NULL
+customer anonymised_at timestamptz NULL
 customer company_name varchar NOT NULL
 customer address_line varchar NOT NULL
 customer city varchar NOT NULL
@@ -226,3 +227,8 @@ staff_setup_token token_hash varchar NOT NULL
 staff_setup_token expires_at timestamptz NOT NULL
 staff_setup_token used_at timestamptz NULL
 staff_setup_token created_at timestamptz NOT NULL
+report_recipient id int8 NOT NULL
+report_recipient email varchar NOT NULL
+report_recipient label varchar NULL
+report_recipient added_by int8 NOT NULL
+report_recipient created_at timestamptz NOT NULL

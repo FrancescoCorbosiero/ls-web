@@ -6,6 +6,7 @@ import it.logisticasanchez.web.platform.web.RequestId;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import java.util.Map;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -28,6 +29,7 @@ public class AuditService {
     private final IpHasher ipHasher;
     private final ClientIpResolver clientIp;
     private final Clock clock;
+    private final JdbcTemplate jdbc;
 
     public AuditService(
             AuditLogRepository logs,
@@ -35,13 +37,15 @@ public class AuditService {
             ObjectMapper json,
             IpHasher ipHasher,
             ClientIpResolver clientIp,
-            Clock clock) {
+            Clock clock,
+            JdbcTemplate jdbc) {
         this.logs = logs;
         this.details = details;
         this.json = json;
         this.ipHasher = ipHasher;
         this.clientIp = clientIp;
         this.clock = clock;
+        this.jdbc = jdbc;
     }
 
     /** Writes the entry and returns the id of the {@code audit_log} row. */
@@ -66,6 +70,45 @@ public class AuditService {
                     new AuditLogDetail(saved.getId(), toJson(entry.personalBefore()), toJson(entry.personalAfter())));
         }
         return saved.getId();
+    }
+
+    /**
+     * Erasure (NFR-03, ADR 0020): removes the personal values ({@code audit_log_detail}) of every
+     * entry about the entity or made by the actor; the {@code audit_log} rows (ids only) stay.
+     * Runs as a maintenance transaction ({@code SET LOCAL ls.audit_maintenance = 'on'}), the only
+     * way the immutability trigger lets a DELETE through.
+     */
+    @Transactional
+    public int deletePersonalDetails(String entityType, long entityId, AuditActorType actorType, Long actorId) {
+        jdbc.execute("SET LOCAL ls.audit_maintenance = 'on'");
+        int deleted = jdbc.update(
+                "delete from audit_log_detail d using audit_log l where d.audit_log_id = l.id"
+                        + " and l.entity_type = ? and l.entity_id = ?",
+                entityType,
+                entityId);
+        if (actorId != null) {
+            deleted += jdbc.update(
+                    "delete from audit_log_detail d using audit_log l where d.audit_log_id = l.id"
+                            + " and l.actor_type = ? and l.actor_id = ?",
+                    actorType.name(),
+                    actorId);
+        }
+        return deleted;
+    }
+
+    /**
+     * Erasure (NFR-03): removes every {@code audit_log_detail} row whose personal values mention
+     * the text (an e-mail address), whatever entity the entry is about — report recipients,
+     * allow-list changes, notes. Maintenance transaction as above.
+     */
+    @Transactional
+    public int deletePersonalDetailsMentioning(String text) {
+        jdbc.execute("SET LOCAL ls.audit_maintenance = 'on'");
+        String like = "%" + text.toLowerCase(java.util.Locale.ROOT) + "%";
+        return jdbc.update(
+                "delete from audit_log_detail d where lower(d.before::text) like ? or lower(d.after::text) like ?",
+                like,
+                like);
     }
 
     private String toJson(Map<String, Object> values) {

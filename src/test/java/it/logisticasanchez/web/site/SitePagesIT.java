@@ -130,7 +130,10 @@ class SitePagesIT extends AbstractPostgresIT {
         for (String tag : tags) {
             assertThat(line(html, tag)).as("%s of %s", tag, page.path()).isEqualTo(line(legacy, tag));
         }
-        String ours = main(html).replaceAll("\\s+", " ");
+        // The texts added for the customer area (NFR-03, ADR 0024) are marked by the port script and left out.
+        String ours = main(html)
+                .replaceAll("<!-- ls-web:addition -->[\\s\\S]*?<!-- /ls-web:addition -->", "")
+                .replaceAll("\\s+", " ");
         String theirs = main(legacy)
                 .replace(
                         "href=\"https://ordini.logisticasanchez.com\" target=\"_blank\" rel=\"noopener\"",

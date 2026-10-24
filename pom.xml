@@ -27,6 +27,7 @@
     <palantir-java-format.version>2.102.0</palantir-java-format.version>
     <!-- AWS SDK v2 BOM (ADR 0001): SESv2 only in M1, used by the notifications outbox worker. -->
     <awssdk.version>2.56.0</awssdk.version>
+    <openpdf.version>3.0.5</openpdf.version>
   </properties>
 
   <dependencyManagement>
@@ -104,6 +105,13 @@
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>url-connection-client</artifactId>
+    </dependency>
+
+    <!-- Reports (ADM-09): the PDF of one customer's orders, A4 landscape, OpenPDF (ADR 0001) -->
+    <dependency>
+      <groupId>com.github.librepdf</groupId>
+      <artifactId>openpdf</artifactId>
+      <version>${openpdf.version}</version>
     </dependency>
 
     <!-- Observability: only /actuator/health is exposed (application.yml) -->

@@ -19,7 +19,8 @@ public record CustomerView(
         Instant emailVerifiedAt,
         Instant approvedAt,
         Instant declinedAt,
-        String declineReason) {
+        String declineReason,
+        Instant anonymisedAt) {
 
     static CustomerView of(Customer c) {
         return new CustomerView(
@@ -38,7 +39,16 @@ public record CustomerView(
                 c.getEmailVerifiedAt(),
                 c.getApprovedAt(),
                 c.getDeclinedAt(),
-                c.getDeclineReason());
+                c.getDeclineReason(),
+                c.getAnonymisedAt());
+    }
+
+    public boolean emailVerified() {
+        return emailVerifiedAt != null;
+    }
+
+    public boolean anonymised() {
+        return anonymisedAt != null;
     }
 
     public boolean canOrder() {

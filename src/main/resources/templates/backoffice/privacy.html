@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!-- Privacy tools, ADMIN only (NFR-03, ADR 0024): look an e-mail up, export the data as JSON, erase by anonymisation after a named confirmation. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.privacy.title} + ' · ' + #{layout.private.backoffice}">Privacy · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+    <h1 th:text="#{backoffice.privacy.title}">Privacy: esporta o anonimizza</h1>
+    <p class="muted" th:text="#{backoffice.privacy.lead}">Per una richiesta di accesso o di cancellazione: cerca l'indirizzo, scarica i dati oppure anonimizzali. Gli ordini restano, con i dati del mittente così com'erano al momento dell'invio, per il periodo di conservazione previsto.</p>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <form method="post" th:action="@{/gestione/impostazioni/privacy/cerca}" class="input-group mb-m">
+      <label class="visually-hidden" for="email" th:text="#{customers.field.email}">Email</label>
+      <input class="input" id="email" name="email" type="email" maxlength="254" required th:value="${email}">
+      <button type="submit" class="btn btn-secondary" th:text="#{backoffice.search}">Cerca</button>
+    </form>
+    <section class="card" th:if="${subject != null}" data-subject>
+      <h2 th:text="${subject.email}">email</h2>
+      <p th:if="${subject.isEmpty()}" th:text="#{backoffice.privacy.nothing}">Nessun dato per questo indirizzo.</p>
+      <dl th:if="${!subject.isEmpty()}">
+        <dt th:text="#{backoffice.privacy.customer}">Cliente</dt>
+        <dd th:text="${subject.customer.isPresent()} ? ${subject.customer.get().companyName} + ' (n. ' + ${subject.customer.get().id} + ')' : '-'">-</dd>
+        <dt th:text="#{backoffice.privacy.leads}">Richieste dal sito</dt><dd th:text="${subject.leadCount}">0</dd>
+      </dl>
+      <div class="actions" th:if="${!subject.isEmpty()}">
+        <form method="post" th:action="@{/gestione/impostazioni/privacy/esporta}">
+          <input type="hidden" name="email" th:value="${subject.email}">
+          <button type="submit" class="btn btn-secondary" th:text="#{backoffice.privacy.export}">Esporta i dati (JSON)</button>
+        </form>
+        <form method="post" th:action="@{/gestione/impostazioni/privacy/anonimizza}">
+          <input type="hidden" name="email" th:value="${subject.email}">
+          <p class="lede" th:text="#{backoffice.privacy.confirm}">Anonimizzare è irreversibile: sei sicuro di voler procedere?</p>
+          <button type="submit" class="btn btn-primary" th:text="#{backoffice.privacy.anonymise}">Anonimizza</button>
+        </form>
+      </div>
+    </section>
+    <p class="mt-m"><a href="/gestione/impostazioni/" th:text="#{backoffice.settings.back}">Torna alle impostazioni</a></p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

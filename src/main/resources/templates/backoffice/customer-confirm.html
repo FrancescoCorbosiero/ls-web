@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<!-- Named confirmation of approve/decline (ADM-02; chapter 04 §7.2 «Sei sicuro di voler procedere?», «Conferma»/«Annulla»; fixes CMS-19). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${action == 'approve'} ? #{backoffice.customers.approve} : #{backoffice.customers.decline}) + ' · ' + #{layout.private.backoffice}">Conferma · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <th:block th:replace="~{backoffice/layout :: nav('customersPending')}"></th:block>
+    <h1 th:text="${action == 'approve'} ? #{backoffice.customers.approveTitle(${customer.companyName})} : #{backoffice.customers.declineTitle(${customer.companyName})}">Approva il cliente</h1>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <dl>
+      <dt th:text="#{customers.field.email}">Email</dt><dd th:text="${customer.email}">-</dd>
+      <dt th:text="#{customers.field.addressLine}">Via</dt><dd th:text="${customer.addressOneLine()}">-</dd>
+      <dt th:text="#{customers.field.phone}">Telefono</dt><dd th:text="${customer.phone}">-</dd>
+      <dt th:text="#{backoffice.customers.col.emailVerified}">Email confermata</dt><dd th:text="${customer.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</dd>
+      <dt th:text="#{backoffice.customers.col.status}">Stato</dt><dd th:text="#{'customers.status.' + ${customer.status.name()}}">-</dd>
+    </dl>
+    <p class="callout callout-info" th:if="${action == 'approve'}" th:text="#{backoffice.customers.approveHint}">Il cliente riceve un'e-mail di conferma e può inserire ordini.</p>
+    <form method="post" th:action="${action == 'approve'} ? @{/gestione/clienti/{id}/approva(id=${customer.id})} : @{/gestione/clienti/{id}/rifiuta(id=${customer.id})}" class="form-grid">
+      <div class="field" th:if="${action == 'decline'}">
+        <label class="label" for="motivo" th:text="#{backoffice.declineReason}">Motivo (facoltativo, inviato al cliente)</label>
+        <textarea class="textarea" id="motivo" name="motivo" rows="3" maxlength="500"></textarea>
+      </div>
+      <p class="lede" th:text="#{backoffice.confirm.question}">Sei sicuro di voler procedere?</p>
+      <p class="actions">
+        <button type="submit" class="btn btn-primary" th:text="#{backoffice.confirm.yes}">Conferma</button>
+        <a class="btn btn-secondary" href="/gestione/clienti/in-approvazione/" th:text="#{backoffice.confirm.no}">Annulla</a>
+      </p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

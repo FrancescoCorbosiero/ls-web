@@ -8,14 +8,18 @@ import it.logisticasanchez.web.notifications.NotificationService;
 import it.logisticasanchez.web.platform.audit.AuditActorType;
 import it.logisticasanchez.web.platform.audit.AuditEntry;
 import it.logisticasanchez.web.platform.audit.AuditService;
+import it.logisticasanchez.web.platform.config.BackofficeProperties;
 import it.logisticasanchez.web.platform.events.DomainEvent;
 import it.logisticasanchez.web.platform.events.DomainEvents;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +41,7 @@ public class CustomerService {
     private final NotificationService notifications;
     private final AuditService audit;
     private final DomainEvents events;
+    private final BackofficeProperties backoffice;
     private final Clock clock;
 
     public CustomerService(
@@ -47,6 +52,7 @@ public class CustomerService {
             NotificationService notifications,
             AuditService audit,
             DomainEvents events,
+            BackofficeProperties backoffice,
             Clock clock) {
         this.customers = customers;
         this.accounts = accounts;
@@ -55,6 +61,7 @@ public class CustomerService {
         this.notifications = notifications;
         this.audit = audit;
         this.events = events;
+        this.backoffice = backoffice;
         this.clock = clock;
     }
 
@@ -68,12 +75,56 @@ public class CustomerService {
         return customers.findByEmail(CustomerAccountService.normalise(email)).map(CustomerView::of);
     }
 
-    /** The customers waiting for approval, oldest first (ADM-02). */
+    /**
+     * The customers waiting for approval, oldest first (ADM-02): PENDING_APPROVAL only, as the
+     * legacy list (PD-06); with {@code ls.backoffice.show-unverified-customers} the unverified
+     * ones too (shown with «Email confermata: NO», not approvable).
+     */
     @Transactional(readOnly = true)
     public List<CustomerView> pendingApproval() {
-        return customers.findByStatusOrderByRegisteredAtAsc(CustomerStatus.PENDING_APPROVAL).stream()
+        List<CustomerStatus> statuses = backoffice.showUnverifiedCustomers() // PD-06
+                ? List.of(CustomerStatus.PENDING_APPROVAL, CustomerStatus.PENDING_VERIFICATION)
+                : List.of(CustomerStatus.PENDING_APPROVAL);
+        return customers.findByStatusInOrderByRegisteredAtAsc(statuses).stream()
                 .map(CustomerView::of)
                 .toList();
+    }
+
+    /** ADM-03: the live customers, newest first, optionally matching {@code query} on name, e-mail or city. */
+    @Transactional(readOnly = true)
+    public Page<CustomerView> search(String query, int page, int size) {
+        String q = query == null ? "" : query.strip().toLowerCase(Locale.ROOT);
+        String like = q.isEmpty()
+                ? ""
+                : "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+        return customers.search(like, PageRequest.of(Math.max(0, page), size)).map(CustomerView::of);
+    }
+
+    /** Every live customer by company name (the report form's select). */
+    @Transactional(readOnly = true)
+    public List<CustomerView> listAll() {
+        return customers.findByAnonymisedAtIsNullOrderByCompanyNameAscIdAsc().stream()
+                .map(CustomerView::of)
+                .toList();
+    }
+
+    /**
+     * Erasure (NFR-03, ADR 0024): the customer row keeps its id with placeholders in every
+     * personal column and is closed as DECLINED; returns the view after the change. The other
+     * tables (login identity, links, leads, notes, outbox, audit details) are handled by the
+     * privacy service, which calls this last.
+     */
+    @Transactional
+    public CustomerView anonymise(long customerId, long staffUserId, String placeholderEmail) {
+        Customer customer = customers.findById(customerId).orElseThrow();
+        String previous = customer.getStatus().name();
+        customer.anonymise(placeholderEmail, clock.instant());
+        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "customer.anonymise")
+                .entity("customer", customer.getId(), null)
+                .change(
+                        Map.of("status", previous),
+                        Map.of("status", customer.getStatus().name(), "anonymised", true)));
+        return CustomerView.of(customer);
     }
 
     /** True when the raw token is a usable {@code REGISTER} link (the form's {@code GET}; nothing consumed). */

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- Decline an order (ADM-04; chapter 04 §4.5): named confirmation, optional reason sent in EML-05. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.orders.decline} + ' · ' + #{layout.private.backoffice}">Rifiuta ordine · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
+    <h1 th:text="#{backoffice.orderDecline.title(${order.tempCode})}">Rifiuta l'ordine</h1>
+    <p class="muted" th:text="#{backoffice.orderApprove.lead(${order.tempCode}, ${order.sender.name}, ${order.recipient.name}, ${order.recipient.city})}">Ordine provvisorio</p>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <form method="post" th:action="@{/gestione/ordini/{id}/rifiuta(id=${order.id})}" class="form-grid">
+      <div class="field">
+        <label class="label" for="motivo" th:text="#{backoffice.declineReason}">Motivo (facoltativo, inviato al cliente)</label>
+        <textarea class="textarea" id="motivo" name="motivo" rows="3" maxlength="500"></textarea>
+      </div>
+      <p class="lede" th:text="#{backoffice.confirm.question}">Sei sicuro di voler procedere?</p>
+      <p class="actions">
+        <button type="submit" class="btn btn-primary" th:text="#{backoffice.confirm.yes}">Conferma</button>
+        <a class="btn btn-secondary" href="/gestione/ordini/in-approvazione/" th:text="#{backoffice.confirm.no}">Annulla</a>
+      </p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

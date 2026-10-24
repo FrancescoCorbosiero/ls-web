@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!-- «Ordini in approvazione» (ADM-04; chapter 04 §3.4: the 13 legacy columns, TEMP codes shown as «-», the legacy empty state). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.ordersPending.title} + ' · ' + #{layout.private.backoffice}">Ordini da approvare · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
+    <h1 th:text="#{backoffice.ordersPending.title}">Ordini in approvazione</h1>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <p class="muted" th:if="${orders.isEmpty()}" th:text="#{backoffice.ordersPending.empty}">Nessun ordine da approvare</p>
+    <div class="table-wrap" th:if="${!orders.isEmpty()}">
+      <table class="table" data-table="orders-pending">
+        <thead><tr th:replace="~{backoffice/orders :: orderColumns}"></tr></thead>
+        <tbody>
+          <tr th:each="o : ${orders}" th:attr="data-order=${o.tempCode}">
+            <th:block th:replace="~{backoffice/orders :: orderCells(${o})}"></th:block>
+            <td class="nowrap">
+              <a class="btn btn-primary btn-sm" th:href="@{/gestione/ordini/{id}/approva(id=${o.id})}" th:text="#{backoffice.orders.approve}">Approva ordine</a>
+              <a class="btn btn-secondary btn-sm" th:href="@{/gestione/ordini/{id}/rifiuta(id=${o.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
+              <a class="btn btn-ghost btn-sm" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

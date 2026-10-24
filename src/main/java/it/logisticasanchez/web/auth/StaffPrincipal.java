@@ -1,9 +1,12 @@
 package it.logisticasanchez.web.auth;
 
+import it.logisticasanchez.web.platform.web.error.ClientErrorException;
+import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,7 +28,7 @@ public final class StaffPrincipal implements UserDetails {
     private final Instant lockedUntil;
     private final Instant now;
 
-    StaffPrincipal(StaffUser user, Instant now) {
+    public StaffPrincipal(StaffUser user, Instant now) {
         this.id = user.getId();
         this.username = user.getUsername();
         this.displayName = user.getDisplayName();
@@ -46,6 +49,21 @@ public final class StaffPrincipal implements UserDetails {
 
     public StaffRole role() {
         return role;
+    }
+
+    public boolean isAdmin() {
+        return role == StaffRole.ADMIN;
+    }
+
+    /**
+     * The staff principal of the current request; 401 through the error model when the session
+     * is not a staff one (the back-office controllers call it before acting).
+     */
+    public static StaffPrincipal require(Authentication authentication) {
+        if (authentication != null && authentication.getPrincipal() instanceof StaffPrincipal staff) {
+            return staff;
+        }
+        throw new ClientErrorException(ErrorCode.UNAUTHENTICATED);
     }
 
     @Override

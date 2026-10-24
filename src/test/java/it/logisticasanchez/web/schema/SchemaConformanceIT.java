@@ -43,6 +43,7 @@ class SchemaConformanceIT extends AbstractPostgresIT {
             "lead",
             "email_outbox",
             "report_run",
+            "report_recipient",
             "feature_flag",
             "audit_log",
             "audit_log_detail");

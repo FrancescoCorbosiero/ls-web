@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- Staff accounts, ADMIN only (ADM-01, ADR 0003): the list and the creation form; the set-password link goes by e-mail (EML-S1). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.staffUsers.title} + ' · ' + #{layout.private.backoffice}">Utenti · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+    <h1 th:text="#{backoffice.staffUsers.title}">Utenti della gestione</h1>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <div class="table-wrap">
+      <table class="table" data-table="staff-users">
+        <thead><tr>
+          <th scope="col" th:text="#{auth.staff.login.username}">Username</th>
+          <th scope="col" th:text="#{backoffice.staffUsers.name}">Nome</th>
+          <th scope="col" th:text="#{customers.field.email}">Email</th>
+          <th scope="col" th:text="#{backoffice.staffUsers.role}">Ruolo</th>
+          <th scope="col" th:text="#{backoffice.staffUsers.state}">Stato</th>
+          <th scope="col" th:text="#{backoffice.staffUsers.lastLogin}">Ultimo accesso</th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="u : ${users}" th:attr="data-user=${u.username}">
+            <td th:text="${u.username}">admin</td>
+            <td th:text="${u.displayName}">Nome</td>
+            <td th:text="${u.email ?: '-'}">-</td>
+            <td th:text="#{'backoffice.staffUsers.role.' + ${u.role.name()}}">Amministratore</td>
+            <td th:text="${!u.active} ? #{backoffice.staffUsers.disabled} : (${u.passwordSet} ? #{backoffice.staffUsers.active} : #{backoffice.staffUsers.passwordPending})">Attivo</td>
+            <td th:text="${u.lastLoginAt != null} ? ${fmt.dateTime(u.lastLoginAt)} : '-'">-</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <h2 class="mt-m" th:text="#{backoffice.staffUsers.create}">Nuovo utente</h2>
+    <p class="muted" th:text="#{backoffice.staffUsers.createHint}">L'utente riceve per e-mail un link, valido 24 ore, con cui sceglie la sua password. Nessuna password passa di qui.</p>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <form method="post" th:action="@{/gestione/impostazioni/utenti/}" class="form-grid cols-2 card">
+      <div class="field">
+        <label class="label" for="username" th:text="#{auth.staff.login.username}">Username</label>
+        <input class="input" id="username" name="username" type="text" maxlength="100" required autocomplete="off" th:value="${values['username']}">
+      </div>
+      <div class="field">
+        <label class="label" for="nome" th:text="#{backoffice.staffUsers.name}">Nome</label>
+        <input class="input" id="nome" name="nome" type="text" maxlength="100" required th:value="${values['nome']}">
+      </div>
+      <div class="field">
+        <label class="label" for="email" th:text="#{customers.field.email}">Email</label>
+        <input class="input" id="email" name="email" type="email" maxlength="254" required th:value="${values['email']}">
+      </div>
+      <div class="field">
+        <label class="label" for="ruolo" th:text="#{backoffice.staffUsers.role}">Ruolo</label>
+        <select class="select" id="ruolo" name="ruolo" required>
+          <option value="" th:selected="${values['ruolo'] == null or values['ruolo'] == ''}" th:text="#{backoffice.staffUsers.roleChoose}">Scegli il ruolo</option>
+          <option th:each="r : ${roles}" th:value="${r.name()}" th:selected="${values['ruolo'] == r.name()}" th:text="#{'backoffice.staffUsers.role.' + ${r.name()}}">Operatore</option>
+        </select>
+      </div>
+      <p class="actions span-2"><button type="submit" class="btn btn-primary" th:text="#{backoffice.staffUsers.submit}">Crea l'utente e invia il link</button></p>
+    </form>
+    <p class="mt-m"><a href="/gestione/impostazioni/" th:text="#{backoffice.settings.back}">Torna alle impostazioni</a></p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

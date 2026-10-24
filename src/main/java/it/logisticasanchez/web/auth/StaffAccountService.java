@@ -9,9 +9,11 @@ import it.logisticasanchez.web.platform.config.SecurityProperties;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -76,8 +78,12 @@ public class StaffAccountService {
         if (users.findByUsername(normalised).isPresent()) {
             throw new UsernameTakenException(normalised);
         }
+        String address = blankToNull(email) == null ? null : email.strip().toLowerCase(java.util.Locale.ROOT);
+        if (address != null && users.findByEmail(address).isPresent()) {
+            throw new EmailTakenException();
+        }
         StaffUser user = new StaffUser(normalised, blankToNull(displayName) == null ? normalised : displayName, role);
-        user.setEmail(blankToNull(email));
+        user.setEmail(address);
         user = users.save(user);
         return issueSetupLink(user);
     }
@@ -174,6 +180,33 @@ public class StaffAccountService {
         });
     }
 
+    /** Every staff account, newest first, as the ADMIN screen shows them. */
+    @Transactional(readOnly = true)
+    public List<StaffUserView> listAll() {
+        return users.findAll(Sort.by(Sort.Direction.DESC, "id")).stream()
+                .map(u -> new StaffUserView(
+                        u.getId(),
+                        u.getUsername(),
+                        u.getDisplayName(),
+                        u.getEmail(),
+                        u.getRole(),
+                        u.isActive(),
+                        u.getPasswordHash() != null,
+                        u.getLastLoginAt()))
+                .toList();
+    }
+
+    /** A staff account as the back office lists it (never the entity). */
+    public record StaffUserView(
+            long id,
+            String username,
+            String displayName,
+            String email,
+            StaffRole role,
+            boolean active,
+            boolean passwordSet,
+            Instant lastLoginAt) {}
+
     /** The absolute URL of a set-password link, as the command prints it and the e-mail carries it. */
     public String setupUrl(String rawToken) {
         return business.siteUrl() + AuthRoutes.STAFF_SET_PASSWORD + "?t=" + rawToken;
@@ -193,6 +226,13 @@ public class StaffAccountService {
     public static class UsernameTakenException extends RuntimeException {
         public UsernameTakenException(String username) {
             super("username already taken: " + username);
+        }
+    }
+
+    /** The e-mail already belongs to another staff account (V002 unique index). */
+    public static class EmailTakenException extends RuntimeException {
+        public EmailTakenException() {
+            super("e-mail already used by a staff account");
         }
     }
 

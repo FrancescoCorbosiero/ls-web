@@ -1,5 +1,6 @@
 package it.logisticasanchez.web.auth;
 
+import it.logisticasanchez.web.platform.security.Authorities;
 import it.logisticasanchez.web.platform.security.SessionLimitsFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Objects;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * The back-office entry (ADM-01, ADR 0003): {@code /gestione/} is the login page for an
  * anonymous visitor (copy of the legacy CMS: «Login», «Username o password errate.») and the
- * Phase 1 stub home for a staff session; {@code /gestione/imposta-password?t=…} renders the
+ * back-office home (section cards, «Impostazioni» for ADMIN) for a staff session; {@code /gestione/imposta-password?t=…} renders the
  * set-password form on {@code GET} and consumes the link on {@code POST}. The login itself is
  * Spring Security's form login on {@code POST /gestione/login} (see {@link AuthChainContributor}).
  * Minimal templates, restyled with the layout in stage 5.
@@ -39,6 +40,7 @@ public class StaffController {
             Model model) {
         if (SessionLimitsFilter.isAuthenticated(authentication) && SessionLimitsFilter.isStaff(authentication)) {
             model.addAttribute("displayName", displayName(authentication));
+            model.addAttribute("isAdmin", isAdmin(authentication));
             return "auth/staff-home";
         }
         model.addAttribute("loginError", error != null);
@@ -90,6 +92,10 @@ public class StaffController {
         model.addAttribute("token", token);
         model.addAttribute("errorKey", errorKey);
         return "auth/staff-set-password";
+    }
+
+    private static boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream().anyMatch(a -> Authorities.ROLE_ADMIN.equals(a.getAuthority()));
     }
 
     private static String displayName(Authentication authentication) {

@@ -13,14 +13,22 @@ import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import it.logisticasanchez.web.tracking.TrackingState;
+import jakarta.persistence.criteria.Predicate;
 import java.math.BigDecimal;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -156,6 +164,94 @@ public class OrderService {
     @Transactional(readOnly = true)
     public Optional<OrderView> find(long orderId) {
         return orders.findById(orderId).map(this::view);
+    }
+
+    /**
+     * ADM-05: the back-office list, newest first, paginated server-side, with the optional
+     * filters of {@link OrderSearch}; the date range is inclusive in Europe/Rome days.
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderView> search(OrderSearch search, int page, int size) {
+        Specification<ShipmentOrder> spec = (root, query, cb) -> {
+            List<Predicate> where = new ArrayList<>();
+            if (search.status() != null) {
+                where.add(cb.equal(root.get("status"), search.status()));
+            }
+            if (search.trackingStateId() != null) {
+                where.add(cb.equal(
+                        root.get("trackingStateId"), search.trackingStateId().shortValue()));
+            }
+            if (search.customerId() != null) {
+                where.add(cb.equal(root.get("customerId"), search.customerId()));
+            }
+            if (search.from() != null) {
+                where.add(cb.greaterThanOrEqualTo(root.get("submittedAt"), startOfDay(search.from())));
+            }
+            if (search.to() != null) {
+                where.add(cb.lessThan(
+                        root.get("submittedAt"), startOfDay(search.to().plusDays(1))));
+            }
+            String code = ItalianFormats.trim(search.code()).toLowerCase(Locale.ROOT);
+            if (!code.isEmpty()) {
+                String like =
+                        "%" + code.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                where.add(cb.or(
+                        cb.like(cb.lower(root.get("code")), like, '\\'),
+                        cb.like(cb.lower(root.get("tempCode")), like, '\\')));
+            }
+            return cb.and(where.toArray(Predicate[]::new));
+        };
+        Pageable pageable =
+                PageRequest.of(Math.max(0, page), size, Sort.by(Sort.Order.desc("submittedAt"), Sort.Order.desc("id")));
+        return orders.findAll(spec, pageable).map(this::view);
+    }
+
+    /** The approved order with this definitive code (trimmed, ignoring case): the tracking page (ADM-06). */
+    @Transactional(readOnly = true)
+    public Optional<OrderView> findApprovedByCode(String code) {
+        String key = ItalianFormats.trim(code).toLowerCase(Locale.ROOT);
+        return key.isEmpty() ? Optional.empty() : orders.findApprovedByCode(key).map(this::view);
+    }
+
+    /**
+     * ADM-09: the approved orders of one customer submitted between {@code from} and {@code to}
+     * (inclusive, Europe/Rome days), optionally only the delivered ones, oldest first. Never
+     * another customer's order.
+     */
+    @Transactional(readOnly = true)
+    public List<OrderView> approvedForReport(long customerId, LocalDate from, LocalDate to, boolean onlyDelivered) {
+        Specification<ShipmentOrder> spec = (root, query, cb) -> {
+            List<Predicate> where = new ArrayList<>();
+            where.add(cb.equal(root.get("customerId"), customerId));
+            where.add(cb.equal(root.get("status"), OrderStatus.APPROVED));
+            where.add(cb.greaterThanOrEqualTo(root.get("submittedAt"), startOfDay(from)));
+            where.add(cb.lessThan(root.get("submittedAt"), startOfDay(to.plusDays(1))));
+            if (onlyDelivered) {
+                where.add(cb.equal(root.get("trackingStateId"), TrackingState.CONSEGNATO));
+            }
+            return cb.and(where.toArray(Predicate[]::new));
+        };
+        return orders.findAll(spec, Sort.by(Sort.Order.asc("submittedAt"), Sort.Order.asc("id"))).stream()
+                .map(this::view)
+                .toList();
+    }
+
+    /** Erasure (NFR-03): removes the staff notes of every order of the customer (the orders stay with their snapshots). */
+    @Transactional
+    public int eraseInternalNotes(long customerId) {
+        return notes.deleteByCustomerId(customerId);
+    }
+
+    /** Every order of a customer, oldest first (the export tool, NFR-03). */
+    @Transactional(readOnly = true)
+    public List<OrderView> allForCustomer(long customerId) {
+        return orders.findByCustomerIdOrderByIdAsc(customerId).stream()
+                .map(this::view)
+                .toList();
+    }
+
+    private static Instant startOfDay(LocalDate day) {
+        return day.atStartOfDay(ItalianFormats.ROME).toInstant();
     }
 
     /** ADM-04: the orders waiting for approval, oldest first. */

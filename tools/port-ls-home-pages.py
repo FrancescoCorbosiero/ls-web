@@ -79,6 +79,56 @@ def port_jsonld(script: str) -> str:
     return script.replace('<script type="application/ld+json">', '<script type="application/ld+json" th:inline="text">', 1)
 
 
+# Texts added to two legal pages for the customer area and the back office (NFR-03, chapter
+# 10 §5; plain text for the owner's review at the next gate). Each entry: page key →
+# [(anchor, html inserted before the anchor)]. The same additions are applied by the port, so
+# --check stays meaningful for these pages too. Each addition is wrapped in
+# <!-- ls-web:addition --> … <!-- /ls-web:addition --> so that SitePagesIT can compare the rest
+# of <main> with the legacy page (PUB-01 allow-list, ADR 0012).
+ADDITIONS = {
+    "privacy": [
+        (
+            '<li><strong>Dati di navigazione</strong>:',
+            "<li><strong>Dati dell'area clienti</strong>, se ti registri per inviare ordini: ragione sociale o nominativo, "
+            "indirizzo, telefono, email, partita IVA o codice fiscale, i dati delle spedizioni che inserisci "
+            "(destinatari, merce, pesi e misure, documenti di trasporto, note) e i registri degli accessi "
+            "(data, ora e indirizzo IP in forma cifrata). L'accesso avviene con un link inviato alla tua email, senza password.</li>\n",
+        ),
+        (
+            '<li><strong>Netlify, Inc.</strong>',
+            "<li><strong>Il fornitore che ospita l'applicazione e il database</strong> (sito, area clienti e gestione), "
+            "in qualit\u00e0 di responsabile del trattamento.</li>\n",
+        ),
+        (
+            '<li>Dati di navigazione: per il periodo di conservazione dei log del fornitore di hosting.</li>',
+            "<li>Dati dell'area clienti: account e dati di registrazione per la durata del rapporto; ordini e spedizioni "
+            "per il tempo previsto dalla legge (di norma 10 anni); link di accesso al massimo 24 ore; copia delle email "
+            "inviate 30 giorni; registri di sicurezza 30 giorni.</li>\n",
+        ),
+        (
+            '<p>Se ritieni che il trattamento violi la normativa',
+            "<p>Per i dati dell'area clienti puoi chiedere all'ufficio una copia completa dei tuoi dati o la loro cancellazione: "
+            "la cancellazione avviene anonimizzando i dati che ti riguardano, salvo quelli degli ordini che dobbiamo conservare per legge.</p>\n",
+        ),
+    ],
+    "cookie": [
+        (
+            '<h2 id="terze-parti">',
+            '<h2 id="area-clienti">Cookie tecnici dell\'area clienti e della gestione</h2>\n'
+            "<p>Le pagine pubbliche non usano cookie. Quando accedi all'area clienti o alla gestione, il sito imposta un solo "
+            "cookie tecnico, necessario per riconoscerti da una pagina all'altra: non richiede consenso (art. 122 Codice privacy).</p>\n"
+            '<div class="table-wrap"><table class="table">\n'
+            '<caption class="visually-hidden">Cookie dell\'area clienti</caption>\n'
+            '<thead><tr><th scope="col">Nome</th><th scope="col">A cosa serve</th><th scope="col">Durata</th></tr></thead>\n'
+            "<tbody>\n"
+            '<tr><th scope="row"><code>__Host-LS_SESSION</code></th><td>Mantiene la sessione dopo l\'accesso e protegge i moduli da invii non autorizzati</td>'
+            "<td>Fino all'uscita o dopo un periodo di inattivit\u00e0; al massimo alcune ore</td></tr>\n"
+            "</tbody></table></div>\n\n",
+        ),
+    ],
+}
+
+
 def port(html: str, page_key: str, error_page: bool) -> str:
     html = html.replace('<!doctype html>\n<html lang="it">', '<!DOCTYPE html>\n<html lang="it" xmlns:th="http://www.thymeleaf.org">', 1)
     if error_page:
@@ -114,6 +164,15 @@ def port(html: str, page_key: str, error_page: bool) -> str:
                   r'href="/area-clienti/"\1Area clienti<', html)
     if PORTAL in html:
         raise SystemExit(f"{page_key}: an order-portal link survived the port")
+    return add_texts(html, page_key)
+
+
+def add_texts(html: str, page_key: str) -> str:
+    """Inserts the ADDITIONS of a page before their anchors (each anchor must exist exactly once)."""
+    for anchor, text in ADDITIONS.get(page_key, []):
+        if html.count(anchor) != 1:
+            raise SystemExit(f"{page_key}: anchor not found once: {anchor}")
+        html = html.replace(anchor, "<!-- ls-web:addition -->" + text + "<!-- /ls-web:addition -->" + anchor)
     return html
 
 

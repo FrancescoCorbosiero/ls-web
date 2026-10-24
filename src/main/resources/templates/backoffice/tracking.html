@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!-- «Imposta tracking» by code (ADM-06; chapter 04 §4.6 as a page, ADR 0008: approved orders only, current state preselected). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.tracking.title} + ' · ' + #{layout.private.backoffice}">Tracking · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <th:block th:replace="~{backoffice/layout :: nav('tracking')}"></th:block>
+    <h1 th:text="#{backoffice.tracking.title}">Imposta tracking</h1>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <form method="get" th:action="@{/gestione/tracking/}" class="input-group mb-m" role="search">
+      <label class="visually-hidden" for="codice" th:text="#{backoffice.tracking.code}">Codice spedizione</label>
+      <input class="input" id="codice" name="codice" type="search" maxlength="64" required th:value="${codice}" th:placeholder="#{backoffice.tracking.code}">
+      <button type="submit" class="btn btn-secondary" th:text="#{backoffice.search}">Cerca</button>
+    </form>
+    <p class="callout" role="status" th:if="${notFound}" data-not-found th:text="#{backoffice.tracking.notFound}">Nessun ordine approvato con questo codice.</p>
+    <section class="card" th:if="${order != null}" data-order th:attr="data-order=${order.code}">
+      <h2 th:text="${order.code}">Codice</h2>
+      <dl>
+        <dt th:text="#{backoffice.orders.col.customer}">Cliente mittente</dt><dd th:text="${order.sender.name}">-</dd>
+        <dt th:text="#{orders.col.recipient}">Destinatario</dt><dd th:text="${order.recipient.name} + ', ' + ${order.recipient.city}">-</dd>
+        <dt th:text="#{backoffice.tracking.current}">Stato attuale</dt><dd data-current th:text="${order.trackingLabel}">-</dd>
+      </dl>
+      <form method="post" th:action="@{/gestione/tracking/}" class="form-grid">
+        <input type="hidden" name="codice" th:value="${order.code}">
+        <div class="field">
+          <label class="label" for="stato" th:text="#{backoffice.tracking.state}">Nuovo stato</label>
+          <select class="select" id="stato" name="stato">
+            <option th:each="s : ${states}" th:value="${s.id()}" th:selected="${s.id() == order.trackingStateId}" th:text="${s.label()}">Presa in carico</option>
+          </select>
+        </div>
+        <p class="actions">
+          <button type="submit" class="btn btn-primary" th:text="#{backoffice.tracking.set}">Imposta stato</button>
+          <a class="btn btn-ghost" th:href="@{/gestione/ordini/{id}/(id=${order.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a>
+        </p>
+      </form>
+    </section>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

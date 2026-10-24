@@ -1,6 +1,8 @@
 package it.logisticasanchez.web.notifications;
 
 import java.time.Clock;
+import java.time.Instant;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,5 +33,19 @@ public class OutboxNotificationService implements NotificationService {
                     cipher.encrypt(message.tokenLink().rawToken()));
         }
         return outbox.save(row).getId();
+    }
+
+    @Override
+    @Transactional
+    public int eraseRecipient(String email, String placeholder) {
+        String normalised = email.trim().toLowerCase(Locale.ROOT);
+        Instant now = clock.instant();
+        int touched = 0;
+        String like = "%" + normalised.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+        for (EmailOutbox row : outbox.findByAddress(normalised, like)) {
+            row.erase(normalised, placeholder, now);
+            touched++;
+        }
+        return touched;
     }
 }

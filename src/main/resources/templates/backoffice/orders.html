@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!--
+  «Ordini» (ADM-05; chapter 04 §3.5 columns; fixes CMS-26: server-side pagination, filters by state,
+  tracking state, customer and submission dates, search by code; no six-month window). The row
+  fragments orderColumns/orderCells are shared with orders-pending.html.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.orders.title} + ' · ' + #{layout.private.backoffice}">Ordini · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{backoffice/layout :: nav('orders')}"></th:block>
+    <h1 th:text="#{backoffice.orders.title}">Ordini registrati</h1>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <form method="get" th:action="@{/gestione/ordini/}" class="form-grid cols-2 card mb-m" data-filters>
+      <div class="field">
+        <label class="label" for="codice" th:text="#{backoffice.orders.filter.code}">Codice</label>
+        <input class="input" id="codice" name="codice" type="search" maxlength="64" th:value="${filters['codice']}">
+      </div>
+      <div class="field">
+        <label class="label" for="stato" th:text="#{backoffice.orders.filter.status}">Stato</label>
+        <select class="select" id="stato" name="stato">
+          <option value="" th:selected="${filters['stato'] == ''}" th:text="#{backoffice.filter.all}">Tutti</option>
+          <option th:each="s : ${statuses}" th:value="${s.name()}" th:selected="${filters['stato'] == s.name()}" th:text="#{'orders.status.' + ${s.name()}}">Confermato</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="tracking" th:text="#{backoffice.orders.filter.tracking}">Tracking</label>
+        <select class="select" id="tracking" name="tracking">
+          <option value="" th:selected="${filters['tracking'] == ''}" th:text="#{backoffice.filter.all}">Tutti</option>
+          <option th:each="s : ${states}" th:value="${s.id()}" th:selected="${filters['tracking'] == #strings.toString(s.id())}" th:text="${s.label()}">Presa in carico</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="cliente" th:text="#{backoffice.orders.filter.customer}">Cliente</label>
+        <select class="select" id="cliente" name="cliente">
+          <option value="" th:selected="${filters['cliente'] == ''}" th:text="#{backoffice.filter.all}">Tutti</option>
+          <option th:each="c : ${customers}" th:value="${c.id}" th:selected="${filters['cliente'] == #strings.toString(c.id)}" th:text="${c.companyName} + ' – ' + ${c.email}">Ditta</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="da" th:text="#{backoffice.orders.filter.from}">Inviati dal</label>
+        <input class="input" id="da" name="da" type="date" th:value="${filters['da']}">
+      </div>
+      <div class="field">
+        <label class="label" for="a" th:text="#{backoffice.orders.filter.to}">al</label>
+        <input class="input" id="a" name="a" type="date" th:value="${filters['a']}">
+      </div>
+      <p class="actions span-2">
+        <button type="submit" class="btn btn-secondary" th:text="#{backoffice.filter.apply}">Filtra</button>
+        <a class="btn btn-ghost" href="/gestione/ordini/" th:text="#{backoffice.filter.reset}">Azzera i filtri</a>
+      </p>
+    </form>
+    <th:block th:replace="~{backoffice/layout :: pageInfo(${page})}"></th:block>
+    <p class="muted" th:if="${page.totalElements == 0}" th:text="#{backoffice.orders.empty}">Nessun ordine registrato</p>
+    <div class="table-wrap" th:if="${page.totalElements > 0}">
+      <table class="table" data-table="orders">
+        <thead>
+          <tr th:fragment="orderColumns">
+            <th scope="col" th:text="#{backoffice.orders.col.id}">ID</th>
+            <th scope="col" th:text="#{backoffice.orders.col.code}">Codice</th>
+            <th scope="col" th:text="#{backoffice.orders.col.customer}">Cliente mittente</th>
+            <th scope="col" th:text="#{backoffice.orders.col.transportDocument}">Codice Doc. Trasporto</th>
+            <th scope="col" th:text="#{backoffice.orders.col.recipient}">Destinatario</th>
+            <th scope="col" th:text="#{backoffice.orders.col.address}">Indirizzo</th>
+            <th scope="col" th:text="#{backoffice.orders.col.city}">Città (Prov)</th>
+            <th scope="col" th:text="#{backoffice.orders.col.postalCode}">Cap</th>
+            <th scope="col" th:text="#{backoffice.orders.col.phone}">Telefono</th>
+            <th scope="col" th:text="#{backoffice.orders.col.amount}">Importo</th>
+            <th scope="col" th:text="#{backoffice.orders.col.service}">Ser. Accessorio</th>
+            <th scope="col" th:text="#{backoffice.orders.col.status}">Stato</th>
+            <th scope="col" th:text="#{backoffice.orders.col.tracking}">Tracking</th>
+            <th scope="col" th:text="#{backoffice.col.actions}">Azioni</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr th:each="o : ${page.content}" th:attr="data-order=${o.displayCode()}">
+            <th:block th:fragment="orderCells(o)">
+              <td th:text="${o.id}">1</td>
+              <td><a th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.codeOrDash()}">-</a></td>
+              <td><a th:href="@{/gestione/clienti/{id}/(id=${o.customerId})}" th:text="${o.sender.name}">Mittente</a></td>
+              <td th:text="${o.transportDocumentCode ?: '-'}">-</td>
+              <td th:text="${o.recipient.name}">Destinatario</td>
+              <td th:text="${o.recipient.addressLine}">Via</td>
+              <td th:text="${o.recipient.city} + ' (' + ${o.recipient.province} + ')'">Città (Prov)</td>
+              <td th:text="${o.recipient.postalCode}">Cap</td>
+              <td th:text="${o.recipient.phone ?: '-'}">-</td>
+              <td th:text="${o.amountText()}">-</td>
+              <td th:text="${o.accessoryServiceLabel}">-</td>
+              <td th:text="#{'orders.status.' + ${o.status.name()}}">Stato</td>
+              <td th:text="${o.status.name() == 'APPROVED'} ? ${o.trackingLabel} : '-'">-</td>
+            </th:block>
+            <td class="nowrap">
+              <a class="btn btn-secondary btn-sm" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a>
+              <a class="btn btn-ghost btn-sm" th:if="${o.status.name() == 'APPROVED'}" th:href="@{/gestione/ordini/{id}/(id=${o.id}, _='tracking')} + '#tracking'" th:text="#{backoffice.orders.setTracking}">Imposta tracking</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <nav class="actions" th:if="${page.totalPages > 1}" th:aria-label="#{backoffice.pager.label}">
+      <a class="btn btn-secondary btn-sm" th:if="${page.hasPrevious()}" th:href="@{/gestione/ordini/(stato=${filters['stato']}, tracking=${filters['tracking']}, cliente=${filters['cliente']}, da=${filters['da']}, a=${filters['a']}, codice=${filters['codice']}, pagina=${page.number})}" th:text="#{backoffice.pager.previous}">Precedente</a>
+      <a class="btn btn-secondary btn-sm" th:if="${page.hasNext()}" th:href="@{/gestione/ordini/(stato=${filters['stato']}, tracking=${filters['tracking']}, cliente=${filters['cliente']}, da=${filters['da']}, a=${filters['a']}, codice=${filters['codice']}, pagina=${page.number + 2})}" th:text="#{backoffice.pager.next}">Successiva</a>
+    </nav>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

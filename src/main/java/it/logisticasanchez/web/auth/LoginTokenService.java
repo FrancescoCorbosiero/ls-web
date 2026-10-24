@@ -74,6 +74,12 @@ public class LoginTokenService {
         return token;
     }
 
+    /** Erasure (NFR-03): deletes every link of a customer user and the REGISTER links of an e-mail hash. */
+    @Transactional
+    public int deleteAll(long customerUserId, String emailHash) {
+        return tokens.deleteByCustomerUserId(customerUserId) + tokens.deleteByEmailHash(emailHash);
+    }
+
     public Duration validity(LoginTokenPurpose purpose) {
         SecurityProperties.Tokens lifetimes = security.tokens();
         return switch (purpose) {

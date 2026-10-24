@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<!--
+  Fragments shared by the back-office pages (ADR 0017): the section navigation of chapter 10 §2
+  («In Approvazione», «Registrati», «Ordini», «Tracking», «Report», «Impostazioni» for ADMIN), the
+  flash message after an action, the row-count line. Pages include layout/private for head,
+  header and footer. Model attribute `staff` (StaffSession) comes from BackofficeModelAttributes.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head><title>fragments</title></head>
+<body>
+
+<nav class="breadcrumbs mb-m" th:fragment="nav(active)" th:aria-label="#{backoffice.nav.label}">
+  <a href="/gestione/" th:attr="aria-current=${active == 'home' ? 'page' : null}" th:text="#{backoffice.nav.home}">Gestione</a>
+  <a href="/gestione/clienti/in-approvazione/" th:attr="aria-current=${active == 'customersPending' ? 'page' : null}" th:text="#{backoffice.nav.customersPending}">In Approvazione</a>
+  <a href="/gestione/clienti/" th:attr="aria-current=${active == 'customers' ? 'page' : null}" th:text="#{backoffice.nav.customers}">Registrati</a>
+  <a href="/gestione/ordini/in-approvazione/" th:attr="aria-current=${active == 'ordersPending' ? 'page' : null}" th:text="#{backoffice.nav.ordersPending}">Ordini da approvare</a>
+  <a href="/gestione/ordini/" th:attr="aria-current=${active == 'orders' ? 'page' : null}" th:text="#{backoffice.nav.orders}">Ordini</a>
+  <a href="/gestione/tracking/" th:attr="aria-current=${active == 'tracking' ? 'page' : null}" th:text="#{backoffice.nav.tracking}">Tracking</a>
+  <a href="/gestione/report/" th:attr="aria-current=${active == 'reports' ? 'page' : null}" th:text="#{backoffice.nav.reports}">Report</a>
+  <a href="/gestione/impostazioni/" th:if="${staff.admin}" th:attr="aria-current=${active == 'settings' ? 'page' : null}" th:text="#{backoffice.nav.settings}">Impostazioni</a>
+</nav>
+
+<th:block th:fragment="flash">
+  <p class="callout callout-info" role="status" th:if="${flash != null}" data-flash th:text="${flash}">Fatto.</p>
+</th:block>
+
+<p class="callout" role="alert" th:fragment="error(message)" th:if="${message != null}" data-error th:text="${message}">Errore</p>
+
+<th:block th:fragment="pageInfo(page)">
+  <p class="muted" th:if="${page.totalElements == 0}" th:text="#{backoffice.list.none}">Nessun risultato.</p>
+  <p class="muted" th:if="${page.totalElements > 0}" th:text="#{backoffice.list.count(${page.totalElements}, ${page.number + 1}, ${page.totalPages})}">Risultati</p>
+</th:block>
+
+</body>
+</html>

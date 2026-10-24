@@ -2,6 +2,7 @@ package it.logisticasanchez.web.auth;
 
 import it.logisticasanchez.web.notifications.NotificationService;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.beans.factory.ObjectProvider;
@@ -47,6 +48,31 @@ public class CustomerAccountService {
         this.notifications = notifications;
         this.mails = mails;
         this.listeners = listeners;
+    }
+
+    /**
+     * Erasure (NFR-03, ADR 0024): every login identity of the customer gets the placeholder
+     * address and is disabled, its one-time links are deleted (the outbox rows that carried them
+     * were detached first) and its live sessions end. Returns the addresses that were replaced.
+     */
+    @Transactional
+    public List<String> anonymise(long customerId, String placeholderEmail) {
+        List<String> replaced = new ArrayList<>();
+        Instant now = Instant.now();
+        for (CustomerUser user : users.findByCustomerId(customerId)) {
+            replaced.add(user.getEmail());
+            tokens.deleteAll(user.getId(), emailHasher.hash(user.getEmail()));
+            if (user.getPendingEmail() != null) {
+                tokens.deleteAll(user.getId(), emailHasher.hash(user.getPendingEmail()));
+            }
+            user.setEmail(placeholderEmail);
+            user.setPendingEmail(null);
+            if (user.getDisabledAt() == null) {
+                user.setDisabledAt(now);
+            }
+            sessions.endAllSessions(user.getId());
+        }
+        return replaced;
     }
 
     /** A login identity as other modules see it. */

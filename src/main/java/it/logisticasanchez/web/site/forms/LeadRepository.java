@@ -4,6 +4,8 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -71,5 +73,39 @@ public class LeadRepository {
                 .param("retainUntil", retainUntil, Types.DATE)
                 .update(keys, "id");
         return keys.getKeyAs(Long.class);
+    }
+
+    /**
+     * Anonymises the rows that match {@code where} (NFR-03, Q-18): every personal column becomes
+     * a placeholder (the e-mail {@code lead-<id>@anonimizzato.invalid}), the payload an empty
+     * object, the IP hash and user agent null; the form, dates and status stay for statistics.
+     */
+    private int anonymise(String where, Object... params) {
+        return jdbc.sql("UPDATE lead SET name = '-', company = NULL, email = 'lead-' || id || '@anonimizzato.invalid',"
+                        + " phone = CASE WHEN form = 'PREVENTIVO' THEN '-' ELSE NULL END, subject = NULL, message = NULL,"
+                        + " goods_description = NULL, payload = '{}'::jsonb, ip_hash = NULL, user_agent = NULL"
+                        + " WHERE email NOT LIKE '%@anonimizzato.invalid' AND " + where)
+                .params(params)
+                .update();
+    }
+
+    /** Erasure on request (NFR-03): every lead sent with this (normalised) e-mail. */
+    public int anonymiseByEmail(String email) {
+        return anonymise("lower(email) = ?", email);
+    }
+
+    /** Retention (Q-18): every lead past its {@code retain_until}. */
+    public int anonymiseExpired(LocalDate today) {
+        return anonymise("retain_until < ?", today);
+    }
+
+    /** The leads of an e-mail as the export tool lists them (NFR-03): form, date, name, subject or message. */
+    public List<Map<String, Object>> exportByEmail(String email) {
+        return jdbc.sql(
+                        "SELECT id, form, status, created_at, name, company, phone, subject, message, payload::text AS payload"
+                                + " FROM lead WHERE lower(email) = ? ORDER BY id")
+                .param(email)
+                .query()
+                .listOfRows();
     }
 }

@@ -1233,3 +1233,191 @@ SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.ac
 * `CLAUDE.md` Commands: the `dev-seed` line now mentions the four customers and the four orders.
 * Still open from earlier stages: confidential-figure guard, local gitleaks, `/e2e` Dependabot
   entry, Q-55 wording trim, ADR 0015 EML-S1 line, `docs/plan.md` §4.1 items of steps 5 and B1.
+
+## Step B3 — Back office, reports and privacy tools (2026-10-24)
+
+The working tree was clean at the start (nothing left by an interrupted attempt). The step adds
+the `backoffice` module (every `/gestione/**` screen over the services of step B2), the
+`reports` module (ADM-09, EML-07) and a small `privacy` module (NFR-03), plus the two retention
+jobs that were still open.
+
+### What was built
+
+* **V012** `report_recipient` (the ADMIN allow-list of extra report recipients, normalised
+  e-mail, unique) and `customer.anonymised_at` (the erasure mark). `expected-columns.txt`,
+  `expected-constraints.txt`, `SchemaConformanceIT`, `MigrationsIT` and `ApplicationContextIT`
+  count twelve migrations.
+* **`backoffice` module** (`it.logisticasanchez.web.backoffice`; ADR 0017): `BackofficeRoutes`,
+  `BackofficeRouteContributor` (staff routes; `impostazioni/**` ADMIN), `StaffSession` (name and
+  role for pages, id for actions), `BackofficeModelAttributes` (`staff` in every template), four
+  controllers and sixteen templates under `templates/backoffice/`:
+  * `BackofficeCustomersController` — «In Approvazione» (`clienti/in-approvazione/`: the nine
+    legacy columns, «Email confermata» SI/NO, «Nessun utente da approvare»), approve and decline
+    behind a named confirmation page («Sei sicuro di voler procedere?», optional reason sent in
+    EML-03), «Registrati» (`clienti/`: newest first, search on name/e-mail/city, 25 per page), the
+    customer page (`clienti/{id}/`: data and its orders);
+  * `BackofficeOrdersController` — «Ordini da approvare» (`ordini/in-approvazione/`: the 13
+    legacy columns, temporary codes shown as «-»), «Approva ordine» (`ordini/{id}/approva`:
+    «Codice», «Importo Totale (per cliente)» with the Italian comma; a duplicate code or a bad
+    amount is shown on the form with the typed values kept), decline (`ordini/{id}/rifiuta`),
+    «Ordini» (`ordini/`: server-side pagination, filters state/tracking/customer/inclusive dates
+    in Europe/Rome, search by code or temporary code, default state `APPROVED`), the detail
+    (`ordini/{id}/`: «Dettaglio Spedizione», «Dettaglio Colli», «Pallets» with one row per line
+    and its quantity, sender linked to its customer page, the tracking form with the current
+    state preselected and the history, «Aggiorna note» with the customer's note read-only
+    beside), «Imposta tracking» by code (`tracking/`);
+  * `BackofficeReportsController` — «Report» (`report/`: customer, inclusive dates defaulting to
+    the current month, «Solo ordini consegnati», «Invia anche al cliente», extra addresses,
+    «Invia Report»; flash «Report inviato correttamente: N ordini» with the download link; the
+    last twenty runs);
+  * `BackofficeSettingsController` (ADMIN) — `impostazioni/` (the 25 M2 flags with one form each,
+    all off; the report recipients allow-list, add/remove), `impostazioni/utenti/` (the staff
+    accounts and the creation form: the set-password link goes by e-mail, EML-S1; duplicate
+    username or e-mail refused on the form), `impostazioni/privacy/` (look an address up, export
+    as JSON, anonymise behind a confirmation).
+  * The home (`auth/staff-home.html`, still served by `StaffController`) shows the sections as
+    cards, «Impostazioni» for ADMIN only; every page shows the section navigation. Every staff
+    action writes `audit_log` through the domain services (ids only; addresses and note texts in
+    `audit_log_detail`). Message keys `backoffice.*` (180) in `messages_it.properties`.
+* **Domain additions the screens needed**: `CustomerService.search` (JPQL, live customers only),
+  `listAll`, `anonymise`, `pendingApproval` honouring `ls.backoffice.show-unverified-customers`
+  (PD-06); `CustomerView.emailVerified()/anonymised()`; `OrderService.search(OrderSearch, page,
+  size)` (JPA `Specification`, newest first), `findApprovedByCode`, `approvedForReport`,
+  `eraseInternalNotes`, `allForCustomer`; `OrderSearch` record; `StaffAccountService.listAll`,
+  `EmailTakenException`; `StaffPrincipal` public with `require()` and `isAdmin()`.
+* **`reports` module** (`it.logisticasanchez.web.reports`; ADR 0016): `ReportRun` (V007 row,
+  `text[]` recipients), `ReportRecipient` + `ReportRecipientService` (office always allowed,
+  ADMIN rows, `ls.reports.recipients.allow-list` as a configured seed; add/remove audited with the
+  address in the detail), `ReportPeriod` (inclusive, Europe/Rome, `from ≤ to`, not in the
+  future), `ReportService.request` (one customer's approved orders by submission date, optional
+  `CONSEGNATO` only; recipients = office + customer if chosen (Q-08 seam
+  `ls.reports.customer-can-receive`) + allow-listed extras, otherwise the whole request is
+  refused; `report_run` row; one EML-07 per recipient; audit `report.send`),
+  `pdfForStaff`/`pdfForCustomer` (regenerated at each download; another customer → 403),
+  `ReportPdf` (OpenPDF 3.0.5, A4 landscape, «I tuoi dati» block, the 13 legacy headers verbatim,
+  «-» for missing values, Italian numbers, «Dt/Cons.» = delivery date or «-», no partner header),
+  `ReportMails` (EML-07 «Report ordini PDF», «Date di riferimento», «Scarica PDF» → the staff or
+  the customer download), `ReportDownloadController` (`GET /gestione/report/{id}/download`,
+  `GET /area-clienti/report/{id}/download`), `ReportsRouteContributor`.
+* **`privacy` module** (`it.logisticasanchez.web.privacy`; ADR 0024): `PrivacyService.lookup`,
+  `export` (JSON: customer, login identity, orders with snapshots and lines, leads) and
+  `anonymise` (customer placeholders + DECLINED + `anonymised_at`; login identities disabled and
+  renamed, links deleted, sessions ended — `CustomerAccountService.anonymise`; outbox rows
+  addressed to, replying to or mentioning the address lose bodies and token, queued ones become
+  FAILED — `NotificationService.eraseRecipient`; staff notes deleted; leads anonymised —
+  `LeadService.anonymiseByEmail`; `report_run.recipients` rewritten — `ReportService.eraseRecipient`;
+  `audit_log_detail` rows about the customer, its orders, its login or mentioning the address
+  deleted in a maintenance transaction — `AuditService.deletePersonalDetails[Mentioning]`);
+  orders stay with their snapshots. Both tools ADMIN-only (`@PreAuthorize`) and audited.
+* **Retention jobs**: `LeadRetentionJob` (`site`: leads past `retain_until` anonymised, SQL in
+  `LeadRepository`), `OutboxBodiesRetentionJob` (`notifications`: bodies and token purged
+  `ls.retention.outbox-bodies-days` after delivery, in batches); registered with the platform
+  `RetentionRunner` by being beans.
+* **Legal pages**: `/privacy/` (customer-area data, the hosting provider as processor, the
+  retention periods of the customer area, the export/erasure sentence) and `/cookie/` (the
+  single technical cookie `__Host-LS_SESSION` of the private areas) gain plain-text sections,
+  applied by `tools/port-ls-home-pages.py` (`ADDITIONS`, wrapped in `<!-- ls-web:addition -->`
+  markers that `SitePagesIT` leaves out of the comparison; `--check` is still clean).
+* **Tests** (every one tagged): `ReportPeriodTest` (unit); `BackofficeCustomersIT` (ADM-02,
+  ADM-03, EML-03), `BackofficeOrdersIT` (ADM-04…ADM-08, EML-09: > 1 page of orders, filters,
+  search, tracking from the row and by code, EML-09 once, notes, detail sections),
+  `BackofficeSettingsIT` (ADM-01, ADM-09, NFR-02: OPERATOR 403, flag toggle with audit,
+  allow-list, staff creation with EML-S1), `ReportIT` (ADM-09, EML-07: A holds no order of B,
+  only delivered, refused recipient, downloads per session, PDF headers and A4 landscape, the
+  page), `PrivacyIT` (NFR-03: export, anonymisation scanned over every text column of every
+  table — only `shipment_order.sender_email`/`sender_name` survive —, retention jobs);
+  `EnumerationSeedIT` already covers ADM-10. `route-matrix.tsv` gained 32 lines; the id-bound
+  staff routes accept `404|200` because the sample id `1` may exist in a shared database.
+  `./mvnw -B -ntp verify` green on the local PostgreSQL: 177 unit + 376 integration tests, none
+  skipped, Spotless clean; the packaged jar was smoke-tested (dev-seed, admin and operator login,
+  every back-office page, note, tracking, report with its two EML-07 rows and the PDF download,
+  flag on/off, privacy lookup, operator 403 on `/gestione/impostazioni/`).
+
+### How to run it
+
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp verify
+python3 tools/port-ls-home-pages.py --check          # templates (with the legal-page additions) equal a fresh port
+./mvnw -B -ntp -DskipTests package
+java -jar target/ls-web-0.1.0-SNAPSHOT.jar dev-seed --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+# http://localhost:8080/gestione/ → admin.seed (password printed by dev-seed) → the home cards
+#   /gestione/clienti/in-approvazione/ (cliente.in-attesa: Approva → confirmation → EML-03 in .local/mail)
+#   /gestione/ordini/in-approvazione/ (TEMP order of cliente.attivo: Approva ordine → codice + importo)
+#   /gestione/ordini/ (filters, search by code), /gestione/ordini/{id}/ (detail, tracking, note)
+#   /gestione/tracking/?codice=TEST-0002, /gestione/report/ (Invia Report → EML-07 → /gestione/report/{id}/download)
+#   /gestione/impostazioni/ (flags, destinatari), /gestione/impostazioni/utenti/, /gestione/impostazioni/privacy/
+# operatore.seed sees everything but /gestione/impostazioni/** (403)
+```
+
+### Routes added (all in `route-matrix.tsv`)
+
+Staff (ADMIN or OPERATOR): `GET /gestione/clienti/`, `…/clienti/in-approvazione/`,
+`…/clienti/{id}/`, `GET|POST …/clienti/{id}/approva`, `…/clienti/{id}/rifiuta`,
+`GET /gestione/ordini/`, `…/ordini/in-approvazione/`, `…/ordini/{id}/`,
+`GET|POST …/ordini/{id}/approva`, `…/ordini/{id}/rifiuta`, `POST …/ordini/{id}/tracking`,
+`…/ordini/{id}/note`, `GET|POST /gestione/tracking/`, `GET|POST /gestione/report/`,
+`GET /gestione/report/{id}/download`. ADMIN: `GET /gestione/impostazioni/`,
+`POST …/impostazioni/flag`, `…/impostazioni/destinatari`, `…/impostazioni/destinatari/{id}/rimuovi`,
+`GET|POST …/impostazioni/utenti/`, `GET …/impostazioni/privacy/`, `POST …/privacy/cerca`,
+`…/privacy/esporta`, `…/privacy/anonimizza`. Customer: `GET /area-clienti/report/{id}/download`.
+
+### Decisions taken
+
+* ADR 0016 (report selection, recipients, authenticated downloads, PDF differences), ADR 0017
+  (pages instead of dialogs, lists, pagination, detail, roles), ADR 0024 (export, erasure by
+  anonymisation, retention jobs, legal pages); ADR README index updated.
+* **Confirmation pages instead of dialogs** for approve/decline of customers and the decline of
+  orders (named subject, optional reason); approval of an order is its own form; no
+  confirmation on backward tracking moves in M1 (the history keeps every change).
+* **«Ordini» defaults to `APPROVED`** (the legacy «registered» list) and lets the filter choose
+  the other states; «Dt/Cons.» is the delivery date (the legacy printed something else, 12c §3.4).
+* **The report file name has no e-mail local part** (`report-ordini-{dal}_{al}.pdf`).
+* **Anonymisation placeholders** on the reserved domain `anonimizzato.invalid`; an anonymised
+  customer is `DECLINED` and never listed; the orders keep their snapshots (Q-18).
+* **`StaffPrincipal` is public** and offers `require()`; the back-office pages tolerate a plain
+  principal (name and role from the authentication) so that `RouteMatrixIT` can render them,
+  while actions need the real id (401 otherwise).
+* **New Italian texts for the owner's review**: the home cards, the nav entry «Ordini da
+  approvare», the filter and pager labels, the hints («Il codice definitivo…», «In euro, con la
+  virgola…», the notes hint, the report hints, the settings hints), the flash messages, the
+  staff-user screen, the privacy tool texts, EML-07 wording (title «Report ordini», the filter
+  sentence, «è necessario accedere con il tuo account»), the refusal texts of `ReportPeriod`,
+  `ReportService` and `ReportRecipientService`, the `/privacy/` and `/cookie/` additions
+  (including the hosting-provider sentence, deliberately generic until ADR 0022 names it).
+
+### Open points
+
+* **E2E** (`[ADM-02]`…`[ADM-09]` Playwright specs, axe on `/gestione/**`, phone-width tables)
+  belong to the E2E stage; no spec exists yet. The 14-column order tables rely on `.table-wrap`
+  horizontal scrolling on a phone (NFR-01 to verify there).
+* `report_run` rows are kept forever for now (PD-16: 24 months) and audit rows / IP hashes have
+  no retention job yet; `ls.retention.report-runs-months`, `audit-months`, `ip-hashes-days` are
+  declared seams.
+* The home has no counters (ENH-08); the «Imposta tracking» row action links to the detail's
+  tracking form; HTMX is not used.
+* `ReportService.eraseRecipient` scans every run (fine for M1 volumes); `report_run` has no
+  index on recipients.
+* `OutboxWorker` sends the EML-07 of an allow-listed address only if the staging allow-list of
+  `ls.notifications.allow-list` permits it outside production (chapter 10 §3), as for every mail.
+* The `/privacy/` hosting-provider sentence and the Netlify/SES bullets need the owner's review
+  once the infrastructure of ADR 0022 is decided (Netlify no longer processes the forms after
+  cut-over).
+* Shared files touched (integrator to confirm): `messages_it.properties` (`backoffice.*`,
+  `auth.staff.home.lead`), `auth/staff-home.html`, `route-matrix.tsv`, `expected-columns.txt`,
+  `expected-constraints.txt`, `SchemaConformanceIT`, `MigrationsIT`, `ApplicationContextIT`,
+  `SitePagesIT` (marker filter), `Sessions` (staff principal overload), `pom.xml` (OpenPDF).
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `docs/plan.md` §4.1: a `privacy` row (export/erasure orchestration, ADR 0024) — the
+  `customers` row said «export and erasure tools»; `reports` row: `report_recipient` (V012);
+  `backoffice` row: `impostazioni/utenti/` and `impostazioni/privacy/`.
+* `docs/parity-matrix.md`: ADM-02…ADM-09, EML-07, NFR-03 now have server-side tests (E2E parts
+  open); ADM-10 unchanged.
+* `CLAUDE.md` Commands: the back-office URLs after `dev-seed`.
+* Still open from earlier stages: confidential-figure guard, local gitleaks, `/e2e` Dependabot
+  entry, Q-55 wording trim, ADR 0015 EML-S1 line, `docs/plan.md` §4.1 items of steps 5, B1, B2.

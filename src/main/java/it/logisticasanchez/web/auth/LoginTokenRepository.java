@@ -22,4 +22,20 @@ public interface LoginTokenRepository extends JpaRepository<LoginToken, Long> {
                     + " and not exists (select 1 from email_outbox e where e.login_token_id = t.id)",
             nativeQuery = true)
     int deleteExpiredBefore(Instant before);
+
+    /** Erasure (NFR-03): every link of a customer user; the caller has already detached the outbox rows. */
+    @Modifying
+    @Query(
+            value = "delete from login_token t where t.customer_user_id = :customerUserId"
+                    + " and not exists (select 1 from email_outbox e where e.login_token_id = t.id)",
+            nativeQuery = true)
+    int deleteByCustomerUserId(long customerUserId);
+
+    /** Erasure (NFR-03): the REGISTER links issued to an e-mail (stored only as its HMAC). */
+    @Modifying
+    @Query(
+            value = "delete from login_token t where t.email_hash = :emailHash"
+                    + " and not exists (select 1 from email_outbox e where e.login_token_id = t.id)",
+            nativeQuery = true)
+    int deleteByEmailHash(String emailHash);
 }

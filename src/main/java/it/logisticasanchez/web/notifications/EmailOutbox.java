@@ -210,6 +210,26 @@ public class EmailOutbox {
         }
     }
 
+    /**
+     * Erasure (NFR-03): the erased address, wherever it appears (recipient, Reply-To), is
+     * replaced by the placeholder; bodies and token are removed; a row still QUEUED becomes
+     * FAILED (it would otherwise reach the erased person, and V007 requires a body on a queued row).
+     */
+    public void erase(String email, String placeholder, Instant now) {
+        if (recipient.equalsIgnoreCase(email)) {
+            this.recipient = placeholder;
+        }
+        if (replyTo != null && replyTo.equalsIgnoreCase(email)) {
+            this.replyTo = placeholder;
+        }
+        this.loginTokenId = null;
+        if (status == EmailOutboxStatus.QUEUED) {
+            this.status = EmailOutboxStatus.FAILED;
+            this.lastError = "erased";
+        }
+        purgeBodies(now);
+    }
+
     /** Retention (Q-18): removes the bodies and the token, keeps the metadata. */
     public void purgeBodies(Instant now) {
         this.bodyText = null;

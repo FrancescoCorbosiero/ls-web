@@ -20,4 +20,9 @@ public interface EmailOutboxRepository extends JpaRepository<EmailOutbox, Long> 
     List<EmailOutbox> findSentBeforeWithBodies(Instant before, Pageable page);
 
     long countByStatus(EmailOutboxStatus status);
+
+    /** Rows addressed to, replying to, or mentioning in their bodies the (normalised) address: the erasure tool (NFR-03). */
+    @Query("select e from EmailOutbox e where lower(e.recipient) = :email or lower(e.replyTo) = :email"
+            + " or lower(e.bodyText) like :like or lower(e.bodyHtml) like :like")
+    List<EmailOutbox> findByAddress(String email, String like);
 }
