@@ -350,7 +350,8 @@ written. Owner decision Q-55 applies: no `ls.migration.*` / `ls.probes.*` seams 
   (HMAC-SHA-256 for `ip_hash` columns); `CspNonce`. Tests: `RouteMatrixIT` (generated from
   the handler mappings against `src/test/resources/security/route-matrix.tsv`),
   `DenyByDefaultIT`, `CsrfIT`, `SessionLimitsIT`, `ForwardedHeadersIT`, `HostRoutingIT`,
-  `PublicHeadersIT` (reads `legacy/ls-home/public/_headers` at test time), `PrivateHeadersIT`,
+  `PublicHeadersIT` (reads the verbatim copy `src/test/resources/security/ls-home-public_headers`
+  of `legacy/ls-home/public/_headers` and compares it with the checkout when present), `PrivateHeadersIT`,
   `PublicPagesCookieFreeIT` (real port: no `Set-Cookie` outside the private areas).
 * **Error model** (`platform.web.error`, ADR 0002): `ErrorCode` (status, code, Italian
   reason; the legacy `ErrorEnum` texts reused), `ApiError` JSON schema
@@ -511,12 +512,11 @@ the `www` 301 without setting a cookie on public paths, `git status` clean after
   the audit tables belong to the deploy stage (ADR 0022).
 * The record-style accessors of `BusinessProperties` are read by Thymeleaf through SpEL
   (`${business.brandName}`): works on Spring Framework 7 (asserted by `ErrorModelIT`).
-* `RouteMatrixIT` and `PublicHeadersIT` read files from the working directory
-  (`src/test/resources/security/route-matrix.tsv`, `legacy/ls-home/public/_headers`): the
-  build runs from the repository root with the legacy checkout present (CI needs the
-  `ls-home` checkout or the `PublicHeadersIT` fixture copy of `_headers` — the integrator
-  decides at stage 11; a copy of the six header lines under `src/test/resources/` is the
-  simplest).
+* `RouteMatrixIT` reads `src/test/resources/security/route-matrix.tsv` from the working
+  directory: the build runs from the repository root (Maven and CI do). `PublicHeadersIT`
+  needs no legacy checkout since the verification run of 2026-10-24: a verbatim copy of
+  `ls-home@9b78785 public/_headers` ships as a test resource (the only kind of file that may
+  be copied from the legacy) and is compared with the checkout when it is present.
 * Still from stages 1–2: confidential-figure guard, gitleaks locally, `/e2e` Dependabot
   entry, Q-55 wording to trim in `docs/plan.md`, owner-side production items.
 

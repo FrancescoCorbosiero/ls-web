@@ -25,7 +25,9 @@ import org.springframework.test.web.servlet.MvcResult;
 
 /**
  * PUB-05: every public route sends exactly the header set and CSP of
- * {@code legacy/ls-home/public/_headers} (read from the file, so a drift fails here), with
+ * {@code legacy/ls-home/public/_headers} (a verbatim copy ships as the test resource
+ * {@code security/ls-home-public_headers} so CI needs no legacy checkout; when the checkout
+ * is present the copy is compared with it, so a drift fails here), with
  * {@code connect-src 'self'}; caching per PD-02: {@code /fonts/*} immutable one year,
  * {@code /img/*} and {@code /*.png} one week, HTML/CSS/JS {@code no-cache} + ETag answering 304.
  * HSTS enabled as in production.
@@ -88,7 +90,18 @@ class PublicHeadersIT extends AbstractPostgresIT {
 
     /** The {@code /*} block of {@code public/_headers} as name → value. */
     private static java.util.Map<String, String> legacyHeaders() throws Exception {
-        List<String> lines = Files.readAllLines(Path.of("legacy/ls-home/public/_headers"), StandardCharsets.UTF_8);
+        List<String> lines;
+        try (var in = PublicHeadersIT.class.getResourceAsStream("/security/ls-home-public_headers")) {
+            lines = new String(in.readAllBytes(), StandardCharsets.UTF_8)
+                    .lines()
+                    .toList();
+        }
+        Path legacy = Path.of("legacy/ls-home/public/_headers");
+        if (Files.isRegularFile(legacy)) {
+            assertThat(Files.readAllLines(legacy, StandardCharsets.UTF_8))
+                    .as("test copy of ls-home public/_headers drifted from the checkout")
+                    .isEqualTo(lines);
+        }
         var headers = new java.util.LinkedHashMap<String, String>();
         boolean inGlobal = false;
         for (String line : lines) {
