@@ -92,12 +92,14 @@ public class RouteRegistry {
         return path.startsWith(SecurityRoutes.BACKOFFICE) ? SecurityRoutes.BACKOFFICE : SecurityRoutes.CUSTOMER_AREA;
     }
 
+    /** The only public paths allowed inside the private areas: the sign-in entries of both areas (ADR 0002). */
     static boolean isSignInEntry(String pattern) {
         return pattern.equals(SecurityRoutes.CUSTOMER_AREA)
                 || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "accesso")
                 || pattern.equals(SecurityRoutes.BACKOFFICE)
                 || pattern.equals(SecurityRoutes.BACKOFFICE + "login")
                 || pattern.equals(SecurityRoutes.BACKOFFICE + "logout")
+                || pattern.equals(SecurityRoutes.BACKOFFICE + "imposta-password")
                 || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "logout")
                 || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "registrazione/");
     }

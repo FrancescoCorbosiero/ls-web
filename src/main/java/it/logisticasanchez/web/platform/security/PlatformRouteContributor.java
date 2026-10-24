@@ -7,9 +7,9 @@ import org.springframework.stereotype.Component;
 
 /**
  * The URL-map baseline of chapter 10 §2 declared by {@code platform}: static resources, the
- * health endpoint, the error page, the sign-in entries of both areas (the pages themselves come
- * with the {@code auth} stage), {@code POST /api/form} and the compatibility paths (handlers in
- * Phase 2). Public pages are declared by the {@code site} module.
+ * health endpoint, the error page, {@code POST /api/form} and the compatibility paths (handlers
+ * in Phase 2). The sign-in entries of both areas are declared by the {@code auth} module; public
+ * pages by the {@code site} module.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -35,13 +35,7 @@ public class PlatformRouteContributor implements SecurityRouteContributor {
         routes.permitGet(STATIC_RESOURCES)
                 .permitGet("/actuator/health")
                 .permit(null, "/error")
-                // Customer area: sign-in request page and link confirmation (CUS-01; auth stage).
-                .permitGet(SecurityRoutes.CUSTOMER_AREA, SecurityRoutes.CUSTOMER_AREA + "accesso")
-                .permit(HttpMethod.POST, SecurityRoutes.CUSTOMER_AREA, SecurityRoutes.CUSTOMER_AREA + "accesso")
-                .noStore(SecurityRoutes.CUSTOMER_AREA + "accesso")
-                // Back office: staff sign-in (ADM-01; auth stage).
-                .permitGet(SecurityRoutes.BACKOFFICE)
-                .permit(HttpMethod.POST, SecurityRoutes.BACKOFFICE + "login")
+                // The sign-in entries of both areas are declared by the auth module (AuthRouteContributor).
                 // Public JSON (site module) and the compatibility API (tracking module), session-free.
                 .permit(HttpMethod.POST, "/api/form")
                 .permit(null, "/mono/**")

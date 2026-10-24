@@ -8,6 +8,7 @@ import it.logisticasanchez.web.platform.web.RequestIdFilter;
 import it.logisticasanchez.web.platform.web.error.ErrorResponder;
 import jakarta.servlet.DispatcherType;
 import java.time.Clock;
+import java.util.List;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,8 +29,10 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  * {@code X-CSRF-TOKEN} header from the meta tag), a new session at login, idle and absolute
  * timeouts, no saved request (public pages stay cookie-free), the error model for every
  * refusal. Response headers are owned by
- * {@link SecurityHeadersFilter}, so Spring Security's header writers are off. Login handlers
- * (staff form, customer one-time token) are added by the {@code auth} stage.
+ * {@link SecurityHeadersFilter}, so Spring Security's header writers are off. The login
+ * mechanisms (staff form login, logouts, session registry) are added by the {@code auth}
+ * module through {@link SecurityChainContributor}; the customer one-time-token sign-in is a
+ * controller of that module.
  */
 @Configuration(proxyBeanMethods = false)
 @EnableWebSecurity
@@ -38,12 +41,17 @@ public class SecurityConfig {
 
     @Bean
     SecurityFilterChain securityFilterChain(
-            HttpSecurity http, RouteRegistry routes, ErrorResponder responder, SecurityProperties security, Clock clock)
+            HttpSecurity http,
+            RouteRegistry routes,
+            ErrorResponder responder,
+            SecurityProperties security,
+            Clock clock,
+            List<SecurityChainContributor> contributors)
             throws Exception {
         HttpSessionCsrfTokenRepository csrfRepository = new HttpSessionCsrfTokenRepository();
         RequestMatcher[] csrfExempt =
                 routes.csrfExempt().stream().map(RouteRegistry.Entry::matcher).toArray(RequestMatcher[]::new);
-        return http.authorizeHttpRequests(requests -> {
+        http.authorizeHttpRequests(requests -> {
                     requests.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll();
                     for (RouteRegistry.Entry entry : routes.entries()) {
                         authorize(requests.requestMatchers(entry.matcher()), entry.rule());
@@ -63,8 +71,12 @@ public class SecurityConfig {
                 .addFilterAfter(new SessionLimitsFilter(security, clock), SecurityContextHolderFilter.class)
                 .formLogin(login -> login.disable())
                 .httpBasic(basic -> basic.disable())
-                .logout(logout -> logout.disable())
-                .build();
+                .logout(logout -> logout.disable());
+        // The auth module adds the staff form login, the logouts and the session registry here.
+        for (SecurityChainContributor contributor : contributors) {
+            contributor.contribute(http);
+        }
+        return http.build();
     }
 
     private static void authorize(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizedUrl url, Rule rule) {

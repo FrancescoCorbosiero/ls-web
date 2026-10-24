@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<!-- Phase 1 stub of the registration page behind a REGISTER link (CUS-02 is the Phase 2 customers module; the token stays unconsumed). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <title th:text="#{auth.customer.registration.title} + ' · ' + ${business.brandName}">Registrazione · Logistica Sanchez</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<main id="main">
+  <section class="container">
+    <h1 th:text="#{auth.customer.registration.title}">Registrazione</h1>
+    <p th:text="#{auth.customer.registration.lead}">Il modulo di registrazione è in arrivo.</p>
+  </section>
+</main>
+</body>
+</html>

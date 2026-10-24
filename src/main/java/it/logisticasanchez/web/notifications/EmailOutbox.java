@@ -140,9 +140,12 @@ public class EmailOutbox {
         this.nextAttemptAt = now;
     }
 
-    /** Attaches the one-time link this e-mail carries; the raw token only encrypted. */
+    /**
+     * Attaches the one-time link this e-mail carries, the raw token only encrypted; the
+     * {@code login_token} reference is null for a staff set-password link (V010).
+     */
     public void attachToken(Long loginTokenId, byte[] tokenCiphertext) {
-        this.loginTokenId = Objects.requireNonNull(loginTokenId, "loginTokenId");
+        this.loginTokenId = loginTokenId;
         this.tokenCiphertext = Objects.requireNonNull(tokenCiphertext, "tokenCiphertext");
     }
 

@@ -43,8 +43,19 @@ public record EmailMessage(
                 kind, recipient, subject, bodyText, bodyHtml, replyTo, new TokenLink(loginTokenId, rawToken));
     }
 
-    /** The one-time link this e-mail carries: the {@code login_token} row and the raw token. */
-    public record TokenLink(long loginTokenId, String rawToken) {
+    /**
+     * A one-time secret that references no {@code login_token} row (the staff set-password link,
+     * whose row is {@code staff_setup_token}): stored encrypted and substituted like a token.
+     */
+    public EmailMessage withSecret(String rawToken) {
+        return new EmailMessage(kind, recipient, subject, bodyText, bodyHtml, replyTo, new TokenLink(null, rawToken));
+    }
+
+    /**
+     * The one-time link this e-mail carries: the raw token and, for customer links, the
+     * {@code login_token} row it belongs to (null for a staff set-password link).
+     */
+    public record TokenLink(Long loginTokenId, String rawToken) {
         public TokenLink {
             Objects.requireNonNull(rawToken, "rawToken");
         }

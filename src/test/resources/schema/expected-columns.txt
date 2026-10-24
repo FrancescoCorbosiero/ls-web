@@ -219,3 +219,9 @@ tracking_state label varchar NOT NULL
 tracking_state public_title varchar NOT NULL
 tracking_state step_label varchar NULL
 tracking_state sort_order int2 NOT NULL
+staff_setup_token id int8 NOT NULL
+staff_setup_token staff_user_id int8 NOT NULL
+staff_setup_token token_hash varchar NOT NULL
+staff_setup_token expires_at timestamptz NOT NULL
+staff_setup_token used_at timestamptz NULL
+staff_setup_token created_at timestamptz NOT NULL

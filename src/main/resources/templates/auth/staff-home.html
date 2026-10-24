@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- Phase 1 stub home of the back office; the backoffice module (Phase 2) replaces it. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title th:text="#{auth.staff.home.title} + ' · ' + ${business.brandName}">Gestione · Logistica Sanchez</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <th:block th:replace="~{fragments/htmx :: meta}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<main id="main">
+  <section class="container">
+    <h1 th:text="#{auth.staff.home.title}">Gestione</h1>
+    <p th:text="#{auth.staff.home.welcome(${displayName})}">Ciao</p>
+    <p th:text="#{auth.staff.home.lead}">L'area di gestione è in arrivo.</p>
+    <form method="post" th:action="@{/gestione/logout}">
+      <button type="submit" class="btn" th:text="#{auth.staff.logout}">Esci</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

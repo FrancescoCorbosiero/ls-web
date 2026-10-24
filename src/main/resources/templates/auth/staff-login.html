@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<!-- Staff login (ADM-01; copy of the legacy CMS login dialog). Minimal markup, restyled with the layout in stage 5. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title th:text="#{auth.staff.login.title} + ' · ' + ${business.brandName}">Login · Logistica Sanchez</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+<main id="main">
+  <section class="container">
+    <h1 th:text="#{auth.staff.login.title}">Login</h1>
+    <p class="notice" th:if="${passwordSet}" th:text="#{auth.staff.login.passwordSet}">Password impostata. Ora puoi accedere.</p>
+    <p class="notice" th:if="${loggedOut}" th:text="#{auth.staff.login.loggedOut}">Sei uscito dalla gestione.</p>
+    <p class="error" role="alert" th:if="${loginError}" th:text="#{auth.staff.login.error}">Username o password errate.</p>
+    <form method="post" th:action="@{/gestione/login}">
+      <p>
+        <label for="username" th:text="#{auth.staff.login.username}">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required autofocus>
+      </p>
+      <p>
+        <label for="password" th:text="#{auth.staff.login.password}">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </p>
+      <p><button type="submit" class="btn" th:text="#{auth.staff.login.submit}">Accedi</button></p>
+    </form>
+  </section>
+</main>
+</body>
+</html>

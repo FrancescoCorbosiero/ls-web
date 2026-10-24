@@ -530,3 +530,211 @@ the `www` 301 without setting a cookie on public paths, `git status` clean after
 * `docs/brief/11-open-questions.md`: nothing new; the stage applies the recorded defaults.
 * Message bundles (stage 5): the error-page titles and leads can move from the templates to
   `messages.properties` keys `error.<status>.title` / `.lead` once the bundle exists.
+
+## Stage 4 — auth: staff login (ADM-01) and the customer magic-link sign-in (CUS-01) (2026-10-24)
+
+Owner decision of 2026-10-24 («alleggerire») applied: the stage builds exactly what the task
+and the parity-matrix rows ask, with the lightest design that satisfies them.
+
+### What was built
+
+* **Schema** `V010__staff_setup_tokens.sql`: table `staff_setup_token` (SHA-256 of the
+  one-time set-password token, 24 h, single use; ADR 0003); `email_outbox.kind` also accepts
+  `EML-S1` (staff set-password e-mail) and the constraint `ck_email_outbox_token_pair` is
+  dropped so a token ciphertext may stand without a `login_token` reference. Expectation
+  files, `SchemaConformanceIT`, `MigrationsIT`, `ApplicationContextIT` and the migration
+  README updated.
+* **Staff authentication** (`it.logisticasanchez.web.auth`, ADR 0003): Spring Security form
+  login on `POST /gestione/login` with the page `/gestione/` («Login», `username`/`password`,
+  one error «Username o password errate.» for every failure, redirect `/gestione/?errore=1`);
+  `StaffUserDetailsService` + `StaffPrincipal` (roles `ROLE_ADMIN`/`ROLE_OPERATOR` from
+  `StaffRole`, disabled until a password is set, locked until `locked_until`); bcrypt cost 12
+  behind a `DelegatingPasswordEncoder` (`{bcrypt}` prefix); `PasswordPolicy` (≥ 12 characters,
+  not in `auth/common-passwords.txt`: SecLists 10k list + the ≥ 12-character entries of the
+  NCSC 100k list, 11 190 entries, MIT); lock-out per account (`StaffAccountService.recordFailure`,
+  PD-10 threshold/duration from `ls.security.staff.lockout.*`, reset on success) and per IP
+  (`StaffLoginRateLimitFilter` with the platform key `staff.login`, 429 + `Retry-After` before
+  any password check); `StaffLoginSuccessHandler` (counters cleared, `last_login_at`,
+  `SessionLimitsFilter.AUTHENTICATED_AT` stamped, redirect `/gestione/`) and
+  `StaffLoginFailureHandler`; session id rotated (`SessionFixationProtectionStrategy`, no
+  attribute migrated); idle 30 min / absolute 10 h enforced by the stage-3 filter; logout
+  `POST /gestione/logout` (CSRF) → `/gestione/`. `GET /gestione/` renders the login page for an
+  anonymous visitor and a stub home («Gestione … in arrivo», logout button) for a staff session.
+* **Provisioning**: `StaffAccountService.create` (account without password + setup link),
+  `createByAdmin` (`@PreAuthorize("hasRole('ADMIN')")`, link e-mailed through the outbox as
+  `EML-S1` with the raw token only encrypted, audited `staff.create`), `issueSetupLink`,
+  `peekSetupLink` (the GET), `setPassword` (the POST: policy, hash, counters cleared, link
+  consumed). Page `/gestione/imposta-password?t=…` (GET renders, POST consumes; «Il link non è
+  più valido» otherwise; `Referrer-Policy: no-referrer`). Command **`create-staff-user`**
+  (`CreateStaffUserCommand`, an `ApplicationRunner` + `ExitCodeGenerator`): `Application.main`
+  detects the argument, starts the app once on an ephemeral loopback port with the outbox
+  worker and retention off, prints `https://<site-url>/gestione/imposta-password?t=<token>`
+  and exits (0 / 1 username taken / 2 bad arguments); never reads or prints a password.
+* **Customer sign-in** (ADR 0004): `GET /area-clienti/` e-mail form (legacy copy adapted:
+  «Inserisci la tua e-mail», hint without its second sentence, privacy link); `POST
+  /area-clienti/` trims and lower-cases, rate-limits per IP (`signin.link.ip`) and per e-mail
+  (`signin.link.email`), always renders the same page («Ti abbiamo inviato un'email: segui il
+  link per continuare») and, in one transaction (`CustomerSignInService.issue`), issues a
+  `SIGN_IN` token (15 min) + EML-01 sign-in e-mail for a known `customer_user` (verified,
+  unverified or declined alike, D-69) or a `REGISTER` token (24 h, `email_hash` = HMAC of the
+  e-mail through `EmailHasher`, no customer row) + registration e-mail for an unknown
+  address; nothing for a disabled login. `LoginTokenService` (`issue`, `issueRegistration`,
+  `peek`, `consume`, `validity`) serves every purpose incl. `VERIFY_EMAIL` and `CHANGE_EMAIL`
+  for Phase 2; tokens are 256 random bits in base64url, stored as SHA-256 (`Tokens`), stamped
+  with the application clock. `GET /area-clienti/accesso?t=…` renders the «Accedi» page
+  without consuming (HEAD likewise); `POST /area-clienti/accesso` consumes, calls the
+  `CustomerSignInListener` hooks (none in Phase 1; the `customers` module verifies the e-mail
+  there), opens the session through `CustomerSessionService.signIn` (fixation strategy,
+  registry, CSRF regenerated, context saved, `AUTHENTICATED_AT` stamped) and redirects to
+  `/area-clienti/ordini/` (stub home with logout) without the token; used/expired → «Il link
+  non è più valido» with the request form. `GET /area-clienti/registrazione/?t=…` validates a
+  `REGISTER` token and renders a stub without consuming. Logout `POST /area-clienti/logout`.
+  **`CustomerSessionService.endAllSessions(customerUserId)`** expires every session of the
+  login in the `SessionRegistry`; the concurrent-session filter invalidates them at their
+  next request and sends them to `/area-clienti/` (401 JSON for HTMX/JSON).
+* **E-mails** (`AuthMails`): EML-01 sign-in and registration variants and EML-S1 from
+  `messages.properties` (`mail.*`), text + minimal HTML, link with `{{token}}` substituted by
+  the outbox worker; the branded templates come with Phase 2 `notifications` (ADR 0015).
+* **Platform changes**: new extension point `SecurityChainContributor` applied by
+  `SecurityConfig` after its baseline (`AuthChainContributor` adds the provider, form login,
+  logouts for both areas, `maximumSessions(-1)` with the registry and the expired-session
+  strategy, the shared `SecurityContextRepository` and `SessionAuthenticationStrategy`);
+  `RouteRegistry.isSignInEntry` gains `/gestione/imposta-password`; the sign-in entries moved
+  from `PlatformRouteContributor` to `AuthRouteContributor`; `SessionLimitsFilter.isAuthenticated`
+  / `isStaff` public; `application.yml` no longer excludes `UserDetailsServiceAutoConfiguration`
+  (it backs off because `StaffUserDetailsService` exists); `EmailMessage.withSecret` and
+  `EmailOutbox.attachToken` with a null `login_token_id`; `LoginToken` factories with a
+  `createdAt`; `RouteMatrixIT` exempts the sign-in entries from the "never 200 anonymous" rule.
+* **Templates** `templates/auth/*.html` (minimal, restyled in stage 5) and the `auth.*` /
+  `mail.*` keys of `messages.properties`.
+* **Tests**: `PasswordPolicyTest`, `SessionCookieConfigurationTest` (unit, ADM-01);
+  `StaffLoginIT` (login page, same redirect for every failure, bcrypt hash, rotation + stamp +
+  idle 30 min, OPERATOR on an ADMIN route 403, logout, absolute 10 h clock-driven, lock-out
+  clock-driven, 429 per IP, no login without a password), `StaffLoginRealServerIT` (cookie
+  flags and rotation on a real server), `CreateStaffUserCommandIT` (link printed, GET renders,
+  policy, mismatch, set once, login, link dead, 24 h expiry, exit codes),
+  `StaffAccountServiceIT` (ADMIN creates, outbox EML-S1 encrypted + wiped, audit, OPERATOR
+  refused) — all `@Tag("ADM-01")`; `CustomerSignInIT` (every bullet of the parity-matrix row:
+  same page for known/unknown/unverified/declined, trimming, SIGN_IN vs REGISTER with
+  `email_hash` and 24 h, hashed storage, two GETs + HEAD never consume, POST once, second POST
+  refused, expiry, no-store/no-referrer, redirect without token, 429 per e-mail and per IP,
+  registration page, logout, `endAllSessions`) and `LoginTokenServiceIT` (VERIFY_EMAIL /
+  CHANGE_EMAIL) — `@Tag("CUS-01")`. `route-matrix.tsv` gained the nine auth lines.
+  `./mvnw -B -ntp clean verify`: 23 unit + 121 integration tests green.
+
+### How to run it
+
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
+./mvnw -B -ntp clean verify
+./mvnw -B -ntp -DskipTests package
+# first ADMIN (prints the one-time set-password link; never a password)
+java -jar target/ls-web-0.1.0-SNAPSHOT.jar create-staff-user --username=admin --role=ADMIN --name="Nome Cognome" \
+  --spring.profiles.active=local --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+# or: ./mvnw spring-boot:run -Dspring-boot.run.profiles=local -Dspring-boot.run.arguments=create-staff-user,--username=admin,--role=ADMIN
+# the link is printed as https://logisticasanchez.com/gestione/imposta-password?t=…: locally replace the
+# origin with http://localhost:8080, open it, set a password (≥ 12 characters), then log in at /gestione/
+SERVER_PORT=8080 java -jar target/ls-web-0.1.0-SNAPSHOT.jar --spring.profiles.active=local \
+  --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls
+# customer sign-in locally: open http://localhost:8080/area-clienti/, type an e-mail; within ~10 s the
+# directory sink writes .local/mail/<timestamp>-<n>.eml — the link is in its text body:
+grep -o 'https://[^ ]*?t=[A-Za-z0-9_-]*' "$(ls -t .local/mail/*.eml | head -1)"
+# replace the origin with http://localhost:8080 and open it: GET shows «Accedi», the button signs in.
+```
+
+Verified here: the packaged jar created `smoke-admin`/`smoke-op` in `ls_web` and printed the
+link (Tomcat on an ephemeral port, exit 0; duplicate username exit 1); the running app answered
+`/area-clienti/` (200, no-store, private CSP, `LS_SESSION` HttpOnly SameSite=Lax), the request
+`POST` with a spaced mixed-case unknown e-mail (200, «Ti abbiamo inviato un'email…»), the
+directory sink wrote the registration e-mail with the normalised recipient, the registration
+link rendered the stub with `no-referrer`, `/gestione/` rendered «Login», an unknown `t`
+rendered «Il link non è più valido».
+
+### Routes added (all in `route-matrix.tsv`)
+
+| Route | Access | Handler |
+|---|---|---|
+| `GET /gestione/` | public (login page) / staff (stub home) | `StaffController.home` |
+| `POST /gestione/login` | public, CSRF | Spring Security form login |
+| `POST /gestione/logout` | staff, CSRF | Spring Security logout → `/gestione/` |
+| `GET` / `POST /gestione/imposta-password?t=` | public, CSRF on POST | `StaffController` |
+| `GET` / `POST /area-clienti/` | public, CSRF on POST | `CustomerSignInController` |
+| `GET` / `HEAD` / `POST /area-clienti/accesso?t=` | public, CSRF on POST | `CustomerSignInController` |
+| `GET /area-clienti/registrazione/?t=` | public | stub (Phase 2 `customers`) |
+| `POST /area-clienti/logout` | customer, CSRF | Spring Security logout → `/area-clienti/` |
+| `GET /area-clienti/ordini/` | customer | stub (Phase 2 `orders`) |
+
+### Decisions taken
+
+* **Staff set-password links have their own table** `staff_setup_token` instead of a
+  `STAFF_SET_PASSWORD` purpose on `login_token` (whose CHECKs tie every non-REGISTER row to a
+  `customer_user`); V010 also lets the outbox carry that token encrypted without a
+  `login_token` reference and accept the kind `EML-S1` (ADR 0003; ADR 0015 to list it).
+* **Form login through Spring Security** (filter, fixation strategy, CSRF strategy, context
+  repository) instead of a hand-written controller; the customer link `POST` reuses the same
+  `SessionAuthenticationStrategy` and `SecurityContextRepository` beans, so both sign-ins
+  rotate the session and register it the same way. A second chain extension point
+  (`SecurityChainContributor`) was added for this; the authorisation stays the route table.
+* **Every staff login failure answers the same redirect and sentence** (wrong password,
+  unknown user, locked, no password yet, deactivated): no enumeration, no lock-out signal.
+* **Lock-out counts failures of existing accounts only**; unknown usernames are covered by the
+  per-IP limit. After an expired lock the count restarts at one.
+* **The common-password list** is the SecLists 10k list plus the ≥ 12-character entries of
+  the NCSC 100k list (11 190 entries, 92 KB, MIT, attribution in the file header): the 12-character
+  minimum would refuse almost every entry of the 10k list alone, so the long entries make the
+  check meaningful. Compared case-insensitively after trimming.
+* **`create-staff-user` runs the real servlet app on an ephemeral loopback port** rather than a
+  non-web context: the modules' beans need the web context (`LocaleResolver` for
+  `ErrorResponder` failed in a `WebApplicationType.NONE` run); the server lives for the seconds
+  the command takes, the outbox worker and retention are off, the process exits with the
+  command's code.
+* **`EmailHasher` reuses the IP-hash key** (`ls.security.ip-hash-key`) with a domain separator
+  for `login_token.email_hash`: no new environment variable (ADR 0004).
+* **`CustomerSignInListener`** (an `auth` SPI, zero beans in Phase 1) is how the `customers`
+  module learns that a sign-in link was used (sets `email_verified_at`, moves
+  `PENDING_VERIFICATION` on); chosen over a new `DomainEvent` so that ADR 0025's "no subscriber
+  in M1/M2" statement about the platform events stays true.
+* **A disabled `customer_user` gets no e-mail** but the same page (the schema comment says a
+  disabled login cannot ask for a link).
+* **The invalid-link pages answer 200** with the request form (not an error status): the visitor
+  did nothing wrong and the next step is on the page.
+* **`?errore=1` / `?impostata=1`** query flags on the login page (a bare `?errore` is not a
+  parameter to every container).
+* Stub pages for `/gestione/` (staff home), `/area-clienti/ordini/` and
+  `/area-clienti/registrazione/` say the area is coming; Phase 2 replaces them and their matrix
+  lines.
+* **New Italian texts** for the owner's review at the next gate: login page, set-password
+  page, link-invalid pages, request page («Inserisci la tua e-mail», sent message), «Accedi»
+  page, stub texts, the three e-mails (`mail.*`).
+
+### Open points
+
+* `dev-seed` (stage 6) creates staff users with random passwords printed once and customers in
+  every state; the auth stage leaves no seeded account.
+* The staff e-mail kind `EML-S1` is outside the chapter 09 catalogue: ADR 0015 lists it when the
+  Phase 2 `notifications` module completes the catalogue and the branded templates replace
+  `AuthMails`' minimal HTML.
+* The `customers` module (Phase 2) implements `CustomerSignInListener` (verify on sign-in,
+  chapter 08 §2.4), calls `CustomerSessionService.endAllSessions` on decline and e-mail
+  change, consumes the `REGISTER` token in its registration `POST`, and replaces the
+  `/area-clienti/registrazione/` stub; `orders` replaces `/area-clienti/ordini/`; `backoffice`
+  replaces the `/gestione/` home and adds the account screen over `StaffAccountService`.
+* An E2E `[CUS-01]` / `[ADM-01]` spec (request link → open page → «Accedi» → session; «Login»
+  page with a real password field) comes with the E2E stage (Playwright) once the layout exists.
+* The session registry is in memory (one instance, ADR 0001); a second instance would need
+  Spring Session or a shared registry — not an M1 concern.
+* The absolute customer-session limit (12 h) is enforced by the stage-3 filter and asserted
+  for staff in `StaffLoginIT`; the customer case is `SessionLimitsIT` (stage 3) with a session
+  stamped by the sign-in (asserted in `CustomerSignInIT`).
+* Still from stages 1–3: confidential-figure guard, gitleaks locally, `/e2e` Dependabot entry,
+  Q-55 wording to trim in `docs/plan.md`, owner-side production items.
+
+### Proposed changes to shared files (for later stages / the integrator)
+
+* `messages.properties`: the `auth.*` and `mail.*` keys were added by this stage (Phase 1
+  agent); stage 5 may regroup them per screen with the copy-deck keys.
+* `CLAUDE.md` "Commands" (stage 11): `java -jar app.jar create-staff-user --username=… --role=ADMIN`
+  for the first ADMIN; `.local/mail` for sign-in links locally.
+* `deploy/` runbook (stage 10): the first-ADMIN step runs the command inside the app container
+  with the production environment and the owner opens the printed link once.
+* ADR 0015: add `EML-S1` to the catalogue table.

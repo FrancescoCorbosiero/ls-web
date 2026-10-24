@@ -29,6 +29,7 @@ class SchemaConformanceIT extends AbstractPostgresIT {
 
     private static final Set<String> M1_TABLES = Set.of(
             "staff_user",
+            "staff_setup_token",
             "customer",
             "customer_pending_registration",
             "customer_user",

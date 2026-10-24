@@ -18,7 +18,6 @@ email_outbox ck_email_outbox_kind
 email_outbox ck_email_outbox_queued_has_body
 email_outbox ck_email_outbox_sent_has_time
 email_outbox ck_email_outbox_status
-email_outbox ck_email_outbox_token_pair
 feature_flag ck_feature_flag_key
 feature_flag ck_feature_flag_requirement_id
 lead ck_lead_form
@@ -74,3 +73,6 @@ shipment_order ux_shipment_order_idempotency_key
 shipment_order ux_shipment_order_temp_code
 staff_user ux_staff_user_email
 staff_user ux_staff_user_username
+staff_setup_token ck_staff_setup_token_hash_length
+staff_setup_token ck_staff_setup_token_expires_after_creation
+staff_setup_token ux_staff_setup_token_hash

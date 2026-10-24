@@ -16,6 +16,7 @@ feature flags: `docs/adr/0025-feature-flags.md`.
 | `V007__notifications_and_reports.sql` | `email_outbox`, `report_run` |
 | `V008__feature_flags_and_audit.sql` | `feature_flag`, `audit_log`, `audit_log_detail`, the immutability trigger |
 | `V009__seeds.sql` | the six tracking states, the six accessory services, the 25 flags (all off) |
+| `V010__staff_setup_tokens.sql` | `staff_setup_token` (one-time set-password links, ADM-01, ADR 0003); `email_outbox.kind` also accepts `EML-S1` and the token ciphertext no longer requires a `login_token` reference |
 
 Rules for the next migration: no `legacy_*`, `*_raw` or `data_quality` column (owner
 decision Q-55, no data migration); no `INSERT` into `staff_user`, `customer` or

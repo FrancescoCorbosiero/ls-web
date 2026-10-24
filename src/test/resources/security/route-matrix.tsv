@@ -5,3 +5,13 @@
 GET	/actuator/health	200	200	200	200
 GET	/actuator/health/**	404	404	404	404
 ANY	/error	404	404	404	404
+# auth module (ADR 0003, ADR 0004): sign-in entries, link pages and the Phase 1 stub homes.
+GET	/area-clienti/	200	302	200	200
+POST	/area-clienti/	403	403	403	403
+GET	/area-clienti/accesso	200	200	200	200
+POST	/area-clienti/accesso	403	403	403	403
+GET	/area-clienti/registrazione/	200	200	200	200
+GET	/area-clienti/ordini/	302	200	403	403
+GET	/gestione/	200	200	200	200
+GET	/gestione/imposta-password	200	200	200	200
+POST	/gestione/imposta-password	403	403	403	403

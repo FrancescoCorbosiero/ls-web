@@ -29,10 +29,6 @@ spring:
     fail-on-missing-locations: true
     validate-on-migrate: true
     clean-disabled: true
-  autoconfigure:
-    # No generated in-memory user with a logged password: the auth module (stage 6)
-    # provides the user store and removes this exclusion.
-    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   thymeleaf:
     cache: true
   web:

@@ -88,7 +88,9 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
                 .as("no password until the one-time link is used")
                 .isNull();
         assertThat(found.getTotpSecret()).containsExactly(1, 2, 3);
-        assertThat(staffUsers.existsByRole(StaffRole.ADMIN)).isFalse();
+        // The test database is shared with the auth tests, which create ADMIN accounts: assert
+        // the query on the role just saved.
+        assertThat(staffUsers.existsByRole(StaffRole.OPERATOR)).isTrue();
     }
 
     @Test
@@ -121,9 +123,13 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
         LoginToken foundRegister = loginTokens.findById(register.getId()).orElseThrow();
         assertThat(foundRegister.getCustomerUserId()).isNull();
         assertThat(foundRegister.getEmailHash()).isEqualTo("b".repeat(64));
+        // Other tests leave expired tokens in the shared database: the 15-minute token goes,
+        // the 24-hour one stays.
         assertThat(loginTokens.deleteExpiredBefore(issued.plus(1, ChronoUnit.HOURS)))
-                .as("only the 15-minute token has expired")
-                .isEqualTo(1);
+                .as("the 15-minute token has expired")
+                .isGreaterThanOrEqualTo(1);
+        assertThat(loginTokens.findByTokenHash("a".repeat(64))).isEmpty();
+        assertThat(loginTokens.findById(register.getId())).isPresent();
     }
 
     @Test

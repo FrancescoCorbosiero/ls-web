@@ -34,7 +34,8 @@ import org.springframework.web.util.pattern.PathPattern;
  * generated from the real handler mappings and checked against
  * {@code src/test/resources/security/route-matrix.tsv} for anonymous, CUSTOMER, OPERATOR and
  * ADMIN. A route missing from the table fails; so does a stale line. Nothing ever answers 500,
- * and a route under the private areas never answers 200 without the right session.
+ * and a route under the private areas never answers 200 without the right session (the sign-in
+ * entries excepted, ADR 0002).
  */
 @Tag("NFR-02")
 @SpringBootTest
@@ -76,7 +77,10 @@ class RouteMatrixIT extends AbstractPostgresIT {
                 if (status >= 500) {
                     problems.add(route + " as " + ROLES.get(i) + " answered " + status);
                 }
-                if (RouteRegistry.isPrivateArea(path) && status == 200 && "anonymous".equals(ROLES.get(i))) {
+                if (RouteRegistry.isPrivateArea(path)
+                        && !RouteRegistry.isSignInEntry(pattern)
+                        && status == 200
+                        && "anonymous".equals(ROLES.get(i))) {
                     problems.add(route + " answered 200 to an anonymous request");
                 }
                 if (!matches(outcomes[i], status)) {

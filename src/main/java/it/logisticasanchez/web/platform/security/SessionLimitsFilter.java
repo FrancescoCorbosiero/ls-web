@@ -57,13 +57,15 @@ public class SessionLimitsFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
-    static boolean isAuthenticated(Authentication authentication) {
+    /** True for a real (non-anonymous) authenticated principal. */
+    public static boolean isAuthenticated(Authentication authentication) {
         return authentication != null
                 && authentication.isAuthenticated()
                 && !(authentication instanceof AnonymousAuthenticationToken);
     }
 
-    static boolean isStaff(Authentication authentication) {
+    /** True when the principal carries a staff role. */
+    public static boolean isStaff(Authentication authentication) {
         for (GrantedAuthority authority : authentication.getAuthorities()) {
             String name = authority.getAuthority();
             if (Authorities.ROLE_ADMIN.equals(name) || Authorities.ROLE_OPERATOR.equals(name)) {

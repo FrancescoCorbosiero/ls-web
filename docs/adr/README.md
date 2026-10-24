@@ -13,6 +13,8 @@ chapter 11 and this folder, never from the chat.
 |---|---|---|---|---|
 | [0001](0001-path-and-stack.md) | Path and stack | Proposed | 2026-10-17 | Implemented from Phase 1 on the owner's go-ahead of 2026-10-17 («puoi procedere in autonomia»), which is not an answer to Q-01/Q-52: confirmation of its Gate 0 items 1–4 still pending |
 | [0002](0002-deny-by-default-route-matrix-error-model.md) | Deny-by-default authorisation, route × role matrix, HTTP error model and rate limiter | Accepted | 2026-10-23 | Phase 1 stage 3 (`platform`): `SecurityRouteContributor`, `RouteMatrixIT`, `ErrorCode`/`ErrorResponder`, `RateLimiter` |
+| [0003](0003-staff-authentication-sessions-roles-provisioning.md) | Staff authentication, sessions, roles and account provisioning | Accepted | 2026-10-24 | Phase 1 stage 4 (`auth`): form login, bcrypt 12 + `PasswordPolicy`, lock-out (PD-10), `staff_setup_token` (V010), `create-staff-user`, `SecurityChainContributor` |
+| [0004](0004-customer-sign-in-one-time-link.md) | Customer sign-in by one-time link consumed by `POST`; identity from the session | Accepted | 2026-10-24 | Phase 1 stage 4 (`auth`): `LoginTokenService`, `CustomerSignInService`, `CustomerSessionService.endAllSessions`, `CustomerSignInListener` hook for `customers` |
 | [0015](0015-email-catalogue-and-outbox.md) | E-mail catalogue and outbox: templates, brand, Reply-To, office address setting, staging guard, bounce handling | Proposed | 2026-10-23 | Phase 1 stage 3 wrote the outbox, sender and staging-guard sections; Phase 2 · notifications completes it |
 | [0018](0018-output-escaping-csp-htmx-validation.md) | Output escaping, CSP without `unsafe-*`, nonce, HTMX configuration, input validation | Accepted | 2026-10-23 | Phase 1 stage 3: `SecurityHeadersFilter`, `PublicEtagFilter`, `fragments/htmx.html` |
 | [0019](0019-logging-configuration-management.md) | Logging without bodies or personal data; configuration from the environment; management endpoints | Accepted | 2026-10-23 | Phase 1 stage 3: `RequestIdFilter`, typed settings, `RequiredSettingsCheck` |
@@ -59,8 +61,8 @@ when written; the IDs it covers must stay covered.
 | ADR | Title | IDs and findings covered | Written in |
 |---|---|---|---|
 | 0002 | Deny-by-default authorisation, route × role matrix and HTTP error model | NFR-02, ADM-01, API-03; SEC-01, SEC-02, SEC-04, SEC-09; Q-21 (what not to reproduce) | **Written** (Phase 1 stage 3, Accepted; also covers the rate limiter, SEC-10) |
-| 0003 | Staff authentication, sessions, roles and account provisioning | ADM-01; Q-17; CMS-01…03, SEC-08, SEC-10; session lifetimes of 10 §2 | Phase 1 |
-| 0004 | Customer sign-in by one-time link consumed by `POST`; identity from the session | CUS-01, EML-01, EML-06; Q-11, Q-30; OP-S1, OP-S2, SEC-11, SEC-12, SEC-19 | Phase 1 |
+| 0003 | Staff authentication, sessions, roles and account provisioning | ADM-01; Q-17; CMS-01…03, SEC-08, SEC-10; session lifetimes of 10 §2 | **Written** (Phase 1 stage 4, Accepted) |
+| 0004 | Customer sign-in by one-time link consumed by `POST`; identity from the session | CUS-01, EML-01, EML-06; Q-11, Q-30; OP-S1, OP-S2, SEC-11, SEC-12, SEC-19 | **Written** (Phase 1 stage 4, Accepted; EML-06 and Q-30 are implemented by `customers` / ADR 0011) |
 | 0005 | Customer lifecycle, registration rules and declined customers | CUS-02, CUS-03, CUS-06, ADM-02; Q-09, Q-10, Q-28, Q-36; OP-08…OP-11, OP-S4 (abuse protection on registration), CMS-20, DQ-25 | Phase 2 · customers |
 | 0006 | Order wizard: lines, totals, temporary codes, idempotent submission; wizard redesigned on the new site's design system; changes to a sent order only by asking the office | CUS-04, CUS-05; Q-12, Q-13, Q-24, Q-35; OP-01…OP-07, OP-12…OP-18, OP-20, OP-23, OP-25, DQ-27, DQ-28 | Phase 2 · orders |
 | 0007 | Order approval contract: codes, amount, VAT flag, state machine, decline | ADM-04, EML-05; Q-05, Q-06; CMS-13, CMS-14, CMS-21, SEC-14, DQ-13, DQ-29, DQ-31, DQ-32 | Phase 2 · orders |

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<!-- Phase 1 stub home of the customer area; the orders module (Phase 2) replaces it. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title th:text="#{auth.customer.home.title} + ' · ' + ${business.brandName}">I tuoi ordini · Logistica Sanchez</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <th:block th:replace="~{fragments/htmx :: meta}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<main id="main">
+  <section class="container">
+    <h1 th:text="#{auth.customer.home.title}">I tuoi ordini</h1>
+    <p th:text="#{auth.customer.home.signedInAs(${email})}">Hai effettuato l'accesso</p>
+    <p th:text="#{auth.customer.home.lead}">L'area clienti è in arrivo.</p>
+    <form method="post" th:action="@{/area-clienti/logout}">
+      <button type="submit" class="btn" th:text="#{auth.customer.logout}">Esci</button>
+    </form>
+  </section>
+</main>
+</body>
+</html>

@@ -55,28 +55,40 @@ public class LoginToken {
 
     protected LoginToken() {}
 
-    /** A token for a known customer user (every purpose but {@code REGISTER}). */
+    /** A token for a known customer user (every purpose but {@code REGISTER}), created now. */
     public static LoginToken forCustomerUser(
             Long customerUserId, LoginTokenPurpose purpose, String tokenHash, Instant expiresAt) {
+        return forCustomerUser(customerUserId, purpose, tokenHash, expiresAt, Instant.now());
+    }
+
+    /** A token for a known customer user, stamped with the application clock. */
+    public static LoginToken forCustomerUser(
+            Long customerUserId, LoginTokenPurpose purpose, String tokenHash, Instant expiresAt, Instant createdAt) {
         if (purpose == LoginTokenPurpose.REGISTER) {
             throw new IllegalArgumentException("REGISTER tokens carry an e-mail hash, not a customer user");
         }
-        LoginToken token = new LoginToken(purpose, tokenHash, expiresAt);
+        LoginToken token = new LoginToken(purpose, tokenHash, expiresAt, createdAt);
         token.customerUserId = Objects.requireNonNull(customerUserId, "customerUserId");
         return token;
     }
 
-    /** A {@code REGISTER} token for an unknown e-mail, identified only by its HMAC. */
+    /** A {@code REGISTER} token for an unknown e-mail, identified only by its HMAC, created now. */
     public static LoginToken forRegistration(String emailHash, String tokenHash, Instant expiresAt) {
-        LoginToken token = new LoginToken(LoginTokenPurpose.REGISTER, tokenHash, expiresAt);
+        return forRegistration(emailHash, tokenHash, expiresAt, Instant.now());
+    }
+
+    /** A {@code REGISTER} token stamped with the application clock. */
+    public static LoginToken forRegistration(String emailHash, String tokenHash, Instant expiresAt, Instant createdAt) {
+        LoginToken token = new LoginToken(LoginTokenPurpose.REGISTER, tokenHash, expiresAt, createdAt);
         token.emailHash = Objects.requireNonNull(emailHash, "emailHash");
         return token;
     }
 
-    private LoginToken(LoginTokenPurpose purpose, String tokenHash, Instant expiresAt) {
+    private LoginToken(LoginTokenPurpose purpose, String tokenHash, Instant expiresAt, Instant createdAt) {
         this.purpose = Objects.requireNonNull(purpose, "purpose");
         this.tokenHash = Objects.requireNonNull(tokenHash, "tokenHash");
         this.expiresAt = Objects.requireNonNull(expiresAt, "expiresAt");
+        this.createdAt = Objects.requireNonNull(createdAt, "createdAt");
     }
 
     public Long getId() {
