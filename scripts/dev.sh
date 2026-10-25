@@ -26,7 +26,7 @@ else
 dev.sh: serve PostgreSQL 16 in una di queste due forme:
   - i binari server (initdb, pg_ctl, psql): macOS  brew install postgresql@16  e  export LS_PG_BIN=$(brew --prefix postgresql@16)/bin
                                              Debian/Ubuntu  sudo apt install postgresql-16  (binari in /usr/lib/postgresql/16/bin)
-  - oppure Docker in esecuzione: il database parte da deploy/compose.dev.yml
+  - oppure Docker in esecuzione: il database parte da compose.yaml
 EOF
   exit 1
 fi

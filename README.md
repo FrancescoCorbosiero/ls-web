@@ -46,7 +46,7 @@ Step-by-step guide in Italian: `docs/runbooks/local-setup.md`; deploy: `docs/run
     `export LS_PG_BIN=$(brew --prefix postgresql@16)/bin`; Debian/Ubuntu `sudo apt install postgresql-16`
     (binaries in `/usr/lib/postgresql/16/bin`, the default). Check with `$LS_PG_BIN/initdb --version`.
   * or Docker: `docker compose up -d db` starts `postgres:16` on `localhost:54329` with the same
-    credentials and databases (`compose.yaml` includes `deploy/compose.dev.yml`); `scripts/dev.sh`
+    credentials and databases; `scripts/dev.sh`
     does it by itself when the binaries are missing. `docker compose up --build` also runs the app
     image on :8080.
 * Node 22 (only for the Playwright end-to-end suite under `e2e/`)

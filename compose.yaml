@@ -1,4 +1,52 @@
-# Local development only: `docker compose up --build` starts PostgreSQL 16 and the app on
-# http://localhost:8080 (see deploy/compose.dev.yml). Production uses deploy/compose.yml.
-include:
-  - deploy/compose.dev.yml
+# Local development only (never on a server; production is deploy/compose.yml + Caddy).
+#
+#   docker compose up --build            # PostgreSQL 16 (localhost:54329, role ls/ls, databases ls_web,
+#                                        # ls_web_test, ls_web_e2e) + the app on http://localhost:8080
+#   docker compose run --rm app dev-seed # synthetic data, once per database (passwords printed once)
+#   docker compose down                  # stop (add -v to drop the database)
+#
+#   docker compose up -d db              # only the database, e.g. for scripts/dev.sh or the tests
+#   scripts/dev.sh                       # uses it automatically when initdb is missing
+#
+# Same port and credentials as scripts/local-db.sh, so tests, e2e/run.sh and dev.sh work unchanged.
+# Everything here is local only: no secret, no real data.
+name: ls-web-dev
+
+services:
+  db:
+    image: postgres:16
+    ports:
+      - "127.0.0.1:54329:5432"
+    environment:
+      POSTGRES_USER: ls
+      POSTGRES_PASSWORD: ls
+      POSTGRES_DB: ls_web
+    volumes:
+      - ./deploy/dev/init-databases.sql:/docker-entrypoint-initdb.d/10-databases.sql:ro
+      - dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ls -d ls_web"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "127.0.0.1:${PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      DATABASE_URL: jdbc:postgresql://db:5432/ls_web
+      DATABASE_USER: ls
+      DATABASE_PASSWORD: ls
+      LS_NOTIFICATIONS_DIRECTORY_PATH: /app/mail
+    volumes:
+      - ./.local/mail:/app/mail
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  dev_pgdata:
