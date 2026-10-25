@@ -9,7 +9,7 @@
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${reregister} ? ${values['email']} : null, ${reregister} ? '/area-clienti/logout' : null)}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <h1 th:text="#{customers.review.heading}">Controlla i dati inseriti</h1>
     <p class="lede" th:text="#{customers.review.lead}">Se è tutto corretto premi «Conferma»: la richiesta passa all'ufficio per l'approvazione.</p>
     <div class="table-wrap">

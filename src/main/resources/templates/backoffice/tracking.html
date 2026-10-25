@@ -8,7 +8,7 @@
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <th:block th:replace="~{backoffice/layout :: nav('tracking')}"></th:block>
     <h1 th:text="#{backoffice.tracking.title}">Imposta tracking</h1>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>

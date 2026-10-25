@@ -8,7 +8,7 @@
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('staff', null, null)}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <h1 th:text="#{auth.staff.login.title}">Login</h1>
     <p class="callout callout-info" th:if="${passwordSet}" th:text="#{auth.staff.login.passwordSet}">Password impostata. Ora puoi accedere.</p>
     <p class="callout callout-info" th:if="${loggedOut}" th:text="#{auth.staff.login.loggedOut}">Sei uscito dalla gestione.</p>

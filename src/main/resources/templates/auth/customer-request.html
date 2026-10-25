@@ -12,7 +12,7 @@
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <h1 th:text="#{auth.customer.request.heading}">Inserisci la tua e-mail</h1>
     <p class="callout callout-info" role="status" th:if="${sent}" th:text="#{auth.customer.request.sent}">Ti abbiamo inviato un'email: segui il link per continuare</p>
     <form method="post" th:action="@{/area-clienti/}" class="form-grid">

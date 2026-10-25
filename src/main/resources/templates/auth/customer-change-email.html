@@ -9,7 +9,7 @@
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <h1 th:text="#{auth.customer.changeEmail.title}">Conferma la nuova e-mail</h1>
     <p class="lede" th:text="#{auth.customer.changeEmail.lead(${newEmail})}">Premi il pulsante per usare questo indirizzo come e-mail di accesso.</p>
     <form method="post" th:action="@{/area-clienti/cambio-email}">

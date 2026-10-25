@@ -9,7 +9,7 @@
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <h1 th:text="#{auth.customer.linkInvalid.title}">Il link non è più valido</h1>
     <p class="lede" th:text="#{auth.customer.linkInvalid.lead}">Inserisci di nuovo la tua e-mail per riceverne uno nuovo.</p>
     <form method="post" th:action="@{/area-clienti/}" class="form-grid">

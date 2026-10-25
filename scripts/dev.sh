@@ -18,8 +18,8 @@ if [[ -x "$PG_BIN/initdb" ]]; then
   scripts/local-db.sh start >/dev/null
   eval "$(scripts/local-db.sh env)"
 elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then
-  echo "▸ Database locale in Docker (postgres:16, porta 54329; deploy/compose.dev.yml)"
-  docker compose -f deploy/compose.dev.yml up -d --wait db >/dev/null
+  echo "▸ Database locale in Docker (postgres:16, porta 54329; compose.yaml)"
+  docker compose up -d --wait db >/dev/null
   export TEST_DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web_test TEST_DATABASE_USER=ls TEST_DATABASE_PASSWORD=ls
 else
   cat >&2 <<'EOF'

@@ -8,7 +8,7 @@
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
     <h1 th:text="#{backoffice.orders.approve}">Approva ordine</h1>
     <p class="muted" th:text="#{backoffice.orderApprove.lead(${order.tempCode}, ${order.sender.name}, ${order.recipient.name}, ${order.recipient.city})}">Ordine provvisorio</p>
