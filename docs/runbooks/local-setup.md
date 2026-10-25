@@ -6,11 +6,21 @@ sintetici. Comandi e identificatori restano in inglese; vedi anche `README.md` e
 
 ## Prerequisiti
 
-* JDK 21 (`java -version`), Node 22 (`node --version`), i binari server di PostgreSQL 16
-  (`/usr/lib/postgresql/16/bin`: `initdb`, `pg_ctl`, `psql`). Maven non serve: `./mvnw`
-  scarica Maven 3.9.11.
-* Nessun Docker necessario. Con un demone Docker disponibile i test possono usare Testcontainers
-  (basta non impostare `TEST_DATABASE_URL`).
+* JDK 21 (`java -version`) e Node 22 (`node --version`, solo per i test E2E). Maven non serve:
+  `./mvnw` lo scarica.
+* PostgreSQL 16 in locale, in una di due forme:
+  * **binari server** (`initdb`, `pg_ctl`, `psql`): su macOS `brew install postgresql@16` e
+    `export LS_PG_BIN=$(brew --prefix postgresql@16)/bin`; su Debian/Ubuntu
+    `sudo apt install postgresql-16` (binari in `/usr/lib/postgresql/16/bin`, il percorso
+    predefinito). Verifica: `$LS_PG_BIN/initdb --version`.
+  * **Docker**: `docker compose -f deploy/compose.dev.yml up -d db` avvia `postgres:16` su
+    `localhost:54329` con le stesse credenziali e gli stessi database (`ls_web`, `ls_web_test`,
+    `ls_web_e2e`); `scripts/dev.sh` lo fa da solo se non trova i binari. Con
+    `docker compose -f deploy/compose.dev.yml --profile app up --build` gira in Docker anche l'app
+    (porta 8080, e-mail in `.local/mail/`); i dati di prova con
+    `docker compose -f deploy/compose.dev.yml run --rm app dev-seed`.
+* Con un demone Docker disponibile i test possono anche usare Testcontainers (basta non
+  impostare `TEST_DATABASE_URL`).
 
 ## 1. Database locale
 
