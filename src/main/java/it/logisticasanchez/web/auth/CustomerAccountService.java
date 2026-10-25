@@ -67,6 +67,7 @@ public class CustomerAccountService {
             }
             user.setEmail(placeholderEmail);
             user.setPendingEmail(null);
+            user.clearPassword();
             if (user.getDisabledAt() == null) {
                 user.setDisabledAt(now);
             }

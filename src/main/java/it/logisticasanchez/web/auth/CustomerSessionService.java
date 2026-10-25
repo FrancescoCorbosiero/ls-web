@@ -6,6 +6,7 @@ import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.time.Clock;
 import java.util.List;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -49,16 +50,23 @@ public class CustomerSessionService {
         this.clock = clock;
     }
 
+    /** The session attribute naming how the session was opened ({@link SignInMethod}). */
+    public static final String SIGN_IN_METHOD = CustomerSessionService.class.getName() + ".method";
+
     /**
-     * Opens the session after a sign-in link or the registration and remembers the device when
-     * asked (ADR 0031); otherwise the device forgets any earlier remembered sign-in.
+     * Opens the session after a sign-in link, the registration or the password and remembers the
+     * device when asked (ADR 0031); otherwise the device forgets any earlier remembered sign-in.
+     * The method is kept in the session: a session opened by a link proved the mailbox, so the
+     * profile lets it set a new password without the current one (ADR 0032).
      */
     public void signIn(
             CustomerPrincipal principal,
+            SignInMethod method,
             boolean rememberDevice,
             HttpServletRequest request,
             HttpServletResponse response) {
         signIn(principal, request, response);
+        request.getSession().setAttribute(SIGN_IN_METHOD, method);
         if (rememberDevice) {
             remembered.remember(principal.customerUserId(), request, response);
         } else {
@@ -91,6 +99,20 @@ public class CustomerSessionService {
             }
         }
         return ended;
+    }
+
+    /** True when the current session was opened by an e-mailed link (or the registration that followed one). */
+    public static boolean signedInByLink(HttpServletRequest request) {
+        HttpSession session = request.getSession(false);
+        return session != null && session.getAttribute(SIGN_IN_METHOD) == SignInMethod.LINK;
+    }
+
+    /** How a customer session was opened. */
+    public enum SignInMethod {
+        /** The e-mailed link (or the registration behind a link): the mailbox is proven. */
+        LINK,
+        /** E-mail and password (ADR 0032). */
+        PASSWORD
     }
 
     /** The principal of the current request, or 401 through the error model when it is not a customer session. */

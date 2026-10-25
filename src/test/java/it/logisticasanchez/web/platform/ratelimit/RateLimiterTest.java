@@ -36,7 +36,7 @@ class RateLimiterTest {
 
     private RateLimiter limiter() {
         Limit three = new Limit(3, Duration.ofMinutes(1));
-        return new RateLimiter(new RateLimitProperties(three, three, three, three, three, three), clock);
+        return new RateLimiter(new RateLimitProperties(three, three, three, three, three, three, three, three), clock);
     }
 
     @Test
@@ -106,10 +106,14 @@ class RateLimiterTest {
     }
 
     @Test
-    void theDefaultLimitsOfTheSixPlatformKeysAreRegistered() {
-        RateLimiter limiter = new RateLimiter(new RateLimitProperties(null, null, null, null, null, null), clock);
+    void theDefaultLimitsOfTheEightPlatformKeysAreRegistered() {
+        RateLimiter limiter =
+                new RateLimiter(new RateLimitProperties(null, null, null, null, null, null, null, null), clock);
         assertThat(limiter.limitOf(RateLimitKeys.SIGNIN_LINK_EMAIL)).isEqualTo(new Limit(5, Duration.ofMinutes(15)));
         assertThat(limiter.limitOf(RateLimitKeys.SIGNIN_LINK_IP)).isEqualTo(new Limit(20, Duration.ofMinutes(15)));
+        assertThat(limiter.limitOf(RateLimitKeys.SIGNIN_PASSWORD_EMAIL))
+                .isEqualTo(new Limit(10, Duration.ofMinutes(15)));
+        assertThat(limiter.limitOf(RateLimitKeys.SIGNIN_PASSWORD_IP)).isEqualTo(new Limit(30, Duration.ofMinutes(15)));
         assertThat(limiter.limitOf(RateLimitKeys.STAFF_LOGIN)).isEqualTo(new Limit(20, Duration.ofMinutes(15)));
         assertThat(limiter.limitOf(RateLimitKeys.TRACKING_LOOKUP)).isEqualTo(new Limit(60, Duration.ofMinutes(1)));
         assertThat(limiter.limitOf(RateLimitKeys.FORM_SUBMIT)).isEqualTo(new Limit(10, Duration.ofMinutes(10)));

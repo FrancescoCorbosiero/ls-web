@@ -1,6 +1,6 @@
 # 0031 · Customers stay signed in on a device for 60 days
 
-* **Status:** Accepted
+* **Status:** Accepted (extended by ADR 0032: «Resta connesso» also on the e-mail-and-password sign-in)
 * **Date:** 2026-10-25
 * **Requirement IDs:** CUS-01, CUS-02 (chapter 09), NFR-02, NFR-03 · **Questions:** PD-10 (session and token lifetimes; decided by the owner on 2026-10-25) · **Findings:** chapter 10 §2 «Sessions (the owner may change these)»; amends ADR 0004 («Identity from the session»)
 

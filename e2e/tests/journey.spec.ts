@@ -23,6 +23,7 @@ const customer = {
   city: 'Seregno',
   postalCode: '20831',
   phone: '0362 123456',
+  password: `E2e-pallet-${stamp}`,
 };
 const order = {
   transportDocument: `DDT-E2E-${stamp}`,
@@ -88,8 +89,8 @@ async function expectAccessible(page: Page): Promise<void> {
 
 test('[CUS-02] a new address asks for access and completes the registration from the mailed link', async () => {
   await customerPage.goto('/area-clienti/');
-  await customerPage.getByLabel('Email').fill(customer.email);
-  await customerPage.getByRole('button', { name: 'Avanti' }).click();
+  await customerPage.locator('#email').fill(customer.email);
+  await customerPage.getByRole('button', { name: 'Ricevi il link' }).click();
   await expect(customerPage.getByText("Ti abbiamo inviato un'email")).toBeVisible();
 
   const mail = await waitForMail({ to: customer.email, subject: /Completa la registrazione/ });
@@ -106,6 +107,9 @@ test('[CUS-02] a new address asks for access and completes the registration from
 
   await expect(customerPage.getByRole('heading', { name: 'Controlla i dati inseriti' })).toBeVisible();
   await expect(customerPage.getByText(customer.companyName)).toBeVisible();
+  // ADR 0032: the password is chosen on the summary
+  await customerPage.locator('#password').fill(customer.password);
+  await customerPage.locator('#passwordConfirm').fill(customer.password);
   await customerPage.getByRole('button', { name: 'Conferma', exact: true }).click();
 
   await expect(customerPage).toHaveURL(/\/area-clienti\/ordini\/$/);
@@ -149,8 +153,8 @@ test('[EML-03] the approval e-mail reaches the customer', async () => {
 test('[CUS-01] the approved customer signs in from the mailed link', async () => {
   await customerContext.clearCookies();
   await customerPage.goto('/area-clienti/');
-  await customerPage.getByLabel('Email').fill(customer.email);
-  await customerPage.getByRole('button', { name: 'Avanti' }).click();
+  await customerPage.locator('#email').fill(customer.email);
+  await customerPage.getByRole('button', { name: 'Ricevi il link' }).click();
   await expect(customerPage.getByText("Ti abbiamo inviato un'email")).toBeVisible();
 
   const mail = await waitForMail({ to: customer.email, subject: /link per accedere/ });
@@ -162,6 +166,18 @@ test('[CUS-01] the approved customer signs in from the mailed link', async () =>
   await expect(customerPage).toHaveURL(/\/area-clienti\/ordini\/$/);
   await expect(customerPage.getByRole('heading', { name: 'I miei ordini' })).toBeVisible();
   await expect(customerPage.locator('[data-customer-status]')).toHaveCount(0);
+});
+
+test('[CUS-01] the customer signs out and back in with e-mail and password', async () => {
+  await customerPage.goto('/area-clienti/ordini/');
+  await customerPage.getByRole('button', { name: 'Esci' }).click();
+  await expect(customerPage).toHaveURL(/\/area-clienti\/$/);
+  await customerPage.locator('#login-email').fill(customer.email);
+  await customerPage.locator('#password').fill(customer.password);
+  await customerPage.getByRole('button', { name: 'Accedi', exact: true }).click();
+  await expect(customerPage).toHaveURL(/\/area-clienti\/ordini\/$/);
+  await expect(customerPage.getByRole('heading', { name: 'I miei ordini' })).toBeVisible();
+  await expect(customerPage.locator('[data-password-missing]')).toHaveCount(0);
 });
 
 test('[CUS-01] «Resta connesso» opens the area again once the session has ended', async () => {

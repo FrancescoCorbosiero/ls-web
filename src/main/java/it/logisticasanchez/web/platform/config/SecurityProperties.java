@@ -18,6 +18,7 @@ public record SecurityProperties(
         @DefaultValue Sessions sessions,
         @DefaultValue Tokens tokens,
         @DefaultValue Staff staff,
+        @DefaultValue CustomerPassword customerPassword,
         @DefaultValue Proxy proxy,
         @DefaultValue Hsts hsts,
         /**
@@ -70,6 +71,14 @@ public record SecurityProperties(
             @Min(1) @DefaultValue("10") int threshold, // PD-10
             @NotNull @DefaultValue("15m") Duration duration // PD-10
             ) {}
+
+    /**
+     * The customers' own passwords (owner decision of 2026-10-25, ADR 0032): at least {@code
+     * minLength} characters (8, the usual floor for passwords people choose; staff keep 12) and
+     * not in the common-password list.
+     */
+    public record CustomerPassword(
+            @Min(8) @DefaultValue("8") int minLength) {}
 
     /** TOTP for staff is M2 (ENH-09, flag {@code security.adminTotp}); this seam stays off in M1. */
     public record Totp(@DefaultValue("false") boolean enabled // Q-17

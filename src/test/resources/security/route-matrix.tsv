@@ -10,6 +10,7 @@ GET	/area-clienti/	200	302	200	200
 POST	/area-clienti/	403	403	403	403
 GET	/area-clienti/accesso	200	200	200	200
 POST	/area-clienti/accesso	403	403	403	403
+POST	/area-clienti/password	403	403	403	403
 GET	/area-clienti/cambio-email	200	200	200	200
 POST	/area-clienti/cambio-email	403	403	403	403
 # customers module (CUS-02, CUS-06): registration behind a REGISTER link (the controller checks the token or the session), profile.
@@ -17,6 +18,7 @@ GET	/area-clienti/registrazione/	200	302	200	200
 POST	/area-clienti/registrazione/	403	403	403	403
 GET	/area-clienti/profilo/	302	200	403	403
 POST	/area-clienti/profilo/email	403	403	403	403
+POST	/area-clienti/profilo/password	403	403	403	403
 # orders module (CUS-04, CUS-05, CUS-07): list, detail, the new-order form and the changes to a pending order behind a customer session.
 GET	/area-clienti/ordini/	302	200	403	403
 GET	/area-clienti/ordini/{codice}/	302	404	403	403

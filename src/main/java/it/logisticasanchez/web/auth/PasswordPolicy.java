@@ -13,7 +13,7 @@ import java.util.Set;
 import org.springframework.stereotype.Component;
 
 /**
- * The staff password policy (ADM-01, chapter 10 §4): at least {@value #MIN_LENGTH} characters
+ * The password policy (ADM-01, chapter 10 §4): for staff at least {@value #MIN_LENGTH} characters
  * and not in the bundled list of common passwords ({@code auth/common-passwords.txt}, compared
  * case-insensitively after trimming). Nothing else is required: length and the deny-list are
  * what the brief asks, and composition rules push people to predictable passwords.
@@ -30,9 +30,14 @@ public class PasswordPolicy {
         this.common = load();
     }
 
-    /** The reason a password is refused, or empty when it is acceptable. */
+    /** The reason a staff password is refused, or empty when it is acceptable. */
     public Optional<Violation> check(String password) {
-        if (password == null || password.strip().length() < MIN_LENGTH) {
+        return check(password, MIN_LENGTH);
+    }
+
+    /** The same rules with another minimum length (the customers' passwords, ADR 0032). */
+    public Optional<Violation> check(String password, int minLength) {
+        if (password == null || password.strip().length() < minLength) {
             return Optional.of(Violation.TOO_SHORT);
         }
         if (common.contains(password.strip().toLowerCase(Locale.ROOT))) {

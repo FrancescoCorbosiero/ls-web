@@ -1,5 +1,6 @@
 package it.logisticasanchez.web.orders;
 
+import it.logisticasanchez.web.auth.CustomerPasswordService;
 import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
 import it.logisticasanchez.web.customers.CustomerService;
@@ -40,11 +41,17 @@ public class CustomerOrdersController {
     private final OrderService orders;
     private final CustomerService customers;
     private final TrackingCatalog catalog;
+    private final CustomerPasswordService passwords;
 
-    public CustomerOrdersController(OrderService orders, CustomerService customers, TrackingCatalog catalog) {
+    public CustomerOrdersController(
+            OrderService orders,
+            CustomerService customers,
+            TrackingCatalog catalog,
+            CustomerPasswordService passwords) {
         this.orders = orders;
         this.customers = customers;
         this.catalog = catalog;
+        this.passwords = passwords;
     }
 
     @GetMapping(OrderRoutes.LIST)
@@ -68,6 +75,8 @@ public class CustomerOrdersController {
                 "orders",
                 active.isEmpty() ? all : all.stream().filter(GROUPS.get(active)).toList());
         model.addAttribute("selfService", orders.customerSelfService());
+        // ADR 0032: a customer who signs in only by link is offered a password
+        model.addAttribute("passwordMissing", !passwords.hasPassword(principal.customerUserId()));
         return "orders/list";
     }
 

@@ -65,6 +65,8 @@ customer_user last_login_at timestamptz NULL
 customer_user disabled_at timestamptz NULL
 customer_user pending_email varchar NULL
 customer_user created_at timestamptz NOT NULL
+customer_user password_hash varchar NULL
+customer_user password_changed_at timestamptz NULL
 email_outbox id int8 NOT NULL
 email_outbox kind varchar NOT NULL
 email_outbox recipient varchar NOT NULL

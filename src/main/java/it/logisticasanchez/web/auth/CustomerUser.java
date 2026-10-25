@@ -15,8 +15,8 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * A customer's login identity for the magic-link sign-in (table {@code customer_user}, chapter 08
- * §2.3; CUS-01). The customer itself belongs to the {@code customers} module: only its id is held
+ * A customer's login identity (table {@code customer_user}, chapter 08 §2.3; CUS-01): the e-mail
+ * of the link sign-in and, when the customer chose one, the password hash (ADR 0032). The customer itself belongs to the {@code customers} module: only its id is held
  * here (modules never share entities or repositories, chapter 10 §2).
  */
 @Entity
@@ -46,6 +46,12 @@ public class CustomerUser {
 
     @Column(name = "pending_email", length = 254)
     private String pendingEmail;
+
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
+
+    @Column(name = "password_changed_at")
+    private Instant passwordChangedAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
@@ -110,6 +116,26 @@ public class CustomerUser {
 
     public void setPendingEmail(String pendingEmail) {
         this.pendingEmail = pendingEmail == null ? null : normaliseEmail(pendingEmail);
+    }
+
+    /** The password hash (ADR 0032), or null while the customer signs in only by e-mailed link. */
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public boolean hasPassword() {
+        return passwordHash != null;
+    }
+
+    public void setPassword(String passwordHash, Instant changedAt) {
+        this.passwordHash = Objects.requireNonNull(passwordHash, "passwordHash");
+        this.passwordChangedAt = Objects.requireNonNull(changedAt, "changedAt");
+    }
+
+    /** Anonymisation (NFR-03): the login can no longer be used with a password. */
+    public void clearPassword() {
+        this.passwordHash = null;
+        this.passwordChangedAt = null;
     }
 
     public Instant getCreatedAt() {

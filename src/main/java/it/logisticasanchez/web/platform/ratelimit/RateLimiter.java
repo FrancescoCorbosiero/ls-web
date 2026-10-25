@@ -31,6 +31,8 @@ public class RateLimiter {
         this.clock = Objects.requireNonNull(clock, "clock");
         register(RateLimitKeys.SIGNIN_LINK_EMAIL, properties.signinLinkEmail());
         register(RateLimitKeys.SIGNIN_LINK_IP, properties.signinLinkIp());
+        register(RateLimitKeys.SIGNIN_PASSWORD_EMAIL, properties.signinPasswordEmail());
+        register(RateLimitKeys.SIGNIN_PASSWORD_IP, properties.signinPasswordIp());
         register(RateLimitKeys.STAFF_LOGIN, properties.staffLogin());
         register(RateLimitKeys.TRACKING_LOOKUP, properties.trackingLookup());
         register(RateLimitKeys.FORM_SUBMIT, properties.formSubmit());

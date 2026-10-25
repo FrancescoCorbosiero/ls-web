@@ -14,6 +14,7 @@ import it.logisticasanchez.web.notifications.EmailOutbox;
 import it.logisticasanchez.web.notifications.EmailOutboxRepository;
 import it.logisticasanchez.web.orders.OrderService;
 import it.logisticasanchez.web.orders.OrderView;
+import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.support.AbstractPostgresIT;
 import it.logisticasanchez.web.support.CustomerTestData;
 import it.logisticasanchez.web.support.OrderTestData;
@@ -238,7 +239,7 @@ class BackofficeOrdersIT extends AbstractPostgresIT {
         assertThat(html("/gestione/ordini/", "codice", marker, "stato", "PENDING"))
                 .contains("Nessun risultato");
         assertThat(html("/gestione/ordini/", "codice", marker, "stato", "")).contains("27 risultati");
-        String today = LocalDate.now().toString();
+        String today = LocalDate.now(ItalianFormats.ROME).toString();
         assertThat(html("/gestione/ordini/", "codice", marker, "da", today, "a", today))
                 .contains("27 risultati");
         assertThat(html("/gestione/ordini/", "codice", marker, "a", "2024-01-01"))

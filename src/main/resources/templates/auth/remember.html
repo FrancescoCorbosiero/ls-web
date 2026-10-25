@@ -6,7 +6,7 @@
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <body>
-<div class="remember" th:fragment="remember(days)" th:if="${days > 0}">
+<div class="remember" th:fragment="remember(days)" th:if="${days != null and days > 0}">
   <label class="check-field"><input type="checkbox" name="ricordami" value="1" checked> <span th:text="#{auth.customer.remember(${days})}">Resta connesso su questo dispositivo per 60 giorni</span></label>
   <p class="muted small" th:text="#{auth.customer.rememberHint}">Togli la spunta se usi un computer condiviso.</p>
 </div>
