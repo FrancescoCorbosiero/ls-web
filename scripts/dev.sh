@@ -28,7 +28,7 @@ DB=(--spring.profiles.active=local
     --DATABASE_USER=ls --DATABASE_PASSWORD=ls)
 
 echo "▸ Dati di prova (le password degli utenti staff cambiano a ogni avvio)"
-java -jar "$JAR" dev-seed "${DB[@]}" --logging.level.root=warn --logging.level.it.logisticasanchez=warn --spring.main.banner-mode=off
+java -Dstdout.encoding=UTF-8 -jar "$JAR" dev-seed "${DB[@]}" --logging.level.root=warn --logging.level.it.logisticasanchez=warn --spring.main.banner-mode=off
 
 cat <<EOF
 
@@ -39,4 +39,4 @@ cat <<EOF
    E-mail inviate  .local/mail/*.eml  (il link di accesso all'area clienti è lì)
 
 EOF
-exec env SERVER_PORT="$PORT" java -jar "$JAR" "${DB[@]}"
+exec env SERVER_PORT="$PORT" java -Dstdout.encoding=UTF-8 -jar "$JAR" "${DB[@]}"
