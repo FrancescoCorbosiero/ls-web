@@ -9,6 +9,8 @@ FROM eclipse-temurin:21-jdk-noble AS build
 WORKDIR /build
 # Wrapper and pom first: the dependency download is cached while sources change.
 COPY mvnw pom.xml ./
+# Windows checkouts may turn mvnw into CRLF (shebang "bash\r" -> "not found"): normalise it.
+RUN sed -i "s/\r$//" mvnw && chmod +x mvnw
 COPY .mvn .mvn
 RUN ./mvnw -B -ntp -q dependency:go-offline || true
 COPY src src

@@ -1,0 +1,19 @@
+# Shell scripts and the Maven wrapper must keep LF endings on every platform (Docker builds
+# and Git Bash on Windows break on CRLF); the Windows wrapper keeps CRLF.
+* text=auto
+*.sh text eol=lf
+mvnw text eol=lf
+mvnw.cmd text eol=crlf
+*.py text eol=lf
+*.sql text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.properties text eol=lf
+Caddyfile text eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.woff2 binary
+*.woff binary
+*.ico binary
+*.pdf binary
