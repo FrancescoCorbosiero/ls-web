@@ -40,7 +40,9 @@ GET	/gestione/clienti/{id}/approva	302	403	404|200	404|200
 POST	/gestione/clienti/{id}/approva	403	403	403	403
 GET	/gestione/clienti/{id}/rifiuta	302	403	404|200	404|200
 POST	/gestione/clienti/{id}/rifiuta	403	403	403	403
-GET	/gestione/clienti/{id}/modifica	302	403	404|200	404|200
+# A record that can no longer be changed (an anonymised customer; an order already closed, or approved for an OPERATOR)
+# sends staff back to its page with a message (302); which one the sample id 1 is depends on the tests run before.
+GET	/gestione/clienti/{id}/modifica	302	403	404|200|302	404|200|302
 POST	/gestione/clienti/{id}/modifica	403	403	403	403
 GET	/gestione/ordini/	302	403	200	200
 GET	/gestione/ordini/in-approvazione/	302	403	200	200
@@ -53,9 +55,9 @@ GET	/gestione/ordini/{id}/rifiuta	302	403	404|200	404|200
 POST	/gestione/ordini/{id}/rifiuta	403	403	403	403
 POST	/gestione/ordini/{id}/tracking	403	403	403	403
 POST	/gestione/ordini/{id}/note	403	403	403	403
-GET	/gestione/ordini/{id}/modifica	302	403	404|200	404|200
+GET	/gestione/ordini/{id}/modifica	302	403	404|200|302	404|200|302
 POST	/gestione/ordini/{id}/modifica	403	403	403	403
-GET	/gestione/ordini/{id}/annulla	302	403	404|200	404|200
+GET	/gestione/ordini/{id}/annulla	302	403	404|200|302	404|200|302
 POST	/gestione/ordini/{id}/annulla	403	403	403	403
 GET	/gestione/tracking/	302	403	200	200
 POST	/gestione/tracking/	403	403	403	403

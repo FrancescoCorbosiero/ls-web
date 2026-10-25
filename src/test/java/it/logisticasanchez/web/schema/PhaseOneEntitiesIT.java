@@ -148,10 +148,13 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
 
     @Test
     void auditLogAndDetailRoundTrip() {
+        // An entity id no test order reaches: the shared database holds the audit rows of the
+        // order tests, and a real order 42 audited after NOW would come first in the lookup.
+        long entityId = 900_000_042L;
         AuditLog entry = auditLogs.save(AuditLog.of(AuditActorType.STAFF, "order.note.update")
                 .occurredAt(NOW)
                 .actor(7L)
-                .entity("shipment_order", 42L, "TEST-0001")
+                .entity("shipment_order", entityId, "TEST-0001")
                 .change("{\"body\": \"changed\"}", "{\"body\": \"changed\"}")
                 .request("d".repeat(64), "test-agent/1.0", "req-1")
                 .build());
@@ -159,7 +162,7 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
         flushAndClear();
 
         AuditLog found = auditLogs
-                .findByEntityTypeAndEntityIdOrderByOccurredAtDesc("shipment_order", 42L)
+                .findByEntityTypeAndEntityIdOrderByOccurredAtDesc("shipment_order", entityId)
                 .get(0);
         assertThat(found.getAction()).isEqualTo("order.note.update");
         assertThat(found.getActorType()).isEqualTo(AuditActorType.STAFF);
