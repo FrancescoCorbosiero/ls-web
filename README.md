@@ -6,6 +6,17 @@ It replaces the legacy public site, order portal, CMS and backend.
 
 ## Quickstart
 
+One command (JDK 21 and the PostgreSQL 16 binaries are the only prerequisites):
+
+```sh
+scripts/dev.sh          # local database, build, synthetic data, app on http://localhost:8080
+```
+
+It prints the staff passwords (`admin.seed`, `operatore.seed`) at every start; the customer
+area accepts `cliente.attivo@cliente.example` and writes the sign-in link to `.local/mail/`.
+
+Step by step:
+
 ```sh
 scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"
 ./mvnw -B -ntp verify                                    # build + unit + integration tests

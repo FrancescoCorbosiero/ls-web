@@ -35,6 +35,15 @@ Le credenziali `ls`/`ls` valgono solo in locale.
 
 ## 3. Avvio con dati sintetici
 
+Il modo rapido è un solo comando, che fa tutto quanto segue (database, build se serve, dati
+di prova, app sulla porta 8080) e stampa le password degli utenti staff a ogni avvio:
+
+```sh
+scripts/dev.sh             # PORT=9090 scripts/dev.sh per un'altra porta; --rebuild forza il jar
+```
+
+Passo per passo:
+
 ```sh
 JAR=target/ls-web-0.1.0-SNAPSHOT.jar
 DB="--spring.profiles.active=local --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls"
