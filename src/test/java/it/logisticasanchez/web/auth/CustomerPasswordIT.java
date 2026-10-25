@@ -51,7 +51,9 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @AutoConfigureMockMvc
 class CustomerPasswordIT extends AbstractPostgresIT {
 
-    private static final String PASSWORD = "Pallet-di-prova-2026";
+    private static final String PASSWORD = CustomerTestData.newPassword();
+    private static final String NEW_PASSWORD = CustomerTestData.newPassword();
+    private static final String WRONG_PASSWORD = CustomerTestData.newPassword();
     private static final String REFUSED = "E-mail o password non corrette.";
     private static final Pattern SIGN_IN_LINK =
             Pattern.compile("https://logisticasanchez\\.com/area-clienti/accesso\\?t=([A-Za-z0-9_-]+)");
@@ -132,7 +134,7 @@ class CustomerPasswordIT extends AbstractPostgresIT {
         passwords.setPassword(disabled.customerUserId(), PASSWORD);
         jdbc.update("update customer_user set disabled_at = now() where id = ?", disabled.customerUserId());
 
-        String wrongPassword = refusedPage(customer.email(), "Un-altra-password-99");
+        String wrongPassword = refusedPage(customer.email(), WRONG_PASSWORD);
         String unknownEmail = CustomerTestData.uniqueEmail("sconosciuto");
         String unknown = refusedPage(unknownEmail, PASSWORD);
         String noPassword = refusedPage(withoutPassword.email(), PASSWORD);
@@ -141,7 +143,7 @@ class CustomerPasswordIT extends AbstractPostgresIT {
         assertThat(wrongPassword)
                 .contains(REFUSED)
                 .contains("Prima volta o password dimenticata?")
-                .doesNotContain("Un-altra-password-99");
+                .doesNotContain(WRONG_PASSWORD);
         // apart from the e-mail typed back into the form, the four pages are the same
         assertThat(blankEmail(unknown, unknownEmail)).isEqualTo(blankEmail(wrongPassword, customer.email()));
         assertThat(blankEmail(noPassword, withoutPassword.email()))
@@ -153,7 +155,7 @@ class CustomerPasswordIT extends AbstractPostgresIT {
     void passwordAttemptsAreRateLimitedPerEmail() throws Exception {
         passwords.setPassword(customer.customerUserId(), PASSWORD);
         for (int i = 0; i < 10; i++) {
-            signIn(customer.email(), "tentativo-sbagliato-" + i, false).andExpect(status().isOk());
+            signIn(customer.email(), WRONG_PASSWORD + i, false).andExpect(status().isOk());
         }
         signIn(customer.email(), PASSWORD, false)
                 .andExpect(status().isTooManyRequests())
@@ -176,9 +178,9 @@ class CustomerPasswordIT extends AbstractPostgresIT {
 
         // «password dimenticata»: a new link lets the customer replace it without the old one
         MockHttpSession again = signInByLink(customer.email());
-        mvc.perform(changePassword(again, null, "Nuova-password-2027", "Nuova-password-2027"))
+        mvc.perform(changePassword(again, null, NEW_PASSWORD, NEW_PASSWORD))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-salvata=1#password"));
-        assertThat(passwords.isCurrentPassword(customer.customerUserId(), "Nuova-password-2027"))
+        assertThat(passwords.isCurrentPassword(customer.customerUserId(), NEW_PASSWORD))
                 .isTrue();
 
         // a session opened otherwise must give the current password
@@ -190,13 +192,14 @@ class CustomerPasswordIT extends AbstractPostgresIT {
                 .contains("id=\"currentPassword\"");
         mvc.perform(changePassword(other, null, PASSWORD, PASSWORD))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-errore=attuale#password"));
-        mvc.perform(changePassword(other, "sbagliata-di-certo", PASSWORD, PASSWORD))
+        mvc.perform(changePassword(other, WRONG_PASSWORD, PASSWORD, PASSWORD))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-errore=attuale#password"));
-        mvc.perform(changePassword(other, "Nuova-password-2027", PASSWORD, PASSWORD + "x"))
+        mvc.perform(changePassword(other, NEW_PASSWORD, PASSWORD, PASSWORD + 'x'))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-errore=diverse#password"));
-        mvc.perform(changePassword(other, "Nuova-password-2027", "corta", "corta"))
+        String tooShort = PASSWORD.substring(0, 5);
+        mvc.perform(changePassword(other, NEW_PASSWORD, tooShort, tooShort))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-errore=corta#password"));
-        mvc.perform(changePassword(other, "Nuova-password-2027", "password", "password"))
+        mvc.perform(changePassword(other, NEW_PASSWORD, "password", "password"))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-errore=comune#password"));
         assertThat(mvc.perform(get("/area-clienti/profilo/")
                                 .param("password-errore", "comune")
@@ -212,7 +215,7 @@ class CustomerPasswordIT extends AbstractPostgresIT {
                         .getResponse()
                         .getContentAsString())
                 .contains("La password deve avere almeno 8 caratteri.");
-        assertThat(passwords.isCurrentPassword(customer.customerUserId(), "Nuova-password-2027"))
+        assertThat(passwords.isCurrentPassword(customer.customerUserId(), NEW_PASSWORD))
                 .isTrue();
     }
 
@@ -224,9 +227,8 @@ class CustomerPasswordIT extends AbstractPostgresIT {
         Cookie hereDevice = rememberCookie(here.getResponse());
         Cookie otherDevice = rememberCookie(elsewhere.getResponse());
 
-        MvcResult changed = mvc.perform(
-                        changePassword(session(here), PASSWORD, "Nuova-password-2027", "Nuova-password-2027")
-                                .cookie(hereDevice))
+        MvcResult changed = mvc.perform(changePassword(session(here), PASSWORD, NEW_PASSWORD, NEW_PASSWORD)
+                        .cookie(hereDevice))
                 .andExpect(header().string("Location", "/area-clienti/profilo/?password-salvata=1#password"))
                 .andReturn();
 
@@ -242,7 +244,7 @@ class CustomerPasswordIT extends AbstractPostgresIT {
                 .andExpect(status().isFound())
                 .andExpect(header().string("Location", "/area-clienti/"));
         signIn(customer.email(), PASSWORD, false).andExpect(status().isOk()); // the old one no longer works
-        signIn(customer.email(), "Nuova-password-2027", false).andExpect(status().isFound());
+        signIn(customer.email(), NEW_PASSWORD, false).andExpect(status().isFound());
     }
 
     @Test
@@ -267,7 +269,7 @@ class CustomerPasswordIT extends AbstractPostgresIT {
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("Scegli la password")))
                 .andExpect(content().string(Matchers.containsString("Almeno 8 caratteri")));
-        mvc.perform(registration(token, email, "confirm", PASSWORD, PASSWORD + "!"))
+        mvc.perform(registration(token, email, "confirm", PASSWORD, PASSWORD + '!'))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("Le due password non coincidono.")));
         mvc.perform(registration(token, email, "confirm", "corta", "corta"))

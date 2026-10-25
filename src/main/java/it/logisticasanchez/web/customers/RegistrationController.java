@@ -181,10 +181,10 @@ public class RegistrationController {
         Optional<PasswordPolicy.Violation> violation = passwords.violation(password);
         if (violation.isPresent()) {
             return violation.get() == PasswordPolicy.Violation.COMMON
-                    ? "customers.password.common"
-                    : "customers.password.tooShort";
+                    ? "customers.signinForm.common"
+                    : "customers.signinForm.tooShort";
         }
-        return password.equals(confirm) ? null : "customers.password.mismatch";
+        return password.equals(confirm) ? null : "customers.signinForm.mismatch";
     }
 
     private String sent(Model model) {
