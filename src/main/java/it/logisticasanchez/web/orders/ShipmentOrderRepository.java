@@ -23,6 +23,14 @@ interface ShipmentOrderRepository extends JpaRepository<ShipmentOrder, Long>, Jp
     @Query("select count(o) > 0 from ShipmentOrder o where lower(o.code) = :code")
     boolean existsByCodeNormalised(@Param("code") String code);
 
+    /** The code check of an ADMIN correction (ADM-11): any other order with this code, trimmed and ignoring case. */
+    @Query("select count(o) > 0 from ShipmentOrder o where lower(o.code) = :code and o.id <> :id")
+    boolean existsByCodeNormalisedAndIdNot(@Param("code") String code, @Param("id") long id);
+
+    long countByStatus(OrderStatus status);
+
+    long countByStatusAndTrackingStateIdNot(OrderStatus status, Short trackingStateId);
+
     List<ShipmentOrder> findByStatusOrderBySubmittedAtAsc(OrderStatus status);
 
     /** An approved order by its definitive code, trimmed and ignoring case (the tracking page, ADM-06). */

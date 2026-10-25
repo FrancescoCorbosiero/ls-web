@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<!-- «Annulla ordine» (ADM-11; ADR 0028): a pending order for every staff member, a confirmed one only for an ADMIN; nothing is deleted, no e-mail; on the version of the order shown. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.orderCancel.title(${order.displayCode()})} + ' · ' + #{layout.private.backoffice}">Annulla ordine · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav(${order.isPending()} ? 'ordersPending' : 'orders')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="@{/gestione/ordini/{id}/(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.order.backToOrder}">Torna all'ordine</span></a>
+        <h1 th:text="#{backoffice.orderCancel.title(${order.displayCode()})}">Annulla l'ordine</h1>
+        <p class="lede" th:text="#{backoffice.orderApprove.lead(${order.displayCode()}, ${order.sender.name}, ${order.recipient.name}, ${order.recipient.city})}">Ordine</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <section class="panel panel-danger">
+      <p class="ink" th:text="${order.isApproved()} ? #{backoffice.orderCancel.approvedHint} : #{backoffice.orderCancel.pendingHint}">L'ordine resta in archivio come «Annullato».</p>
+      <form method="post" th:action="@{/gestione/ordini/{id}/annulla(id=${order.id})}" class="fields">
+        <input type="hidden" name="versione" th:value="${order.version}">
+        <div class="field span-all">
+          <label class="label" for="motivo" th:text="#{backoffice.orderCancel.reason}">Motivo (facoltativo, solo per l'ufficio)</label>
+          <textarea class="textarea" id="motivo" name="motivo" rows="3" maxlength="500" th:text="${reason}"></textarea>
+        </div>
+        <p class="strong ink span-all mb-0" th:text="#{backoffice.confirm.question}">Sei sicuro di voler procedere?</p>
+        <p class="form-actions span-all">
+          <button type="submit" class="btn btn-danger-solid"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{backoffice.order.cancel}">Annulla ordine</span></button>
+          <a class="btn btn-light" th:href="@{/gestione/ordini/{id}/(id=${order.id})}" th:text="#{backoffice.orderCancel.keep}">No, torna all'ordine</a>
+        </p>
+      </form>
+    </section>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

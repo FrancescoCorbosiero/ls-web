@@ -17,6 +17,8 @@ interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     List<Customer> findByStatusInOrderByRegisteredAtAsc(Collection<CustomerStatus> statuses);
 
+    long countByStatusIn(Collection<CustomerStatus> statuses);
+
     /** The back-office list (ADM-03): live customers, newest first, optionally matching a text on name, e-mail or city. */
     @Query("select c from Customer c where c.anonymisedAt is null"
             + " and (:like = '' or lower(c.companyName) like :like or lower(c.email) like :like or lower(c.city) like :like)"

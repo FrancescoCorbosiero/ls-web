@@ -27,8 +27,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * The order screens of the back office (ADM-04…ADM-08; chapter 04 §3.4–3.5, §4.4–4.8 columns and
- * copy; ADR 0017): «In Approvazione» (temporary codes shown as «-») with «Approva ordine» (fields
- * «Codice» and «Importo Totale (per cliente)», Italian comma) and the decline page; «Ordini»
+ * copy; ADR 0017, ADR 0029): «In Approvazione» (temporary codes shown as «-») with «Approva ordine»
+ * (fields «Codice» and «Importo Totale (per cliente)», Italian comma) and the decline page, both
+ * on the version of the order the page showed (ADR 0028); «Ordini»
  * with server-side pagination, filters (state, tracking, customer, dates) and search by code;
  * the detail with the three legacy sections, the lines grouped with their quantity, the tracking
  * form (current state preselected, any of the six), the internal note beside the customer's
@@ -39,6 +40,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class BackofficeOrdersController {
 
     static final int PAGE_SIZE = 25;
+    /** The «tracking» filter value for the shipments not yet delivered (the home's «Spedizioni in corso»). */
+    static final String UNDELIVERED = "in-corso";
 
     private final OrderService orders;
     private final CustomerService customers;
@@ -68,13 +71,15 @@ public class BackofficeOrdersController {
         String error = null;
         OrderSearch search;
         try {
+            boolean undelivered = UNDELIVERED.equals(filters.get("tracking"));
             search = new OrderSearch(
                     status(filters.get("stato")),
-                    integer(filters.get("tracking")).orElse(null),
+                    undelivered ? null : integer(filters.get("tracking")).orElse(null),
                     integer(filters.get("cliente")).map(Integer::longValue).orElse(null),
                     date(filters.get("da")),
                     date(filters.get("a")),
-                    filters.get("codice"));
+                    filters.get("codice"),
+                    undelivered);
             if (search.from() != null && search.to() != null && search.from().isAfter(search.to())) {
                 throw new RuleViolationException("La data di inizio deve precedere quella di fine.");
             }
@@ -110,6 +115,7 @@ public class BackofficeOrdersController {
             @PathVariable("id") long id,
             @RequestParam(name = "codice", required = false) String code,
             @RequestParam(name = "importo", required = false) String amount,
+            @RequestParam(name = "versione", required = false) String version,
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             Model model,
             RedirectAttributes redirect) {
@@ -117,11 +123,11 @@ public class BackofficeOrdersController {
         Map<String, String> values =
                 Map.of("codice", ItalianFormats.trim(code), "importo", ItalianFormats.trim(amount));
         try {
-            OrderView approved =
-                    orders.approve(order.id(), StaffSession.of(authentication).requireId(), code, amount);
+            OrderView approved = orders.approve(
+                    order.id(), StaffSession.of(authentication).requireId(), expectedVersion(version), code, amount);
             redirect.addFlashAttribute("flash", "Ordine approvato con il codice " + approved.code() + ".");
         } catch (RuleViolationException e) {
-            return approveForm(model, order, values, e.detail());
+            return approveForm(model, order(id), values, e.detail());
         }
         return "redirect:" + BackofficeRoutes.ORDERS_PENDING;
     }
@@ -129,6 +135,7 @@ public class BackofficeOrdersController {
     @GetMapping(BackofficeRoutes.ORDER_DECLINE)
     public String declinePage(@PathVariable("id") long id, Model model) {
         model.addAttribute("order", order(id));
+        model.addAttribute("reason", "");
         model.addAttribute("error", null);
         return "backoffice/order-decline";
     }
@@ -137,6 +144,7 @@ public class BackofficeOrdersController {
     public String decline(
             @PathVariable("id") long id,
             @RequestParam(name = "motivo", required = false) String reason,
+            @RequestParam(name = "versione", required = false) String version,
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             Model model,
             RedirectAttributes redirect) {
@@ -145,9 +153,10 @@ public class BackofficeOrdersController {
             if (reason != null && reason.length() > 500) {
                 throw new RuleViolationException("Il motivo può avere al massimo 500 caratteri.");
             }
-            orders.decline(order.id(), StaffSession.of(authentication).requireId(), reason);
+            orders.decline(order.id(), StaffSession.of(authentication).requireId(), expectedVersion(version), reason);
         } catch (RuleViolationException e) {
-            model.addAttribute("order", order);
+            model.addAttribute("order", order(id));
+            model.addAttribute("reason", ItalianFormats.trim(reason));
             model.addAttribute("error", e.detail());
             return "backoffice/order-decline";
         }
@@ -234,6 +243,8 @@ public class BackofficeOrdersController {
 
     private String detailPage(Model model, OrderView order, String trackingError, String noteError) {
         model.addAttribute("order", order);
+        model.addAttribute("changeable", BackofficeOrderChangesController.changeable(order, (StaffSession)
+                model.getAttribute("staff")));
         model.addAttribute("customer", customers.find(order.customerId()).orElse(null));
         model.addAttribute("note", orders.internalNote(order.id()).orElse(""));
         model.addAttribute("history", orders.trackingHistory(order.id()));
@@ -263,6 +274,11 @@ public class BackofficeOrdersController {
         } catch (IllegalArgumentException e) {
             throw new RuleViolationException("Stato sconosciuto.");
         }
+    }
+
+    /** The version an approve or decline page was built on (ADR 0028): null when the form sent none, -1 when malformed. */
+    private static Integer expectedVersion(String value) {
+        return value == null ? null : BackofficeOrderChangesController.version(value);
     }
 
     private static Optional<Integer> integer(String value) {

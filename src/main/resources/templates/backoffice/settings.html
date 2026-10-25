@@ -7,14 +7,18 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
-    <h1 th:text="#{backoffice.settings.title}">Impostazioni</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{backoffice.settings.title}">Impostazioni</h1>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
-    <p class="actions">
-      <a class="btn btn-secondary" href="/gestione/impostazioni/utenti/" th:text="#{backoffice.staffUsers.title}">Utenti della gestione</a>
-      <a class="btn btn-secondary" href="/gestione/impostazioni/privacy/" th:text="#{backoffice.privacy.title}">Privacy: esporta o anonimizza</a>
+    <p class="form-actions">
+      <a class="btn btn-light" href="/gestione/impostazioni/utenti/" th:text="#{backoffice.staffUsers.title}">Utenti della gestione</a>
+      <a class="btn btn-light" href="/gestione/impostazioni/privacy/" th:text="#{backoffice.privacy.title}">Privacy: esporta o anonimizza</a>
     </p>
 
     <h2 th:text="#{backoffice.settings.recipients}">Destinatari autorizzati dei report</h2>
@@ -23,19 +27,19 @@
     <ul role="list" th:if="${!configuredRecipients.isEmpty()}">
       <li th:each="a : ${configuredRecipients}" th:text="${a} + ' ' + #{backoffice.settings.recipientConfigured}">configurato</li>
     </ul>
-    <div class="table-wrap" th:if="${!recipients.isEmpty()}">
-      <table class="table" data-table="recipients">
+    <div class="data-table-wrap" th:if="${!recipients.isEmpty()}">
+      <table class="data-table" data-table="recipients">
         <thead><tr><th scope="col" th:text="#{customers.field.email}">Email</th><th scope="col" th:text="#{backoffice.settings.recipientLabel}">Descrizione</th><th scope="col" th:text="#{backoffice.col.actions}">Azioni</th></tr></thead>
         <tbody>
           <tr th:each="r : ${recipients}" th:attr="data-recipient=${r.email}">
             <td th:text="${r.email}">email</td>
             <td th:text="${r.label ?: '-'}">-</td>
-            <td><form method="post" th:action="@{/gestione/impostazioni/destinatari/{id}/rimuovi(id=${r.id})}"><button type="submit" class="btn btn-ghost btn-sm" th:text="#{backoffice.settings.recipientRemove}">Rimuovi</button></form></td>
+            <td><form method="post" th:action="@{/gestione/impostazioni/destinatari/{id}/rimuovi(id=${r.id})}"><button type="submit" class="btn btn-light btn-xs" th:text="#{backoffice.settings.recipientRemove}">Rimuovi</button></form></td>
           </tr>
         </tbody>
       </table>
     </div>
-    <form method="post" th:action="@{/gestione/impostazioni/destinatari}" class="form-grid cols-2 card">
+    <form method="post" th:action="@{/gestione/impostazioni/destinatari}" class="panel fields mb-m">
       <div class="field">
         <label class="label" for="email" th:text="#{customers.field.email}">Email</label>
         <input class="input" id="email" name="email" type="email" maxlength="254" required th:value="${email}">
@@ -44,24 +48,24 @@
         <label class="label" for="descrizione" th:text="#{backoffice.settings.recipientLabelOptional}">Descrizione (facoltativo)</label>
         <input class="input" id="descrizione" name="descrizione" type="text" maxlength="100" th:value="${descrizione}">
       </div>
-      <p class="actions span-2"><button type="submit" class="btn btn-primary" th:text="#{backoffice.settings.recipientAdd}">Aggiungi destinatario</button></p>
+      <p class="form-actions span-all"><button type="submit" class="btn" th:text="#{backoffice.settings.recipientAdd}">Aggiungi destinatario</button></p>
     </form>
 
     <h2 class="mt-m" th:text="#{backoffice.settings.flags}">Funzionalità in prova</h2>
     <p class="muted" th:text="#{backoffice.settings.flagsHint}">Tutte spente: il sito si comporta come il sistema attuale. Attivane una solo quando l'ufficio è pronto a usarla.</p>
-    <div class="table-wrap">
-      <table class="table" data-table="flags">
+    <div class="data-table-wrap">
+      <table class="data-table" data-table="flags">
         <thead><tr><th scope="col" th:text="#{backoffice.settings.flagKey}">Chiave</th><th scope="col" th:text="#{backoffice.settings.flagRequirement}">Requisito</th><th scope="col" th:text="#{backoffice.settings.flagState}">Stato</th><th scope="col" th:text="#{backoffice.col.actions}">Azioni</th></tr></thead>
         <tbody>
           <tr th:each="f : ${flags}" th:attr="data-flag=${f.key.key()}">
             <td><code th:text="${f.key.key()}">chiave</code></td>
             <td th:text="${f.key.requirementId()}">ENH-01</td>
-            <td><span class="badge" th:text="${f.value} ? #{backoffice.settings.flagOn} : #{backoffice.settings.flagOff}">spenta</span></td>
+            <td><span class="pill" th:classappend="${f.value} ? 'pill-active' : 'pill-neutral'" th:text="${f.value} ? #{backoffice.settings.flagOn} : #{backoffice.settings.flagOff}">spenta</span></td>
             <td>
               <form method="post" th:action="@{/gestione/impostazioni/flag}">
                 <input type="hidden" name="chiave" th:value="${f.key.key()}">
                 <input type="hidden" name="attiva" th:value="${f.value} ? '0' : '1'">
-                <button type="submit" class="btn btn-secondary btn-sm" th:text="${f.value} ? #{backoffice.settings.flagTurnOff} : #{backoffice.settings.flagTurnOn}">Attiva</button>
+                <button type="submit" class="btn btn-light btn-xs" th:text="${f.value} ? #{backoffice.settings.flagTurnOff} : #{backoffice.settings.flagTurnOn}">Attiva</button>
               </form>
             </td>
           </tr>

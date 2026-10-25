@@ -8,6 +8,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:8089';
 
+/** A session whose pre-installed Chromium is not the build this Playwright pins (Claude Code
+ *  cloud: /opt/pw-browsers/chromium) points at it with CHROMIUM_PATH; CI installs its own. */
+const launchOptions = process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {};
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: false,
@@ -27,6 +31,7 @@ export default defineConfig({
     timezoneId: 'Europe/Rome',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    launchOptions,
   },
   projects: [
     {

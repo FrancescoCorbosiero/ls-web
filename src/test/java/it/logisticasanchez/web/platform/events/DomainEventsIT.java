@@ -43,9 +43,12 @@ class DomainEventsIT extends AbstractPostgresIT {
                 new DomainEvent.CustomerVerified(1L),
                 new DomainEvent.CustomerApproved(1L, 2L),
                 new DomainEvent.CustomerDeclined(1L, 2L),
+                new DomainEvent.CustomerChanged(1L, 2L),
                 new DomainEvent.OrderCreated(10L, 1L),
                 new DomainEvent.OrderApproved(10L, 2L),
                 new DomainEvent.OrderDeclined(10L, 2L),
+                new DomainEvent.OrderChanged(10L),
+                new DomainEvent.OrderCancelled(10L),
                 new DomainEvent.TrackingChanged(10L, 3, 2L),
                 new DomainEvent.LeadStored(5L));
         assertThat(published.stream().map(Object::getClass).distinct())

@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <!--
   Order detail (ADM-08: «Dettaglio Spedizione», «Dettaglio Colli», «Pallets» as labelled sections,
-  units grouped into lines; ADM-06 «Imposta tracking» with the current state preselected; ADM-07
-  «Aggiorna note»: the internal note apart from the customer's read-only note; the tracking history).
+  units grouped into lines; ADM-06 «Imposta tracking» with the current state preselected and its
+  history; ADM-07 «Aggiorna note»: the internal note apart from the customer's read-only note;
+  ADR 0029 layout) with the actions of its state: «Approva ordine» and «Rifiuta» while pending,
+  «Modifica» and «Annulla ordine» (ADM-11: a confirmed order only for an ADMIN).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -11,111 +13,161 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{backoffice/layout :: nav(${order.isPending()} ? 'ordersPending' : 'orders')}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{backoffice/layout :: nav(${order.status.name() == 'PENDING'} ? 'ordersPending' : 'orders')}"></th:block>
-    <h1 th:text="#{backoffice.order.title(${order.displayCode()})}">Ordine</h1>
-    <p><span class="badge" th:text="#{'orders.status.' + ${order.status.name()}}">Stato</span>
-      <span class="muted" th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span>
-      <span class="muted" th:if="${order.approvedAt != null}" th:text="#{backoffice.order.approvedAt(${fmt.dateTime(order.approvedAt)})}">Approvato il</span></p>
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="${order.isPending()} ? '/gestione/ordini/in-approvazione/' : '/gestione/ordini/'"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.order.back}">Torna agli ordini</span></a>
+        <h1 th:text="#{backoffice.order.title(${order.displayCode()})}">Ordine</h1>
+        <p class="page-meta">
+          <span th:replace="~{layout/private :: orderStatus(${order.status})}">Stato</span>
+          <span th:replace="~{layout/private :: trackingPill(${order})}">Presa in carico</span>
+          <span th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span>
+          <span class="pill pill-soft" th:if="${order.createdByStaff()}" th:text="#{backoffice.order.createdByStaff}">Inserito dall'ufficio</span>
+        </p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" th:if="${order.isPending()}" th:href="@{/gestione/ordini/{id}/approva(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{backoffice.orders.approve}">Approva ordine</span></a>
+        <a class="btn btn-danger" th:if="${order.isPending()}" th:href="@{/gestione/ordini/{id}/rifiuta(id=${order.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
+        <a class="btn btn-light" th:if="${changeable}" th:href="@{/gestione/ordini/{id}/modifica(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+        <a class="btn btn-light" th:if="${changeable}" th:href="@{/gestione/ordini/{id}/annulla(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{backoffice.order.cancel}">Annulla ordine</span></a>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
-    <p class="actions" th:if="${order.status.name() == 'PENDING'}">
-      <a class="btn btn-primary" th:href="@{/gestione/ordini/{id}/approva(id=${order.id})}" th:text="#{backoffice.orders.approve}">Approva ordine</a>
-      <a class="btn btn-secondary" th:href="@{/gestione/ordini/{id}/rifiuta(id=${order.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
-    </p>
-    <p class="callout" th:if="${order.status.name() == 'DECLINED'}" th:text="#{backoffice.order.declined(${fmt.dateTime(order.declinedAt)}, ${order.declineReason ?: '-'})}">Rifiutato</p>
 
-    <div class="grid-2">
-      <section class="card" data-section="shipment">
-        <h2 th:text="#{backoffice.order.shipment}">Dettaglio Spedizione</h2>
-        <dl>
-          <dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.codeOrDash()}">-</dd>
-          <dt th:text="#{backoffice.order.tempCode}">Codice provvisorio</dt><dd th:text="${order.tempCode}">-</dd>
-          <dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd>
-          <dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd>
-          <dt th:text="#{orders.col.amount}">Importo</dt><dd th:text="${order.amountText()}">-</dd>
-          <dt th:text="#{orders.col.tracking}">Tracking</dt><dd th:text="${order.status.name() == 'APPROVED'} ? ${order.trackingLabel} : '-'">-</dd>
-          <dt th:text="#{backoffice.order.customerNotes}">Note del cliente</dt><dd data-customer-notes th:text="${order.customerNotes ?: '-'}">-</dd>
-        </dl>
-        <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
-        <dl>
-          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.recipient.name}">-</dd>
-          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.recipient.addressOneLine()}">-</dd>
-          <dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.recipient.phone ?: '-'}">-</dd>
-          <dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.recipient.email ?: '-'}">-</dd>
-        </dl>
-        <h2 th:text="#{backoffice.order.sender}">Mittente</h2>
-        <dl>
-          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd><a th:href="@{/gestione/clienti/{id}/(id=${order.customerId})}" th:text="${order.sender.name}">-</a></dd>
-          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.sender.addressOneLine()}">-</dd>
-          <dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.sender.phone ?: '-'}">-</dd>
-          <dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.sender.email}">-</dd>
-        </dl>
-      </section>
-      <section class="card" data-section="packages">
-        <h2 th:text="#{backoffice.order.packages}">Dettaglio Colli</h2>
-        <dl>
-          <dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${order.packageCount ?: '-'}">-</dd>
-          <dt th:text="#{backoffice.order.pallets}">Pallet</dt><dd th:text="${order.palletCount()}">0</dd>
-          <dt th:text="#{backoffice.order.epal}">EPAL</dt><dd th:text="${order.epalCount()}">0</dd>
-          <dt th:text="#{backoffice.order.weight}">Peso</dt><dd th:text="${order.weightText()}">0 kg</dd>
-          <dt th:text="#{backoffice.order.volume}">Volume</dt><dd th:text="${order.volumeText()}">0 m³</dd>
-        </dl>
-        <h2 th:text="#{backoffice.order.lines}">Pallets</h2>
-        <div class="table-wrap">
-          <table class="table" data-table="lines">
-            <thead><tr>
-              <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
-              <th scope="col" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
-              <th scope="col" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
-              <th scope="col" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
-              <th scope="col" th:text="#{orders.line.weightKg}">Peso (kg)</th>
-              <th scope="col" th:text="#{orders.line.quantity}">Quantità</th>
-            </tr></thead>
-            <tbody>
-              <tr th:each="l : ${order.lines}">
-                <td th:text="${l.kind.label()}">Epal</td>
-                <td th:text="${l.heightCm}">0</td><td th:text="${l.lengthCm}">0</td><td th:text="${l.widthCm}">0</td>
-                <td th:text="${fmt.number(l.weightKg, 0)}">0</td><td th:text="${l.quantity}">0</td>
-              </tr>
-            </tbody>
-          </table>
+    <div class="callout callout-warn" role="status" th:if="${order.isPending() and order.editedByCustomer()}" data-edited>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{backoffice.order.editedByCustomer(${fmt.dateTime(order.editedAt)})}">Il cliente ha modificato l'ordine: controlla i dati prima di approvarlo.</p>
+    </div>
+    <div class="callout callout-error" role="status" th:if="${order.isDeclined()}">
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{backoffice.order.declined(${fmt.dateTime(order.declinedAt)}, ${order.declineReason ?: '-'})}">Rifiutato</p>
+    </div>
+    <div class="callout" role="status" th:if="${order.isCancelled()}" data-cancelled>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg>
+      <p th:text="${order.cancelledByCustomer()} ? #{backoffice.order.cancelledByCustomer(${fmt.dateTime(order.cancelledAt)})} : #{backoffice.order.cancelledByStaff(${fmt.dateTime(order.cancelledAt)}, ${order.cancelReason ?: '-'})}">Annullato</p>
+    </div>
+    <div class="callout callout-info" role="status" th:if="${order.isApproved() and !changeable}">
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>
+      <p th:text="#{backoffice.order.adminOnly}">Un ordine confermato si modifica o si annulla solo da un amministratore.</p>
+    </div>
+
+    <div class="app-grid main-aside">
+      <div class="stack">
+        <section class="panel" data-section="packages">
+          <div class="panel-head">
+            <h2 th:text="#{backoffice.order.packages}">Dettaglio Colli</h2>
+          </div>
+          <dl class="facts mb-m">
+            <div><dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${order.packageCount ?: '-'}">-</dd></div>
+            <div><dt th:text="#{backoffice.order.pallets}">Pallet</dt><dd th:text="${order.palletCount()}">0</dd></div>
+            <div><dt th:text="#{backoffice.order.epal}">EPAL</dt><dd th:text="${order.epalCount()}">0</dd></div>
+            <div><dt th:text="#{backoffice.order.weight}">Peso</dt><dd th:text="${order.weightText()}">0 kg</dd></div>
+            <div><dt th:text="#{backoffice.order.volume}">Volume</dt><dd th:text="${order.volumeText()}">0 m³</dd></div>
+          </dl>
+          <h3 th:text="#{backoffice.order.lines}">Pallets</h3>
+          <div class="data-table-wrap">
+            <table class="data-table stacked" data-table="lines">
+              <thead><tr>
+                <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
+                <th scope="col" class="num" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.weightKg}">Peso (kg)</th>
+                <th scope="col" class="num" th:text="#{orders.line.quantity}">Quantità</th>
+                <th scope="col" class="num" th:text="#{orders.line.totals}">Totale riga</th>
+              </tr></thead>
+              <tbody>
+                <tr th:each="l : ${order.lines}">
+                  <td th:attr="data-label=#{orders.line.kind}" th:text="${l.kind.label()}">Epal</td>
+                  <td class="num" th:attr="data-label=#{orders.line.heightCm}" th:text="${l.heightCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.lengthCm}" th:text="${l.lengthCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.widthCm}" th:text="${l.widthCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.weightKg}" th:text="${fmt.number(l.weightKg, 0)}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.quantity}" th:text="${l.quantity}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.totals}" th:text="${fmt.number(l.lineWeightKg, 2)} + ' kg · ' + ${fmt.number(l.lineVolumeM3, 2)} + ' m³'">0</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel" data-section="shipment">
+          <h2 th:text="#{backoffice.order.shipment}">Dettaglio Spedizione</h2>
+          <dl class="facts">
+            <div><dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.codeOrDash()}">-</dd></div>
+            <div><dt th:text="#{backoffice.order.tempCode}">Codice provvisorio</dt><dd th:text="${order.tempCode}">-</dd></div>
+            <div><dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd></div>
+            <div><dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd></div>
+            <div><dt th:text="#{orders.col.amount}">Importo</dt><dd th:text="${order.amountText()}">-</dd></div>
+            <div><dt th:text="#{orders.col.tracking}">Tracking</dt><dd th:text="${order.isApproved()} ? ${order.trackingLabel} : '-'">-</dd></div>
+            <div class="span-all"><dt th:text="#{backoffice.order.customerNotes}">Note del cliente</dt><dd class="facts-note" data-customer-notes th:text="${order.customerNotes ?: '-'}">-</dd></div>
+          </dl>
+        </section>
+        <div class="app-grid cols-2">
+          <section class="panel" data-section="recipient">
+            <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
+            <dl class="facts">
+              <div class="span-all"><dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.recipient.name}">-</dd></div>
+              <div class="span-all"><dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.recipient.addressOneLine()}">-</dd></div>
+              <div><dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.recipient.phone ?: '-'}">-</dd></div>
+              <div><dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.recipient.email ?: '-'}">-</dd></div>
+            </dl>
+          </section>
+          <section class="panel" data-section="sender">
+            <h2 th:text="#{backoffice.order.sender}">Mittente</h2>
+            <dl class="facts">
+              <div class="span-all"><dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd><a th:href="@{/gestione/clienti/{id}/(id=${order.customerId})}" th:text="${order.sender.name}">-</a></dd></div>
+              <div class="span-all"><dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.sender.addressOneLine()}">-</dd></div>
+              <div><dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.sender.phone ?: '-'}">-</dd></div>
+              <div><dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.sender.email}">-</dd></div>
+            </dl>
+          </section>
         </div>
-      </section>
-    </div>
+      </div>
 
-    <div class="grid-2 mt-m">
-      <section class="card" id="tracking" data-section="tracking" th:if="${order.status.name() == 'APPROVED'}">
-        <h2 th:text="#{backoffice.tracking.title}">Imposta tracking</h2>
-        <th:block th:replace="~{backoffice/layout :: error(${trackingError})}"></th:block>
-        <form method="post" th:action="@{/gestione/ordini/{id}/tracking(id=${order.id})}" class="form-grid">
-          <div class="field">
-            <label class="label" for="stato" th:text="#{backoffice.tracking.state}">Stato</label>
-            <select class="select" id="stato" name="stato">
-              <option th:each="s : ${states}" th:value="${s.id()}" th:selected="${s.id() == order.trackingStateId}" th:text="${s.label()}">Presa in carico</option>
-            </select>
-          </div>
-          <p class="actions"><button type="submit" class="btn btn-primary" th:text="#{backoffice.tracking.set}">Imposta stato</button></p>
-        </form>
-        <h3 th:text="#{backoffice.order.history}">Storico</h3>
-        <ol class="events" data-history>
-          <li th:each="h : ${history}"><span th:text="${fmt.dateTime(h.occurredAt)}">data</span> · <strong th:text="${h.label}">stato</strong></li>
-        </ol>
-      </section>
-      <section class="card" id="note" data-section="note">
-        <h2 th:text="#{backoffice.note.title}">Aggiorna note</h2>
-        <p class="muted" th:text="#{backoffice.note.hint}">Le note interne restano nell'ufficio: il cliente non le vede mai. La nota del cliente è qui sopra, in sola lettura.</p>
-        <th:block th:replace="~{backoffice/layout :: error(${noteError})}"></th:block>
-        <form method="post" th:action="@{/gestione/ordini/{id}/note(id=${order.id})}" class="form-grid">
-          <div class="field">
-            <label class="label" for="nota" th:text="#{backoffice.note.label}">Note interne</label>
-            <textarea class="textarea" id="nota" name="nota" rows="5" maxlength="5000" th:text="${note}"></textarea>
-          </div>
-          <p class="actions"><button type="submit" class="btn btn-primary" th:text="#{backoffice.note.save}">Salva le note</button></p>
-        </form>
-      </section>
+      <div class="stack">
+        <section class="panel" id="tracking" data-section="tracking" th:if="${order.isApproved()}">
+          <h2 th:text="#{backoffice.tracking.title}">Imposta tracking</h2>
+          <th:block th:replace="~{backoffice/layout :: error(${trackingError})}"></th:block>
+          <form method="post" th:action="@{/gestione/ordini/{id}/tracking(id=${order.id})}" class="fields">
+            <div class="field span-all">
+              <label class="label" for="stato" th:text="#{backoffice.tracking.state}">Stato</label>
+              <select class="select" id="stato" name="stato">
+                <option th:each="s : ${states}" th:value="${s.id()}" th:selected="${s.id() == order.trackingStateId}" th:text="${s.label()}">Presa in carico</option>
+              </select>
+            </div>
+            <p class="form-actions span-all"><button type="submit" class="btn btn-sm" th:text="#{backoffice.tracking.set}">Imposta stato</button></p>
+          </form>
+          <h3 th:text="#{backoffice.order.history}">Storico</h3>
+          <ol class="timeline" data-history>
+            <li th:each="h : ${history}"><span class="when" th:text="${fmt.dateTime(h.occurredAt)}">data</span><strong th:text="${h.label}">stato</strong></li>
+          </ol>
+        </section>
+        <section class="panel" id="note" data-section="note">
+          <h2 th:text="#{backoffice.note.title}">Aggiorna note</h2>
+          <p class="muted small" th:text="#{backoffice.note.hint}">Le note interne restano nell'ufficio: il cliente non le vede mai.</p>
+          <th:block th:replace="~{backoffice/layout :: error(${noteError})}"></th:block>
+          <form method="post" th:action="@{/gestione/ordini/{id}/note(id=${order.id})}" class="fields">
+            <div class="field span-all">
+              <label class="label" for="nota" th:text="#{backoffice.note.label}">Note interne</label>
+              <textarea class="textarea" id="nota" name="nota" rows="5" maxlength="5000" th:text="${note}"></textarea>
+            </div>
+            <p class="form-actions span-all"><button type="submit" class="btn btn-sm" th:text="#{backoffice.note.save}">Salva le note</button></p>
+          </form>
+        </section>
+        <section class="panel" data-section="history">
+          <h2 th:text="#{orders.detail.history}">Cronologia</h2>
+          <ol class="timeline">
+            <li><span class="when" th:text="${fmt.dateTime(order.submittedAt)}">data</span><span th:text="${order.createdByStaff()} ? #{backoffice.history.createdByStaff} : #{backoffice.history.submitted}">Inviato dal cliente</span></li>
+            <li th:if="${order.editedAt != null}"><span class="when" th:text="${fmt.dateTime(order.editedAt)}">data</span><span th:text="${order.editedByCustomer()} ? #{backoffice.history.editedByCustomer} : #{backoffice.history.editedByStaff}">Modificato</span></li>
+            <li th:if="${order.approvedAt != null}"><span class="when" th:text="${fmt.dateTime(order.approvedAt)}">data</span><span th:text="#{orders.history.approved(${order.code})}">Confermato</span></li>
+            <li th:if="${order.declinedAt != null}"><span class="when" th:text="${fmt.dateTime(order.declinedAt)}">data</span><span th:text="#{orders.history.declined}">Rifiutato</span></li>
+            <li th:if="${order.cancelledAt != null}"><span class="when" th:text="${fmt.dateTime(order.cancelledAt)}">data</span><span th:text="${order.cancelledByCustomer()} ? #{backoffice.history.cancelledByCustomer} : #{backoffice.history.cancelledByStaff}">Annullato</span></li>
+          </ol>
+        </section>
+      </div>
     </div>
-    <p class="mt-m"><a th:href="${order.status.name() == 'PENDING'} ? '/gestione/ordini/in-approvazione/' : '/gestione/ordini/'" th:text="#{backoffice.order.back}">Torna agli ordini</a></p>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

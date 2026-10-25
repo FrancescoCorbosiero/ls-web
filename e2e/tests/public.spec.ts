@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
@@ -146,4 +146,99 @@ test.describe('accessibility (axe)', () => {
       expect(blockingViolations(results.violations)).toEqual([]);
     });
   }
+
+  test('[PUB-10] axe finds no serious or critical violation in the home once its motion has settled', async ({ page, baseURL }) => {
+    await offline(page, baseURL!);
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveClass(/\bhas-motion\b/, { timeout: 20_000 });
+    await scrollThrough(page);
+    // Motion works inside <main> only (split headings, figures, steps, the statement): that is
+    // what is checked here, at the end of the page; the page as a whole is checked above.
+    const results = await new AxeBuilder({ page })
+      .include('main')
+      .withTags(['wcag2a', 'wcag2aa', 'best-practice'])
+      .analyze();
+    expect(blockingViolations(results.violations)).toEqual([]);
+  });
+});
+
+/** Scrolls the page from top to bottom in half-screen steps, then lets every move settle. */
+async function scrollThrough(page: Page): Promise<void> {
+  const height = await page.evaluate(() => document.documentElement.scrollHeight);
+  const step = Math.round((page.viewportSize()?.height ?? 800) / 2);
+  for (let y = step; y < height + step; y += step) {
+    await page.evaluate((top) => window.scrollTo({ top, behavior: 'instant' }), y);
+    await page.waitForTimeout(150);
+  }
+  await page.waitForTimeout(2500);
+}
+
+/** The texts the server sends for the home's headings and figures (the truth motion must end on). */
+async function homeTexts(page: Page): Promise<{ headings: string[]; figures: string[] }> {
+  const html = await (await page.request.get('/')).text();
+  const text = (s: string) => s.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
+  return {
+    headings: [...main.matchAll(/<h2\b[^>]*>([\s\S]*?)<\/h2>/g)].map((m) => text(m[1])),
+    figures: [...main.matchAll(/<p class="stat-value">([\s\S]*?)<\/p>/g)].map((m) => text(m[1])),
+  };
+}
+
+test.describe('home motion (ADR 0030)', () => {
+  test('[PUB-10] the home motion loads GSAP after the page, raises no error and settles on the complete page', async ({ page, baseURL }) => {
+    await offline(page, baseURL!);
+    const problems = await PageProblems.watch(page);
+    const expected = await homeTexts(page);
+    expect(expected.headings.length).toBeGreaterThan(5);
+    expect(expected.figures).toEqual(['2000+', '100+', '100+', '10+']);
+    await page.goto('/');
+    await expect(page.locator('html')).toHaveClass(/\bhas-motion\b/, { timeout: 20_000 });
+    expect(await page.evaluate(() => typeof (window as unknown as { gsap?: unknown }).gsap)).toBe('object');
+    await scrollThrough(page);
+
+    const settled = await page.evaluate(() => {
+      const effectiveOpacity = (el: Element) => {
+        let opacity = 1;
+        for (let n: Element | null = el; n && n !== document.body; n = n.parentElement) {
+          opacity *= parseFloat(getComputedStyle(n).opacity);
+        }
+        return opacity;
+      };
+      const watched = 'main h2, main .stat-value, main .kicker, main .lede, main .step-num, main .actions, main .split-line, main .scrub-word';
+      return {
+        headings: [...document.querySelectorAll('main h2')].map((h) => (h as HTMLElement).innerText.replace(/\s+/g, ' ').trim()),
+        figures: [...document.querySelectorAll('main .stat-value')].map((e) => e.textContent?.trim() ?? ''),
+        split: document.querySelectorAll('main .split-line, main .scrub-word').length,
+        notSettled: [...document.querySelectorAll(watched)]
+          .filter((el) => {
+            const t = getComputedStyle(el).transform;
+            const moved = el.classList.contains('split-line') && t !== 'none' && t !== 'matrix(1, 0, 0, 1, 0, 0)';
+            return effectiveOpacity(el) < 0.99 || moved;
+          })
+          .map((el) => `${el.tagName.toLowerCase()}.${el.className}: ${(el.textContent ?? '').trim().slice(0, 40)}`),
+      };
+    });
+    expect(settled.split, 'the split headings and the scrubbed statement').toBeGreaterThan(0);
+    expect(settled.headings).toEqual(expected.headings);
+    expect(settled.figures).toEqual(expected.figures);
+    expect(settled.notSettled).toEqual([]);
+    problems.expectNone();
+  });
+
+  test('[PUB-10] under reduced motion the home stays static and GSAP is never fetched', async ({ page, baseURL }) => {
+    await offline(page, baseURL!);
+    const problems = await PageProblems.watch(page);
+    const fetched: string[] = [];
+    page.on('request', (request) => fetched.push(new URL(request.url()).pathname));
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2500);
+    expect(fetched.filter((p) => p.startsWith('/js/vendor/'))).toEqual([]);
+    expect(fetched.filter((p) => p.startsWith('/js/motion/'))).toEqual(['/js/motion/index.js']);
+    await expect(page.locator('html')).not.toHaveClass(/\bhas-motion\b/);
+    await expect(page.locator('main .split-line, main .scrub-word')).toHaveCount(0);
+    await expect(page.locator('main .stat-value')).toHaveText(['2000+', '100+', '100+', '10+']);
+    problems.expectNone();
+  });
 });

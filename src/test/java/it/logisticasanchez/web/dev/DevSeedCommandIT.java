@@ -97,11 +97,13 @@ class DevSeedCommandIT extends AbstractPostgresIT {
                                 + " where c.email = ? order by o.id",
                         String.class,
                         DevSeedCommand.ACTIVE_CUSTOMER_EMAIL))
-                .containsExactly("PENDING/0", "APPROVED/1", "APPROVED/5", "DECLINED/0");
-        // first run on a fresh database: the codes are printed; on a reused one: «già presenti»
+                .containsExactly("PENDING/0", "APPROVED/1", "APPROVED/5", "DECLINED/0", "CANCELLED/0");
+        // first run on a fresh database: the codes are printed; on a reused one: «già presenti», or
+        // the orders of the states added since that database was seeded
         assertThat(out)
                 .containsPattern(
-                        "ordini del cliente ACTIVE: (già presenti|TEMP-[A-Z2-9]{8} \\(PENDING\\), TEST-0002 \\(APPROVED, PRESA\\).*)");
+                        "ordini del cliente ACTIVE: (già presenti|TEMP-[A-Z2-9]{8} \\(PENDING\\), TEST-0002 \\(APPROVED, PRESA\\).*"
+                                + "|TEMP-[A-Z2-9]{8} \\(CANCELLED\\))");
         assertThat(customerUsers(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(customerUsers(DevSeedCommand.PENDING_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL).endsWith(".example");

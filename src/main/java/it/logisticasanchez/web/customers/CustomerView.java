@@ -20,7 +20,9 @@ public record CustomerView(
         Instant approvedAt,
         Instant declinedAt,
         String declineReason,
-        Instant anonymisedAt) {
+        Instant anonymisedAt,
+        String source,
+        int version) {
 
     static CustomerView of(Customer c) {
         return new CustomerView(
@@ -40,7 +42,14 @@ public record CustomerView(
                 c.getApprovedAt(),
                 c.getDeclinedAt(),
                 c.getDeclineReason(),
-                c.getAnonymisedAt());
+                c.getAnonymisedAt(),
+                c.getSource(),
+                c.getVersion());
+    }
+
+    /** ADM-12: created by staff in the back office. */
+    public boolean createdByStaff() {
+        return Customer.SOURCE_BACKOFFICE.equals(source);
     }
 
     public boolean emailVerified() {

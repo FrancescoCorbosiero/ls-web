@@ -11,9 +11,11 @@ import it.logisticasanchez.web.platform.audit.AuditService;
 import it.logisticasanchez.web.platform.config.BackofficeProperties;
 import it.logisticasanchez.web.platform.events.DomainEvent;
 import it.logisticasanchez.web.platform.events.DomainEvents;
+import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -82,12 +84,77 @@ public class CustomerService {
      */
     @Transactional(readOnly = true)
     public List<CustomerView> pendingApproval() {
-        List<CustomerStatus> statuses = backoffice.showUnverifiedCustomers() // PD-06
-                ? List.of(CustomerStatus.PENDING_APPROVAL, CustomerStatus.PENDING_VERIFICATION)
-                : List.of(CustomerStatus.PENDING_APPROVAL);
-        return customers.findByStatusInOrderByRegisteredAtAsc(statuses).stream()
+        return customers.findByStatusInOrderByRegisteredAtAsc(pendingStatuses()).stream()
                 .map(CustomerView::of)
                 .toList();
+    }
+
+    /** How many customers {@link #pendingApproval()} lists (the back-office navigation and home). */
+    @Transactional(readOnly = true)
+    public long countPendingApproval() {
+        return customers.countByStatusIn(pendingStatuses());
+    }
+
+    private List<CustomerStatus> pendingStatuses() {
+        return backoffice.showUnverifiedCustomers() // PD-06
+                ? List.of(CustomerStatus.PENDING_APPROVAL, CustomerStatus.PENDING_VERIFICATION)
+                : List.of(CustomerStatus.PENDING_APPROVAL);
+    }
+
+    /**
+     * ADM-12: staff correct a customer's registration data (the change a customer asked for from
+     * its profile, CUS-06) on the version they opened; the login e-mail never changes here
+     * (CUS-06: only the customer's confirmed request changes it). Orders keep their sender
+     * snapshot (Q-13): the correction applies to the next orders. Audited with the personal
+     * values apart.
+     */
+    @Transactional
+    public CustomerView update(long customerId, long staffUserId, int expectedVersion, RegistrationData data) {
+        Customer customer = customers.findById(customerId).orElseThrow();
+        if (customer.getVersion() != expectedVersion) {
+            throw new RuleViolationException(
+                    "I dati del cliente sono stati modificati nel frattempo: controlla i dati aggiornati e riprova.");
+        }
+        Map<String, Object> before = registrationData(customer);
+        customer.correct(data);
+        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "customer.update")
+                .entity("customer", customer.getId(), null)
+                .personal(before, registrationData(customer)));
+        events.publish(new DomainEvent.CustomerChanged(customer.getId(), staffUserId));
+        return CustomerView.of(customer);
+    }
+
+    /**
+     * ADM-12: staff create a customer who asked by phone or e-mail: ACTIVE at once (approved by the
+     * staff member), source BACKOFFICE, with its OWNER login; the customer signs in with the
+     * usual link (CUS-01), which verifies the address. {@code welcome} sends EML-03 «Benvenuto»
+     * with the link to the customer area. Refused when the address belongs to a customer or a login.
+     */
+    @Transactional
+    public CustomerView createByStaff(long staffUserId, String email, RegistrationData data, boolean welcome) {
+        String normalised = CustomerAccountService.normalise(email == null ? "" : email);
+        if (normalised.isEmpty() || !ItalianFormats.isEmail(normalised) || normalised.length() > 254) {
+            throw new RuleViolationException("Inserisci un indirizzo e-mail valido.");
+        }
+        if (customers.findByEmail(normalised).isPresent() || accounts.isEmailInUse(normalised)) {
+            throw new RuleViolationException("Esiste già un cliente con questa e-mail: cercalo tra i clienti.");
+        }
+        Customer customer = customers.save(Customer.createdByStaff(normalised, data, clock.instant(), staffUserId));
+        accounts.createOwnerLogin(customer.getId(), normalised);
+        if (welcome) {
+            notifications.enqueue(mails.approved(customer));
+        }
+        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "customer.create")
+                .entity("customer", customer.getId(), null)
+                .change(
+                        null,
+                        Map.of(
+                                "status", customer.getStatus().name(),
+                                "source", customer.getSource(),
+                                "welcome", welcome))
+                .personal(null, registrationData(customer)));
+        events.publish(new DomainEvent.CustomerApproved(customer.getId(), staffUserId));
+        return CustomerView.of(customer);
     }
 
     /** ADM-03: the live customers, newest first, optionally matching {@code query} on name, e-mail or city. */
@@ -257,6 +324,14 @@ public class CustomerService {
     /** CUS-06 step 1, from the signed-in profile page: a link to the new address, a notice to the old one. */
     public boolean requestEmailChange(long customerUserId, String newEmail, String clientIp) {
         return accounts.requestEmailChange(customerUserId, newEmail, clientIp);
+    }
+
+    /** Every registration field, «-» for an empty optional one (audit details of ADM-12). */
+    private static Map<String, Object> registrationData(Customer c) {
+        Map<String, Object> values = new LinkedHashMap<>(personal(c));
+        values.put("vatNumber", c.getVatNumber() == null ? "-" : c.getVatNumber());
+        values.put("taxCode", c.getTaxCode() == null ? "-" : c.getTaxCode());
+        return values;
     }
 
     private static Map<String, Object> personal(Customer c) {

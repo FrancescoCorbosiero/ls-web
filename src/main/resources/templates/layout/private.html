@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <!--
   Base layout of the private areas (customer area and back office) and of their sign-in pages:
-  the design system of the public site (main.css), a compact header with the brand and the area
-  name, the strict nonce CSP of ADR 0018 (no inline script without th:attr="nonce=${cspNonce}"),
-  the HTMX meta tags. Usage:
+  the design system of the public site (main.css) plus the private-area stylesheet (app.css, ADR
+  0029), a compact header with the brand, the area name and the signed-in user, the strict nonce
+  CSP of ADR 0018 (no inline script without th:attr="nonce=${cspNonce}"), the HTMX meta tags.
+  Usage:
     <head><title>…</title><th:block th:replace="~{layout/private :: htmlHead}"/></head>
     <body th:attr="hx-headers=${hxHeaders}">
       <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"/>
-      <main id="main" class="section"><div class="container container-narrow">…</div></main>
+      <th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"/>   (or backoffice/layout :: nav)
+      <main id="main" class="app-main"><div class="container">…</div></main>
       <th:block th:replace="~{layout/private :: siteFooter}"/>
     </body>
   siteHeader(area, user, logoutUrl): area is 'customer' or 'staff'; user and logoutUrl may be null (sign-in pages).
+  Pages with the order form add ~{layout/private :: appScript} (the only script of the private areas).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -21,6 +24,7 @@
   <link rel="preload" href="/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/app.css">
   <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -40,22 +44,61 @@
       <span class="brand-text"><span class="brand-name" th:text="${business.brandName}">Logistica Sanchez</span><span class="brand-tag" th:text="${area == 'staff'} ? #{layout.private.backoffice} : #{layout.private.customerArea}">Area clienti</span></span>
     </a>
     <div class="header-actions">
-      <span class="muted hide-xs" th:if="${user != null}" th:text="#{layout.private.signedInAs(${user})}">Collegato come</span>
+      <span class="app-user" th:if="${user != null}" data-user>
+        <span class="app-user-mark" aria-hidden="true" th:text="${#strings.substring(user, 0, 1)}">A</span>
+        <span class="app-user-name hide-xs" th:text="${user}">Utente</span>
+        <span class="visually-hidden" th:text="#{layout.private.signedInAs(${user})}">Collegato come</span>
+      </span>
       <a class="btn btn-secondary btn-sm" href="/" th:if="${logoutUrl == null}" th:text="#{layout.private.backToSite}">Torna al sito</a>
       <form method="post" th:action="@{${logoutUrl}}" th:if="${logoutUrl != null}">
-        <button type="submit" class="btn btn-secondary btn-sm" th:text="${area == 'staff'} ? #{auth.staff.logout} : #{auth.customer.logout}">Esci</button>
+        <button type="submit" class="btn btn-light btn-sm"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-log-out"/></svg><span th:text="${area == 'staff'} ? #{auth.staff.logout} : #{auth.customer.logout}">Esci</span></button>
       </form>
     </div>
   </div>
 </header>
 </th:block>
 
-<!-- customerNav(active, canOrder): the three entries of the customer area; «Nuovo ordine» only for an ACTIVE customer (CUS-03). -->
-<nav class="breadcrumbs mb-m" th:fragment="customerNav(active, canOrder)" th:aria-label="#{layout.private.customerNav}">
-  <a href="/area-clienti/ordini/" th:attr="aria-current=${active == 'orders' ? 'page' : null}" th:text="#{customers.nav.orders}">I miei ordini</a>
-  <a href="/area-clienti/ordini/nuovo/" th:if="${canOrder}" th:attr="aria-current=${active == 'new' ? 'page' : null}" th:text="#{customers.nav.newOrder}">Nuovo ordine</a>
-  <a href="/area-clienti/profilo/" th:attr="aria-current=${active == 'profile' ? 'page' : null}" th:text="#{customers.nav.profile}">Il tuo profilo</a>
+<!-- customerNav(active, canOrder): the sections of the customer area; «Nuovo ordine» only for an ACTIVE customer (CUS-03). -->
+<nav class="app-nav" th:fragment="customerNav(active, canOrder)" th:aria-label="#{layout.private.customerNav}">
+  <div class="container">
+    <ul role="list">
+      <li><a href="/area-clienti/ordini/" th:attr="aria-current=${active == 'orders' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-clipboard-list"/></svg><span th:text="#{customers.nav.orders}">I miei ordini</span></a></li>
+      <li th:if="${canOrder}"><a href="/area-clienti/ordini/nuovo/" th:attr="aria-current=${active == 'new' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{customers.nav.newOrder}">Nuovo ordine</span></a></li>
+      <li><a href="/area-clienti/profilo/" th:attr="aria-current=${active == 'profile' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user"/></svg><span th:text="#{customers.nav.profile}">Il tuo profilo</span></a></li>
+      <li><a href="/tracking/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-route"/></svg><span th:text="#{customers.nav.tracking}">Traccia una spedizione</span></a></li>
+    </ul>
+  </div>
 </nav>
+
+<!-- flash: the message after an action (redirect attribute «flash»; «flashError» when the action could not be done). -->
+<th:block th:fragment="flash">
+  <div class="flash" role="status" th:if="${flash != null}" data-flash>
+    <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-circle-check"/></svg>
+    <p class="mb-0" th:text="${flash}">Fatto.</p>
+  </div>
+  <div class="callout callout-warn" role="alert" th:if="${flashError != null}" data-flash-error>
+    <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+    <p th:text="${flashError}">Non è stato possibile.</p>
+  </div>
+</th:block>
+
+<!-- orderStatus(status), customerStatus(status), trackingPill(order): states as coloured pills with their label. -->
+<span th:fragment="orderStatus(status)" class="pill" th:classappend="${'pill-' + #strings.toLowerCase(status.name())}" th:text="#{'orders.status.' + ${status.name()}}">In attesa</span>
+
+<span th:fragment="customerStatus(status)" class="pill" th:classappend="${status.name() == 'ACTIVE'} ? 'pill-active' : (${status.name() == 'DECLINED'} ? 'pill-declined' : 'pill-pending')" th:text="#{'customers.status.' + ${status.name()}}">Attivo</span>
+
+<span th:fragment="trackingPill(order)" th:if="${order.isApproved()}" class="pill pill-track" th:classappend="${order.trackingStateId == 5} ? 'is-done'" th:text="${order.trackingLabel}">Presa in carico</span>
+
+<!-- error(message): a refused rule shown on the page that sent the form. -->
+<div class="callout callout-error" role="alert" th:fragment="error(message)" th:if="${message != null}" data-error>
+  <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+  <p th:text="${message}">Errore</p>
+</div>
+
+<!-- appScript: the order form's enhancement (/js/app.js, ADR 0029); pages work without it. -->
+<th:block th:fragment="appScript">
+  <script type="module" src="/js/app.js" th:attr="nonce=${cspNonce}"></script>
+</th:block>
 
 <footer class="site-footer" th:fragment="siteFooter">
   <div class="footer-bottom">

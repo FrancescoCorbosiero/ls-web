@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<!--
+  «Panoramica», the back-office home (chapter 10 §2; ADR 0029): what waits for staff (orders and
+  customers to approve, shipments travelling), the quick searches by code, the shortcuts to a new
+  order or customer (ADM-11, ADM-12) and the latest orders. Rendered through StaffHomePage.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{auth.staff.home.title} + ' · ' + ${business.brandName}">Gestione · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('home')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <p class="kicker" th:text="#{auth.staff.home.title}">Gestione</p>
+        <h1 th:text="#{auth.staff.home.welcome(${staff.displayName})}">Ciao</h1>
+        <p class="lede" th:text="${queue.total() > 0} ? #{backoffice.home.lead.waiting(${queue.total()})} : #{backoffice.home.lead.clear}">Ecco cosa ti aspetta oggi.</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" href="/gestione/ordini/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.orders.new}">Nuovo ordine</span></a>
+        <a class="btn btn-light" href="/gestione/clienti/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-plus"/></svg><span th:text="#{backoffice.customers.new}">Nuovo cliente</span></a>
+      </div>
+    </div>
+
+    <ul class="tiles" role="list" data-home-nav>
+      <li><a class="tile" th:classappend="${queue.orders() > 0} ? 'is-attention'" href="/gestione/ordini/in-approvazione/" data-tile="orders">
+        <span class="tile-top"><span class="tile-value" th:text="${queue.orders()}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-inbox"/></svg></span>
+        <span class="tile-label" th:text="#{backoffice.nav.ordersPending}">Ordini da approvare</span>
+        <span class="tile-hint" th:text="#{backoffice.home.ordersPending}">Richieste di spedizione da confermare con codice e importo.</span>
+      </a></li>
+      <li><a class="tile" th:classappend="${queue.customers() > 0} ? 'is-attention'" href="/gestione/clienti/in-approvazione/" data-tile="customers">
+        <span class="tile-top"><span class="tile-value" th:text="${queue.customers()}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-check"/></svg></span>
+        <span class="tile-label" th:text="#{backoffice.home.customersPendingTitle}">Clienti da approvare</span>
+        <span class="tile-hint" th:text="#{backoffice.home.customersPending}">Clienti registrati in attesa della tua approvazione.</span>
+      </a></li>
+      <li><a class="tile" href="/gestione/ordini/?stato=APPROVED&amp;tracking=in-corso" data-tile="transit">
+        <span class="tile-top"><span class="tile-value" th:text="${inTransit}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-truck"/></svg></span>
+        <span class="tile-label" th:text="#{backoffice.home.inTransit}">Spedizioni in corso</span>
+        <span class="tile-hint" th:text="#{backoffice.home.inTransitHint}">Confermate e non ancora consegnate.</span>
+      </a></li>
+      <li><a class="tile" href="/gestione/report/" data-tile="reports">
+        <span class="tile-top"><span class="tile-value tile-value-icon"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg></span></span>
+        <span class="tile-label" th:text="#{backoffice.nav.reports}">Report</span>
+        <span class="tile-hint" th:text="#{backoffice.home.reports}">Il PDF degli ordini di un cliente in un periodo, inviato per e-mail.</span>
+      </a></li>
+    </ul>
+
+    <div class="app-grid main-aside">
+      <section class="panel" aria-labelledby="recenti-title">
+        <div class="panel-head">
+          <h2 id="recenti-title" th:text="#{backoffice.home.recent}">Ultimi ordini</h2>
+          <a class="btn btn-light btn-xs" href="/gestione/ordini/?stato=" th:text="#{backoffice.home.allOrders}">Tutti gli ordini</a>
+        </div>
+        <p class="muted" th:if="${recentOrders.isEmpty()}" th:text="#{backoffice.orders.empty}">Nessun ordine registrato</p>
+        <div class="data-table-wrap" th:if="${!recentOrders.isEmpty()}">
+          <table class="data-table stacked" data-table="recent-orders">
+            <thead><tr>
+              <th scope="col" th:text="#{orders.col.code}">Codice</th>
+              <th scope="col" th:text="#{backoffice.orders.col.customer}">Cliente mittente</th>
+              <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
+              <th scope="col" th:text="#{orders.col.status}">Stato</th>
+              <th scope="col" th:text="#{orders.col.date}">Data</th>
+            </tr></thead>
+            <tbody>
+              <tr th:each="o : ${recentOrders}" th:attr="data-order=${o.displayCode()}">
+                <td class="code" th:attr="data-label=#{orders.col.code}"><a th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.displayCode()}">TEMP-</a></td>
+                <td th:attr="data-label=#{backoffice.orders.col.customer}" th:text="${o.sender.name}">Mittente</td>
+                <td th:attr="data-label=#{orders.col.recipient}"><span th:text="${o.recipient.name}">Dest</span><span class="sub" th:text="${o.recipient.city} + ' (' + ${o.recipient.province} + ')'">Città</span></td>
+                <td th:attr="data-label=#{orders.col.status}"><span th:replace="~{layout/private :: orderStatus(${o.status})}">Stato</span></td>
+                <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <div class="stack">
+        <section class="panel quick-actions" aria-labelledby="cerca-title">
+          <h2 id="cerca-title" class="panel-title" th:text="#{backoffice.home.find}">Cerca e aggiorna</h2>
+          <form method="get" action="/gestione/ordini/" role="search">
+            <input type="hidden" name="stato" value="">
+            <label class="label" for="home-codice" th:text="#{backoffice.home.findOrder}">Trova un ordine per codice</label>
+            <div class="input-group">
+              <input class="input" id="home-codice" name="codice" type="search" maxlength="64" autocomplete="off" th:placeholder="#{backoffice.home.codeHint}">
+              <button type="submit" class="btn btn-light"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-search"/></svg><span th:text="#{backoffice.search}">Cerca</span></button>
+            </div>
+          </form>
+          <form method="get" action="/gestione/tracking/">
+            <label class="label" for="home-tracking" th:text="#{backoffice.home.setTracking}">Aggiorna il tracking di una spedizione</label>
+            <div class="input-group">
+              <input class="input" id="home-tracking" name="codice" type="search" maxlength="64" autocomplete="off" th:placeholder="#{backoffice.home.trackingHint}">
+              <button type="submit" class="btn btn-light"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-route"/></svg><span th:text="#{backoffice.home.open}">Apri</span></button>
+            </div>
+          </form>
+          <form method="get" action="/gestione/clienti/" role="search">
+            <label class="label" for="home-cliente" th:text="#{backoffice.home.findCustomer}">Trova un cliente</label>
+            <div class="input-group">
+              <input class="input" id="home-cliente" name="q" type="search" maxlength="100" autocomplete="off" th:placeholder="#{backoffice.customers.searchHint}">
+              <button type="submit" class="btn btn-light"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-search"/></svg><span th:text="#{backoffice.search}">Cerca</span></button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

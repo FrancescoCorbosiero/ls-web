@@ -13,11 +13,20 @@ public sealed interface DomainEvent {
 
     record CustomerDeclined(long customerId, long staffUserId) implements DomainEvent {}
 
+    /** Staff changed a customer's registration data (ADM-12). */
+    record CustomerChanged(long customerId, long staffUserId) implements DomainEvent {}
+
     record OrderCreated(long orderId, long customerId) implements DomainEvent {}
 
     record OrderApproved(long orderId, long staffUserId) implements DomainEvent {}
 
     record OrderDeclined(long orderId, long staffUserId) implements DomainEvent {}
+
+    /** An order's lines, shipment data or recipient changed (CUS-07, ADM-11). */
+    record OrderChanged(long orderId) implements DomainEvent {}
+
+    /** An order was withdrawn by the customer or cancelled by staff (CUS-07, ADM-11). */
+    record OrderCancelled(long orderId) implements DomainEvent {}
 
     record TrackingChanged(long orderId, int trackingStateId, long staffUserId) implements DomainEvent {}
 

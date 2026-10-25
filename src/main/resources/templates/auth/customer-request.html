@@ -11,17 +11,21 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{auth.customer.request.heading}">Inserisci la tua e-mail</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.customer.request.heading}">Inserisci la tua e-mail</h1>
+      </div>
+    </div>
     <p class="callout callout-info" role="status" th:if="${sent}" th:text="#{auth.customer.request.sent}">Ti abbiamo inviato un'email: segui il link per continuare</p>
-    <form method="post" th:action="@{/area-clienti/}" class="form-grid">
+    <form method="post" th:action="@{/area-clienti/}" class="fields">
       <div class="field">
         <label class="label" for="email" th:text="#{auth.customer.request.email}">Email</label>
         <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required autofocus>
         <p class="field-hint" th:text="#{auth.customer.request.hint}">Assicurati di aver inserito la mail corretta.</p>
       </div>
-      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{auth.customer.request.submit}">Avanti</button></div>
+      <div class="form-actions"><button type="submit" class="btn" th:text="#{auth.customer.request.submit}">Avanti</button></div>
     </form>
     <p class="muted mt-m"><a th:href="@{/privacy/}" th:text="#{auth.customer.request.privacy}">Informativa privacy</a></p>
   </div>

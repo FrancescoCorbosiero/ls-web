@@ -17,27 +17,35 @@ GET	/area-clienti/registrazione/	200	302	200	200
 POST	/area-clienti/registrazione/	403	403	403	403
 GET	/area-clienti/profilo/	302	200	403	403
 POST	/area-clienti/profilo/email	403	403	403	403
-# orders module (CUS-04, CUS-05): list, detail and wizard behind a customer session.
+# orders module (CUS-04, CUS-05, CUS-07): list, detail, the new-order form and the changes to a pending order behind a customer session.
 GET	/area-clienti/ordini/	302	200	403	403
 GET	/area-clienti/ordini/{codice}/	302	404	403	403
 GET	/area-clienti/ordini/nuovo/	302	200	403	403
 POST	/area-clienti/ordini/nuovo/	403	403	403	403
-GET	/area-clienti/ordini/nuovo/destinatario/	302	302	403	403
-POST	/area-clienti/ordini/nuovo/destinatario/	403	403	403	403
 GET	/area-clienti/ordini/nuovo/riepilogo/	302	302	403	403
 POST	/area-clienti/ordini/nuovo/riepilogo/	403	403	403	403
 GET	/area-clienti/ordini/nuovo/inviato/	302	302	403	403
+GET	/area-clienti/ordini/{codice}/modifica	302	404	403	403
+POST	/area-clienti/ordini/{codice}/modifica	403	403	403	403
+GET	/area-clienti/ordini/{codice}/annulla	302	404	403	403
+POST	/area-clienti/ordini/{codice}/annulla	403	403	403	403
 GET	/gestione/	200	200	200	200
-# backoffice module (ADM-02…ADM-09, NFR-03; ADR 0017): staff screens; settings, staff users and privacy tools for ADMIN only.
+# backoffice module (ADM-02…ADM-09, ADM-11, ADM-12, NFR-03; ADR 0017, 0028): staff screens, record editing; settings, staff users and privacy tools for ADMIN only.
 GET	/gestione/clienti/	302	403	200	200
 GET	/gestione/clienti/in-approvazione/	302	403	200	200
+GET	/gestione/clienti/nuovo	302	403	200	200
+POST	/gestione/clienti/nuovo	403	403	403	403
 GET	/gestione/clienti/{id}/	302	403	404|200	404|200
 GET	/gestione/clienti/{id}/approva	302	403	404|200	404|200
 POST	/gestione/clienti/{id}/approva	403	403	403	403
 GET	/gestione/clienti/{id}/rifiuta	302	403	404|200	404|200
 POST	/gestione/clienti/{id}/rifiuta	403	403	403	403
+GET	/gestione/clienti/{id}/modifica	302	403	404|200	404|200
+POST	/gestione/clienti/{id}/modifica	403	403	403	403
 GET	/gestione/ordini/	302	403	200	200
 GET	/gestione/ordini/in-approvazione/	302	403	200	200
+GET	/gestione/ordini/nuovo	302	403	200	200
+POST	/gestione/ordini/nuovo	403	403	403	403
 GET	/gestione/ordini/{id}/	302	403	404|200	404|200
 GET	/gestione/ordini/{id}/approva	302	403	404|200	404|200
 POST	/gestione/ordini/{id}/approva	403	403	403	403
@@ -45,6 +53,10 @@ GET	/gestione/ordini/{id}/rifiuta	302	403	404|200	404|200
 POST	/gestione/ordini/{id}/rifiuta	403	403	403	403
 POST	/gestione/ordini/{id}/tracking	403	403	403	403
 POST	/gestione/ordini/{id}/note	403	403	403	403
+GET	/gestione/ordini/{id}/modifica	302	403	404|200	404|200
+POST	/gestione/ordini/{id}/modifica	403	403	403	403
+GET	/gestione/ordini/{id}/annulla	302	403	404|200	404|200
+POST	/gestione/ordini/{id}/annulla	403	403	403	403
 GET	/gestione/tracking/	302	403	200	200
 POST	/gestione/tracking/	403	403	403	403
 GET	/gestione/report/	302	403	200	200

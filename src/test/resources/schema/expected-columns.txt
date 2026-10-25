@@ -193,6 +193,12 @@ shipment_order source varchar NOT NULL
 shipment_order created_at timestamptz NOT NULL
 shipment_order updated_at timestamptz NOT NULL
 shipment_order version int4 NOT NULL
+shipment_order cancelled_at timestamptz NULL
+shipment_order cancelled_by_type varchar NULL
+shipment_order cancelled_by int8 NULL
+shipment_order cancel_reason text NULL
+shipment_order edited_at timestamptz NULL
+shipment_order edited_by_type varchar NULL
 staff_user id int8 NOT NULL
 staff_user username varchar NOT NULL
 staff_user email varchar NULL

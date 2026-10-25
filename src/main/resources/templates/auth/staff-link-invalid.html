@@ -8,11 +8,15 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('staff', null, null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{auth.staff.linkInvalid.title}">Il link non è più valido</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.staff.linkInvalid.title}">Il link non è più valido</h1>
+      </div>
+    </div>
     <p class="lede" th:text="#{auth.staff.linkInvalid.lead}">Chiedi a un amministratore un nuovo link.</p>
-    <p><a class="btn btn-primary" th:href="@{/gestione/}" th:text="#{auth.staff.login.title}">Login</a></p>
+    <p><a class="btn" th:href="@{/gestione/}" th:text="#{auth.staff.login.title}">Login</a></p>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

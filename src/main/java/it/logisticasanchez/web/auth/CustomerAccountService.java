@@ -137,6 +137,18 @@ public class CustomerAccountService {
     }
 
     /**
+     * ADM-12: the OWNER login of a customer created by staff in the back office. No link is
+     * consumed here: the customer proves the mailbox with its first sign-in link (CUS-01), which
+     * also marks the e-mail verified. The caller has checked that the address is free.
+     */
+    @Transactional
+    public long createOwnerLogin(long customerId, String email) {
+        CustomerUser user = users.save(
+                new CustomerUser(customerId, CustomerSignInService.normalise(email), CustomerUserRole.OWNER));
+        return user.getId();
+    }
+
+    /**
      * CUS-06 step 1: stores the new address as pending, queues the confirmation link to it and a
      * notice to the current address. Returns false (nothing queued) when the address is already
      * someone's login: the page answers the same way either way.

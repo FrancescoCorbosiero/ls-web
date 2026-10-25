@@ -7,9 +7,13 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container">
-    <h1 th:text="#{auth.staff.home.title}">Gestione</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.staff.home.title}">Gestione</h1>
+      </div>
+    </div>
     <p class="muted" th:text="#{auth.staff.home.welcome(${displayName})}">Ciao</p>
     <p class="lede" th:text="#{auth.staff.home.lead}">Clienti, ordini, tracking e report.</p>
     <nav class="quick-grid" th:aria-label="#{backoffice.nav.label}" data-home-nav>

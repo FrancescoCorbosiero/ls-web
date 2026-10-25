@@ -32,6 +32,14 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "shipment_order")
 public class ShipmentOrder {
 
+    static final String SOURCE_CUSTOMER_AREA = "CUSTOMER_AREA";
+    static final String SOURCE_BACKOFFICE = "BACKOFFICE";
+
+    /** Who edited or cancelled an order (columns {@code edited_by_type}, {@code cancelled_by_type}, V013). */
+    static final String BY_CUSTOMER = "CUSTOMER";
+
+    static final String BY_STAFF = "STAFF";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -144,10 +152,28 @@ public class ShipmentOrder {
     private UUID idempotencyKey;
 
     @Column(name = "source", nullable = false, length = 16, updatable = false)
-    private String source = "CUSTOMER_AREA";
+    private String source = SOURCE_CUSTOMER_AREA;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    @Column(name = "cancelled_by_type", length = 16)
+    private String cancelledByType;
+
+    @Column(name = "cancelled_by")
+    private Long cancelledBy;
+
+    @Column(name = "cancel_reason")
+    private String cancelReason;
+
+    @Column(name = "edited_at")
+    private Instant editedAt;
+
+    @Column(name = "edited_by_type", length = 16)
+    private String editedByType;
 
     @Version
     @Column(name = "version", nullable = false)
@@ -161,6 +187,19 @@ public class ShipmentOrder {
 
     /** A new PENDING order of the wizard with its temporary code and the sender snapshot. */
     ShipmentOrder(long customerId, String tempCode, UUID idempotencyKey, Instant now, Party sender, Party recipient) {
+        this(customerId, tempCode, idempotencyKey, now, sender, recipient, SOURCE_CUSTOMER_AREA);
+    }
+
+    /** A new PENDING order created from {@code source}: the wizard ({@link #SOURCE_CUSTOMER_AREA}) or staff for a customer ({@link #SOURCE_BACKOFFICE}, ADM-11). */
+    ShipmentOrder(
+            long customerId,
+            String tempCode,
+            UUID idempotencyKey,
+            Instant now,
+            Party sender,
+            Party recipient,
+            String source) {
+        this.source = Objects.requireNonNull(source, "source");
         this.customerId = customerId;
         this.tempCode = Objects.requireNonNull(tempCode, "tempCode");
         this.idempotencyKey = idempotencyKey;
@@ -195,6 +234,83 @@ public class ShipmentOrder {
         lines.add(line);
         totalWeightKg = totalWeightKg.add(line.getLineWeightKg());
         totalVolumeM3 = totalVolumeM3.add(line.getLineVolumeM3());
+    }
+
+    /**
+     * An edit (CUS-07, ADM-11): the lines become {@code replacement}, in order. Existing lines are
+     * rewritten in place and the surplus ones removed, so line numbers stay 1…n without ever
+     * colliding with a row still waiting to be deleted (unique {@code (order_id, line_no)});
+     * the totals are recomputed from the lines (OP-06).
+     */
+    void replaceLines(List<OrderDraft.Line> replacement) {
+        if (replacement.isEmpty()) {
+            throw new RuleViolationException("Aggiungi almeno una riga di pallet o colli.");
+        }
+        for (int i = 0; i < replacement.size(); i++) {
+            OrderDraft.Line l = replacement.get(i);
+            if (i < lines.size()) {
+                lines.get(i).update(l.kind(), l.heightCm(), l.lengthCm(), l.widthCm(), l.weightKg(), l.quantity());
+            } else {
+                lines.add(new OrderLine(
+                        this, i + 1, l.kind(), l.heightCm(), l.lengthCm(), l.widthCm(), l.weightKg(), l.quantity()));
+            }
+        }
+        while (lines.size() > replacement.size()) {
+            lines.remove(lines.size() - 1);
+        }
+        BigDecimal weight = BigDecimal.ZERO;
+        BigDecimal volume = BigDecimal.ZERO;
+        for (OrderLine line : lines) {
+            weight = weight.add(line.getLineWeightKg());
+            volume = volume.add(line.getLineVolumeM3());
+        }
+        totalWeightKg = weight;
+        totalVolumeM3 = volume;
+    }
+
+    /** The recipient of an edit (CUS-07, ADM-11). */
+    void setRecipient(Party recipient) {
+        this.recipientName = recipient.name();
+        this.recipientAddressLine = recipient.addressLine();
+        this.recipientCity = recipient.city();
+        this.recipientProvince = recipient.province();
+        this.recipientPostalCode = recipient.postalCode();
+        this.recipientPhone = recipient.phone();
+        this.recipientEmail = recipient.email();
+    }
+
+    /** Stamps the last edit; the row always changes, so its version moves on even when only the lines did. */
+    void edited(String byType, Instant at) {
+        this.editedByType = Objects.requireNonNull(byType, "byType");
+        this.editedAt = Objects.requireNonNull(at, "at");
+    }
+
+    /**
+     * Cancels the order (V013, ADR 0028): a PENDING order by the customer or by staff, an APPROVED
+     * one by staff only (the caller checks the ADMIN role). Nothing is deleted.
+     */
+    void cancel(String byType, Long staffUserId, String reason, Instant at) {
+        boolean allowed = status == OrderStatus.PENDING || (status == OrderStatus.APPROVED && BY_STAFF.equals(byType));
+        if (!allowed) {
+            throw new RuleViolationException(
+                    status == OrderStatus.APPROVED
+                            ? "L'ordine è già confermato: per annullarlo contatta il centro logistico."
+                            : "L'ordine non può più essere annullato.");
+        }
+        this.status = OrderStatus.CANCELLED;
+        this.cancelledAt = at;
+        this.cancelledByType = byType;
+        this.cancelledBy = BY_STAFF.equals(byType) ? Objects.requireNonNull(staffUserId, "staffUserId") : null;
+        this.cancelReason = reason == null || reason.isBlank() ? null : reason.strip();
+    }
+
+    /** An ADMIN correction of an approved order (ADM-11, ADR 0028): the definitive code and the amount. */
+    void correctApproval(String code, BigDecimal amount) {
+        if (status != OrderStatus.APPROVED) {
+            throw new RuleViolationException("Codice e importo si correggono solo su un ordine confermato.");
+        }
+        this.code = Objects.requireNonNull(code, "code");
+        this.amount = Objects.requireNonNull(amount, "amount");
     }
 
     /** Staff approve (ADM-04): the definitive code and the amount; tracking becomes PRESA (the caller writes the event). */
@@ -343,6 +459,38 @@ public class ShipmentOrder {
 
     public List<OrderLine> getLines() {
         return lines;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public Instant getCancelledAt() {
+        return cancelledAt;
+    }
+
+    public String getCancelledByType() {
+        return cancelledByType;
+    }
+
+    public Long getCancelledBy() {
+        return cancelledBy;
+    }
+
+    public String getCancelReason() {
+        return cancelReason;
+    }
+
+    public Instant getEditedAt() {
+        return editedAt;
+    }
+
+    public String getEditedByType() {
+        return editedByType;
+    }
+
+    public int getVersion() {
+        return version;
     }
 
     /** A sender or recipient: the legacy fields of chapter 03 §6.6 plus the optional e-mail (OP-14). */

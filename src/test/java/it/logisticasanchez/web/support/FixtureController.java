@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 import org.springframework.boot.test.context.TestComponent;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -123,6 +124,12 @@ public class FixtureController {
     @ResponseBody
     public String conflict() {
         throw new ClientErrorException(ErrorCode.CODE_CONFLICT);
+    }
+
+    @PostMapping("/fixture/errors/stale")
+    @ResponseBody
+    public String stale() {
+        throw new ObjectOptimisticLockingFailureException("ShipmentOrder", 1L);
     }
 
     @GetMapping("/fixture/errors/param")

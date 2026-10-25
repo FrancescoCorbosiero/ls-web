@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<!--
+  Staff order form (ADM-11; ADR 0028, 0029): «Nuovo ordine» for an ACTIVE customer (the sender is
+  chosen here; the form key makes a double submission harmless) or «Modifica» of an order on the
+  version it showed; for a confirmed order (ADMIN only) also the definitive code and the amount.
+  The sections and totals are the customer's form (orders/form.html).
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${order == null} ? #{backoffice.orders.new} : #{backoffice.orderForm.editTitle(${order.displayCode()})}) + ' · ' + #{layout.private.backoffice}">Nuovo ordine · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav(${order != null and order.isPending()} ? 'ordersPending' : 'orders')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="${order == null} ? '/gestione/ordini/' : '/gestione/ordini/' + ${order.id} + '/'"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="${order == null} ? #{backoffice.order.back} : #{backoffice.order.backToOrder}">Torna agli ordini</span></a>
+        <h1 th:text="${order == null} ? #{backoffice.orders.new} : #{backoffice.orderForm.editTitle(${order.displayCode()})}">Nuovo ordine</h1>
+        <p class="lede" th:text="${order == null} ? #{backoffice.orderForm.newLead} : (${order.isApproved()} ? #{backoffice.orderForm.approvedLead} : #{backoffice.orderForm.pendingLead})">Inserisci un ordine per conto di un cliente.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <div class="callout callout-error" role="alert" th:if="${form.hasErrors() or customerError != null}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+
+    <form method="post" class="order-layout" novalidate data-order-form
+          th:action="${order == null} ? @{/gestione/ordini/nuovo} : @{/gestione/ordini/{id}/modifica(id=${order.id})}">
+      <button th:replace="~{orders/form :: defaultSubmit(${order == null} ? #{backoffice.orderForm.create} : #{orders.form.save})}">Salva</button>
+      <input type="hidden" name="versione" th:if="${order != null}" th:value="${version}">
+      <input type="hidden" name="chiave" th:if="${order == null}" th:value="${formKey}">
+      <div class="stack">
+        <section class="panel" id="cliente-mittente" aria-labelledby="cliente-title">
+          <div class="form-step"><span class="form-step-num" aria-hidden="true">
+            <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user"/></svg></span><h2 id="cliente-title" th:text="#{backoffice.orderForm.customerTitle}">Cliente mittente</h2></div>
+          <div class="fields" th:if="${order == null}">
+            <div class="field span-all">
+              <label class="label" for="cliente" th:text="#{backoffice.orderForm.customer}">Cliente (mittente e indirizzo di ritiro)</label>
+              <select class="select" id="cliente" name="cliente" th:attr="aria-invalid=${customerError != null}">
+                <option value="" th:selected="${extra['cliente'] == ''}" th:text="#{backoffice.orderForm.customerChoose}">Scegli il cliente</option>
+                <option th:each="c : ${customers}" th:value="${c.id}" th:selected="${extra['cliente'] == #strings.toString(c.id)}" th:text="${c.companyName} + ' – ' + ${c.city} + ' (' + ${c.email} + ')'">Ditta</option>
+              </select>
+              <p class="field-error" th:if="${customerError != null}" th:text="#{${customerError}}">Errore</p>
+              <p class="field-hint" th:text="#{backoffice.orderForm.customerHint}">Solo i clienti attivi. Il ritiro avviene all'indirizzo registrato del cliente.</p>
+            </div>
+          </div>
+          <dl class="facts" th:if="${order != null}">
+            <div class="span-all"><dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.sender.name}">-</dd></div>
+            <div class="span-all"><dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.sender.addressOneLine()}">-</dd></div>
+          </dl>
+        </section>
+        <section class="panel panel-attention" th:if="${order != null and order.isApproved()}" aria-labelledby="conferma-title" data-approval-correction>
+          <div class="form-step"><span class="form-step-num" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg></span><h2 id="conferma-title" th:text="#{backoffice.orderForm.approvalTitle}">Codice e importo</h2></div>
+          <p class="form-step-hint" th:text="#{backoffice.orderForm.approvalHint}">Correzioni dopo la conferma: restano nel registro delle modifiche. Il cliente non riceve e-mail.</p>
+          <div class="fields">
+            <div class="field">
+              <label class="label" for="codice" th:text="#{backoffice.orderApprove.code}">Codice</label>
+              <input class="input input-code" id="codice" name="codice" type="text" maxlength="64" autocomplete="off" th:value="${extra['codice']}">
+            </div>
+            <div class="field">
+              <label class="label" for="importo" th:text="#{backoffice.orderApprove.amount}">Importo Totale (per cliente)</label>
+              <input class="input" id="importo" name="importo" type="text" inputmode="decimal" maxlength="20" autocomplete="off" th:value="${extra['importo']}">
+            </div>
+          </div>
+        </section>
+        <section th:replace="~{orders/form :: lines(${form}, ${kinds}, 1)}"></section>
+        <section th:replace="~{orders/form :: details(${form}, ${services}, 2)}"></section>
+        <section th:replace="~{orders/form :: recipient(${form}, 3)}"></section>
+      </div>
+      <aside th:replace="~{orders/form :: summary(${form}, ${order == null} ? #{backoffice.orderForm.create} : #{orders.form.save}, ${order == null} ? '/gestione/ordini/' : '/gestione/ordini/' + ${order.id} + '/', #{orders.form.cancel}, ${order == null} ? #{backoffice.orderForm.createNote} : #{backoffice.orderForm.saveNote})}"></aside>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+<th:block th:replace="~{layout/private :: appScript}"></th:block>
+</body>
+</html>

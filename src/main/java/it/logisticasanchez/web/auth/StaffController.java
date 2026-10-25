@@ -4,6 +4,7 @@ import it.logisticasanchez.web.platform.security.Authorities;
 import it.logisticasanchez.web.platform.security.SessionLimitsFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Objects;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 /**
  * The back-office entry (ADM-01, ADR 0003): {@code /gestione/} is the login page for an
  * anonymous visitor (copy of the legacy CMS: «Login», «Username o password errate.») and the
- * back-office home (section cards, «Impostazioni» for ADMIN) for a staff session; {@code /gestione/imposta-password?t=…} renders the
+ * back-office home for a staff session, rendered by the back-office module through
+ * {@link StaffHomePage} (ADR 0029); {@code /gestione/imposta-password?t=…} renders the
  * set-password form on {@code GET} and consumes the link on {@code POST}. The login itself is
  * Spring Security's form login on {@code POST /gestione/login} (see {@link AuthChainContributor}).
  * Minimal templates, restyled with the layout in stage 5.
@@ -26,9 +28,11 @@ public class StaffController {
     static final String NO_REFERRER = "no-referrer";
 
     private final StaffAccountService accounts;
+    private final ObjectProvider<StaffHomePage> homePage;
 
-    public StaffController(StaffAccountService accounts) {
+    public StaffController(StaffAccountService accounts, ObjectProvider<StaffHomePage> homePage) {
         this.accounts = accounts;
+        this.homePage = homePage;
     }
 
     @GetMapping(AuthRoutes.BACKOFFICE)
@@ -41,7 +45,8 @@ public class StaffController {
         if (SessionLimitsFilter.isAuthenticated(authentication) && SessionLimitsFilter.isStaff(authentication)) {
             model.addAttribute("displayName", displayName(authentication));
             model.addAttribute("isAdmin", isAdmin(authentication));
-            return "auth/staff-home";
+            StaffHomePage page = homePage.getIfAvailable();
+            return page == null ? "auth/staff-home" : page.render(authentication, model);
         }
         model.addAttribute("loginError", error != null);
         model.addAttribute("passwordSet", passwordSet != null);

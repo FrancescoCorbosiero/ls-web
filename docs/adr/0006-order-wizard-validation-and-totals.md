@@ -1,6 +1,6 @@
 # 0006 · Order wizard: Italian validation rules and decimal totals
 
-* **Status:** Accepted
+* **Status:** Accepted; the page layout is amended by [ADR 0029](0029-private-area-interface.md) (2026-10-25: one form with the lines as rows, then the summary, instead of three pages; the rules and totals below are unchanged)
 * **Date:** 2026-10-24
 * **Requirement IDs:** CUS-04 (chapter 09) · **Questions:** Q-24 (DDT required), Q-35 (integers ≥ 1, warnings), Q-37 (brand) · **Findings:** OP-01…OP-07, OP-12, OP-14, OP-16, OP-17, OP-23, OP-25 (chapter 03 §10), D-13, D-23
 

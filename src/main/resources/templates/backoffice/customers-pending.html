@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «In Approvazione» (ADM-02; chapter 04 §3.2: nine legacy columns, «SI»/«NO», the legacy empty state). -->
+<!-- «In Approvazione» (ADM-02; chapter 04 §3.2: nine legacy columns, «SI»/«NO», the legacy empty state; ADR 0029 layout). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.customersPending.title} + ' · ' + #{layout.private.backoffice}">In Approvazione · Gestione</title>
@@ -7,14 +7,22 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{backoffice/layout :: nav('customersPending')}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{backoffice/layout :: nav('customersPending')}"></th:block>
-    <h1 th:text="#{backoffice.customersPending.title}">Clienti in approvazione</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{backoffice.customersPending.title}">Clienti in approvazione</h1>
+        <p class="lede" th:text="#{backoffice.customersPending.lead}">Si approva solo un cliente che ha confermato la sua e-mail.</p>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
-    <p class="muted" th:if="${customers.isEmpty()}" th:text="#{backoffice.customersPending.empty}">Nessun utente da approvare</p>
-    <div class="table-wrap" th:if="${!customers.isEmpty()}">
-      <table class="table" data-table="customers-pending">
+    <div class="empty" th:if="${customers.isEmpty()}" data-empty>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-circle-check"/></svg>
+      <h2 th:text="#{backoffice.customersPending.empty}">Nessun utente da approvare</h2>
+    </div>
+    <div class="data-table-wrap" th:if="${!customers.isEmpty()}">
+      <table class="data-table stacked" data-table="customers-pending">
         <thead><tr>
           <th scope="col" th:text="#{backoffice.customers.col.id}">ID</th>
           <th scope="col" th:text="#{backoffice.customers.col.companyName}">Ragione sociale</th>
@@ -29,18 +37,18 @@
         </tr></thead>
         <tbody>
           <tr th:each="c : ${customers}" th:attr="data-customer=${c.id}">
-            <td th:text="${c.id}">1</td>
-            <td><a th:href="@{/gestione/clienti/{id}/(id=${c.id})}" th:text="${c.companyName}">Ditta</a></td>
-            <td th:text="${c.email}">email</td>
-            <td th:text="${c.addressLine}">via</td>
-            <td th:text="${c.province}">MB</td>
-            <td th:text="${c.city}">Seregno</td>
-            <td th:text="${c.postalCode}">20831</td>
-            <td th:text="${c.phone}">tel</td>
-            <td th:text="${c.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</td>
-            <td class="nowrap">
-              <a class="btn btn-primary btn-sm" th:href="@{/gestione/clienti/{id}/approva(id=${c.id})}" th:text="#{backoffice.customers.approve}">Approva</a>
-              <a class="btn btn-secondary btn-sm" th:href="@{/gestione/clienti/{id}/rifiuta(id=${c.id})}" th:text="#{backoffice.customers.decline}">Rifiuta</a>
+            <td class="muted" th:attr="data-label=#{backoffice.customers.col.id}" th:text="${c.id}">1</td>
+            <td class="strong" th:attr="data-label=#{backoffice.customers.col.companyName}"><a th:href="@{/gestione/clienti/{id}/(id=${c.id})}" th:text="${c.companyName}">Ditta</a></td>
+            <td th:attr="data-label=#{backoffice.customers.col.email}" th:text="${c.email}">email</td>
+            <td th:attr="data-label=#{backoffice.customers.col.address}" th:text="${c.addressLine}">via</td>
+            <td th:attr="data-label=#{backoffice.customers.col.province}" th:text="${c.province}">MB</td>
+            <td th:attr="data-label=#{backoffice.customers.col.city}" th:text="${c.city}">Seregno</td>
+            <td th:attr="data-label=#{backoffice.customers.col.postalCode}" th:text="${c.postalCode}">20831</td>
+            <td th:attr="data-label=#{backoffice.customers.col.phone}" th:text="${c.phone}">tel</td>
+            <td th:attr="data-label=#{backoffice.customers.col.emailVerified}"><span class="pill" th:classappend="${c.emailVerified()} ? 'pill-active' : 'pill-pending'" th:text="${c.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</span></td>
+            <td class="row-actions">
+              <a class="btn btn-xs" th:href="@{/gestione/clienti/{id}/approva(id=${c.id})}" th:text="#{backoffice.customers.approve}">Approva</a>
+              <a class="btn btn-danger btn-xs" th:href="@{/gestione/clienti/{id}/rifiuta(id=${c.id})}" th:text="#{backoffice.customers.decline}">Rifiuta</a>
             </td>
           </tr>
         </tbody>

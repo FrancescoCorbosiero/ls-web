@@ -8,13 +8,17 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{auth.customer.changeEmail.title}">Conferma la nuova e-mail</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.customer.changeEmail.title}">Conferma la nuova e-mail</h1>
+      </div>
+    </div>
     <p class="lede" th:text="#{auth.customer.changeEmail.lead(${newEmail})}">Premi il pulsante per usare questo indirizzo come e-mail di accesso.</p>
     <form method="post" th:action="@{/area-clienti/cambio-email}">
       <input type="hidden" name="t" th:value="${token}">
-      <div class="actions"><button type="submit" class="btn btn-primary btn-lg" th:text="#{auth.customer.changeEmail.submit}">Conferma</button></div>
+      <div class="form-actions"><button type="submit" class="btn btn-lg" th:text="#{auth.customer.changeEmail.submit}">Conferma</button></div>
     </form>
   </div>
 </main>

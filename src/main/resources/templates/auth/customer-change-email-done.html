@@ -8,11 +8,15 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{auth.customer.changeEmailDone.title}">E-mail aggiornata</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.customer.changeEmailDone.title}">E-mail aggiornata</h1>
+      </div>
+    </div>
     <p class="lede" th:text="#{auth.customer.changeEmailDone.lead(${newEmail})}">Da ora accedi con il nuovo indirizzo.</p>
-    <p><a class="btn btn-primary" th:href="@{/area-clienti/}" th:text="#{auth.customer.changeEmailDone.signIn}">Accedi</a></p>
+    <p><a class="btn" th:href="@{/area-clienti/}" th:text="#{auth.customer.changeEmailDone.signIn}">Accedi</a></p>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

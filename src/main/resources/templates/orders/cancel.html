@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<!-- «Annulla l'ordine» (CUS-07; ADR 0028): a confirmation page for the withdrawal of a pending order, with the version it showed. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{orders.cancel.title(${order.displayCode()})} + ' · ' + ${business.brandName}">Annulla l'ordine · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="@{/area-clienti/ordini/{c}/(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{orders.edit.back}">Torna all'ordine</span></a>
+        <h1 th:text="#{orders.cancel.title(${order.displayCode()})}">Annulla l'ordine</h1>
+      </div>
+    </div>
+    <th:block th:replace="~{layout/private :: error(${error})}"></th:block>
+    <section class="panel panel-danger">
+      <p class="strong ink" th:text="#{orders.cancel.question}">Vuoi davvero annullare questo ordine?</p>
+      <dl class="facts mb-m">
+        <div><dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.displayCode()}">TEMP-</dd></div>
+        <div><dt th:text="#{orders.col.date}">Data</dt><dd th:text="${fmt.dateTime(order.submittedAt)}">data</dd></div>
+        <div><dt th:text="#{orders.col.recipient}">Destinatario</dt><dd th:text="${order.recipient.name} + ', ' + ${order.recipient.city}">dest</dd></div>
+        <div><dt th:text="#{orders.totals}">Totale</dt><dd th:text="${order.weightText()} + ' · ' + ${order.volumeText()}">0 kg</dd></div>
+      </dl>
+      <p class="muted" th:text="#{orders.cancel.hint}">L'ordine resta nella tua lista come «Annullato» e il centro logistico riceve un avviso. Se cambi idea, inserisci un nuovo ordine.</p>
+      <form method="post" th:action="@{/area-clienti/ordini/{c}/annulla(c=${order.displayCode()})}" class="form-actions">
+        <input type="hidden" name="versione" th:value="${order.version}">
+        <button type="submit" class="btn btn-danger-solid"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{orders.cancel.confirm}">Sì, annulla l'ordine</span></button>
+        <a class="btn btn-light" th:href="@{/area-clienti/ordini/{c}/(c=${order.displayCode()})}" th:text="#{orders.cancel.keep}">No, tienilo</a>
+      </form>
+    </section>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

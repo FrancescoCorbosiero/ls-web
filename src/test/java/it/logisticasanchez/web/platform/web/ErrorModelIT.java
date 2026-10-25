@@ -96,6 +96,19 @@ class ErrorModelIT extends AbstractPostgresIT {
     }
 
     @Test
+    void twoChangesOfTheSameRecordAtOnceAre409WithAClearReason() throws Exception {
+        // ADR 0028: the services refuse a stale page themselves; the version check at commit
+        // catches the race of two saves at the same moment
+        schema(
+                mvc.perform(post("/fixture/errors/stale").with(csrf()).accept(MediaType.APPLICATION_JSON))
+                        .andExpect(status().isConflict())
+                        .andExpect(jsonPath("$.reason")
+                                .value("I dati sono stati modificati nel frattempo da un'altra persona."
+                                        + " Ricarica la pagina e riprova.")),
+                ErrorCode.STALE_DATA);
+    }
+
+    @Test
     void unexpectedExceptionsAre500WithTheGenericReasonAndNoInternals() throws Exception {
         MvcResult json = schema(
                         mvc.perform(get("/fixture/errors/boom").accept(MediaType.APPLICATION_JSON))

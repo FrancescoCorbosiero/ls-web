@@ -6,9 +6,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 /**
- * Routes of the back office (ADR 0002, 0017): customers, orders, tracking and reports for every
- * staff session; settings, staff users and the privacy tools for ADMIN only. Every one is a
- * line of {@code route-matrix.tsv}.
+ * Routes of the back office (ADR 0002, 0017, 0028): customers, orders (their creation, change and
+ * cancellation included; an approved order only by an ADMIN, checked by the service), tracking and
+ * reports for every staff session; settings, staff users and the privacy tools for ADMIN only.
+ * Every one is a line of {@code route-matrix.tsv}.
  */
 @Component
 public class BackofficeRouteContributor implements SecurityRouteContributor {
@@ -19,24 +20,34 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         HttpMethod.GET,
                         BackofficeRoutes.CUSTOMERS,
                         BackofficeRoutes.CUSTOMERS_PENDING,
+                        BackofficeRoutes.CUSTOMER_NEW,
                         BackofficeRoutes.CUSTOMER,
                         BackofficeRoutes.CUSTOMER_APPROVE,
                         BackofficeRoutes.CUSTOMER_DECLINE,
+                        BackofficeRoutes.CUSTOMER_EDIT,
                         BackofficeRoutes.ORDERS,
                         BackofficeRoutes.ORDERS_PENDING,
+                        BackofficeRoutes.ORDER_NEW,
                         BackofficeRoutes.ORDER,
                         BackofficeRoutes.ORDER_APPROVE,
                         BackofficeRoutes.ORDER_DECLINE,
+                        BackofficeRoutes.ORDER_EDIT,
+                        BackofficeRoutes.ORDER_CANCEL,
                         BackofficeRoutes.TRACKING,
                         BackofficeRoutes.REPORTS)
                 .staff(
                         HttpMethod.POST,
+                        BackofficeRoutes.CUSTOMER_NEW,
                         BackofficeRoutes.CUSTOMER_APPROVE,
                         BackofficeRoutes.CUSTOMER_DECLINE,
+                        BackofficeRoutes.CUSTOMER_EDIT,
+                        BackofficeRoutes.ORDER_NEW,
                         BackofficeRoutes.ORDER_APPROVE,
                         BackofficeRoutes.ORDER_DECLINE,
                         BackofficeRoutes.ORDER_TRACKING,
                         BackofficeRoutes.ORDER_NOTE,
+                        BackofficeRoutes.ORDER_EDIT,
+                        BackofficeRoutes.ORDER_CANCEL,
                         BackofficeRoutes.TRACKING,
                         BackofficeRoutes.REPORTS)
                 .admin(

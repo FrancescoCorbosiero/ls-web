@@ -1577,3 +1577,127 @@ build passed: Spring Boot's `MessageSourceAutoConfiguration` only creates the me
 source when the base file `messages.properties` exists, and locally a stale copy survived
 in `target/classes`. The Italian bundle is now `messages.properties` (the app has one
 locale, `spring.web.locale=it` fixed); the test and the layout comment follow.
+
+## Step D — Owner requests of 2026-10-25: record editing, private-area interface, home motion
+
+The owner's message of 2026-10-25, after trying the app: «the dashboards (admin and customers)
+are definitely lacking UX/UI elements. But they are working solid … It's just matter of some
+CSS and some direct UX changes on how orders are prepared», «CRUD for records details is
+completely missing … both from admin side but also i'd be amazing feature for customers to be
+able to CRUD their own orders before they get confirmed by admin», «you can use the repo
+"alpacode-motion" as reference for (lightweight) structured GSAP animations in the homepage».
+
+### What was built
+
+* **Record editing (ADR 0028; chapter 09 CUS-07, ADM-11, ADM-12; Q-12 decided).** Migration
+  `V013__record_editing.sql`: order status `CANCELLED` with `cancelled_at`, `cancelled_by_type`,
+  `cancelled_by`, `cancel_reason`; `edited_at`, `edited_by_type`; consistency checks; a customer
+  created by staff (source `BACKOFFICE`) may be ACTIVE before its first sign-in verifies the
+  e-mail. `OrderService.updateByCustomer`, `cancelByCustomer`, `createByStaff`,
+  `updateByStaff`, `cancelByStaff` (optimistic check on the version the page showed, audit,
+  domain events `OrderChanged`/`OrderCancelled`, EML-06 notices only for the customer's own
+  changes); `CustomerService.createByStaff`, `update` (`CustomerChanged`).
+  `CustomerOrderChangesController` (`/area-clienti/ordini/{codice}/modifica`, `…/annulla`),
+  `BackofficeOrderChangesController` (`/gestione/ordini/nuovo`, `…/{id}/modifica`,
+  `…/{id}/annulla`), `BackofficeCustomerChangesController` (`/gestione/clienti/nuovo`,
+  `…/{id}/modifica`). `dev-seed` adds a cancelled order and only creates the seed orders that
+  are missing.
+* **Private-area interface (ADR 0029).** `static/css/app.css` on top of `main.css`,
+  `static/img/app-icons.svg` (Lucide), `static/js/app.js`; every customer-area, auth and
+  back-office template moved onto it. The order form is one page (`OrderForm`, fragments in
+  `orders/form.html`) shared by the new order, the customer's edit and the staff form, working
+  without JavaScript. «I miei ordini» with tiles and status tabs, the order detail with tracking
+  steps and history; the back-office «Panoramica» (`BackofficeHome` through the new
+  `auth.StaffHomePage` seam), navigation counters, the order-list filter «Non ancora
+  consegnati».
+* **Home motion (ADR 0030; built in a parallel worktree, merged as `eea60c6`).**
+  `static/js/motion/` after `alpacode-motion@7b1a203`, GSAP 3.15.0 vendored, a selector map so
+  the ported home markup is untouched (PUB-01); `SitePagesIT` and `public.spec.ts` «home motion».
+  Also fixed: the header button read «Preventivogratuito» (`layout.header.quote.suffix` now
+  starts with an escaped space).
+* **Tests.** New: `CustomerOrderChangesIT`, `CustomerOrderChangesOfficeOnlyIT`,
+  `BackofficeOrderChangesIT`, `BackofficeCustomerChangesIT`, `BackofficeHomeIT`; rewritten:
+  `OrderWizardIT` (the one-page form without JavaScript: rows added, removed and renumbered,
+  Enter, the 50-row guard); updated: `BackofficeOrdersIT`, `BackofficeCustomersIT`,
+  `MigrationsIT`, `ApplicationContextIT`, `DevSeedCommandIT`, `DomainEventsIT`,
+  `SettingsDefaultsIT`, `route-matrix.tsv`, the schema files. E2E `journey.spec.ts`: the order
+  through the one-page form with live totals, [CUS-07] edit and cancel, [ADM-11] an order
+  entered by staff, [ADM-12] a customer created and corrected, [NFR-01] axe and phone width on
+  17 private screens.
+
+### How to run it
+
+As in step C (`scripts/dev.sh`, then `/area-clienti/` with `cliente.attivo@cliente.example`
+and `/gestione/` with `admin.seed`). `e2e/run.sh` needs `CHROMIUM_PATH=/opt/pw-browsers/chromium`
+where the pre-installed Chromium is not Playwright 1.56.1's (this environment).
+
+### Routes added (all in `route-matrix.tsv`)
+
+Customer: `GET|POST /area-clienti/ordini/{codice}/modifica`, `GET|POST …/{codice}/annulla`.
+Staff (ADMIN or OPERATOR; an approved order only for ADMIN, checked in the service):
+`GET|POST /gestione/ordini/nuovo`, `GET|POST …/ordini/{id}/modifica`, `GET|POST
+…/ordini/{id}/annulla`, `GET|POST /gestione/clienti/nuovo`, `GET|POST …/clienti/{id}/modifica`.
+Removed: `GET|POST /area-clienti/ordini/nuovo/destinatario/` (the recipient is on the form).
+
+### Decisions taken
+
+* **Q-12 answered by the owner** (chapter 11, ADR 0028): `ls.orders.customer-changes` now
+  defaults to `SELF_SERVICE`; `OFFICE_ONLY` keeps the M1 behaviour. Chapter 09 gains CUS-07,
+  ADM-11, ADM-12; the «Not ported» note points at them; ADR 0006 and 0007 are marked amended.
+* **Cancel, never delete**: `CANCELLED` keeps the row and its history; «Rifiuta» stays the
+  office's refusal with its e-mail; a cancelled order leaves public tracking and the reports.
+* **Corrections after approval are ADMIN only** (chapter 08 §2.4), code and amount with the
+  approval rules; OPERATORs change and cancel pending orders.
+* **No e-mail to the customer for staff changes** (creation, edit, cancel): the customer is
+  told at approval (EML-05) or by the office; EML-06 notices go to the office for the
+  customer's own edits and cancellations.
+* **Staff-created customers are ACTIVE at once**, approved by the creator, the e-mail verified
+  by the first sign-in; the welcome e-mail (EML-03) is a ticked-by-default choice.
+* **One-page order form** with the summary page kept (ADR 0029); 50 rows at most; blank rows
+  ignored.
+
+### New Italian texts for the owner's review
+
+* **Customer area**: the form sections «Pallet e colli», «Dati della spedizione»,
+  «Destinatario», their hints («Una riga per ogni tipo di unità…», «Scegli «Epal» e la base
+  120 × 80 cm si compila da sola.», «Dove consegniamo la merce.»), «Aggiungi riga», «Elimina la
+  riga {n}», «Continua al riepilogo», «I totali si aggiornano mentre scrivi…», the stepper
+  «Dati dell'ordine» / «Riepilogo e invio»; «I miei ordini» tiles and tabs («In attesa di
+  conferma», «In viaggio», «Consegnati», «Ordini inviati», «Rifiutati o annullati»), the empty
+  state; the detail («Dove si trova la spedizione», «Cronologia», «Hai annullato questo
+  ordine il …», «Il centro logistico ha annullato questo ordine il …»); edit and cancel
+  («Modifica l'ordine …», «Puoi cambiare pallet, dati della spedizione e destinatario finché il
+  centro logistico non conferma l'ordine.», «Vuoi davvero annullare questo ordine?», «Sì,
+  annulla l'ordine» / «No, tienilo»); the flash messages («Modifiche salvate: il centro
+  logistico vede già l'ordine aggiornato.», «Ordine … annullato. Il centro logistico è stato
+  avvisato.») and the refusals («L'ordine è stato modificato nel frattempo…», «Il centro
+  logistico ha già gestito l'ordine: non si può più modificare né annullare.»).
+* **Back office**: «Panoramica» (the lead «N richieste aspettano te: le trovi qui sotto.», the
+  tiles, «Cerca e aggiorna»), «Nuovo ordine» / «Nuovo cliente» forms and their hints, «Codice e
+  importo» for an ADMIN correction, «Annulla l'ordine …» with «Motivo (facoltativo, solo per
+  l'ufficio)», the order flags («Inserito dall'ufficio», «Il cliente ha modificato l'ordine il
+  …: controlla i dati prima di approvarlo.»), «Non ancora consegnati», the flash messages and
+  refusals of `BackofficeOrderChangesController`, `BackofficeCustomerChangesController` and
+  `OrderService`/`CustomerService` («Solo un amministratore può modificare o annullare un ordine
+  già confermato.», «Il cliente non è attivo: approvalo prima di inserire un ordine.», «Esiste
+  già un cliente con questa e-mail: cercalo tra i clienti.»…).
+* **E-mails**: the two EML-06 office notices «Richiesta di spedizione {codice} modificata dal
+  cliente» (with the current detail) and «… annullata dal cliente».
+
+### Open points
+
+* A cancelled approved order is excluded from reports (ADM-09 selects `APPROVED`); to keep
+  cancelled shipments in the reports is a change to ADM-09 for the owner.
+* The customer gets no e-mail when staff edit or cancel its order; if the owner wants one, it
+  is a new EML entry.
+* Reported by the motion worktree, not changed here: Lighthouse's phone profile measured below
+  95 locally with and without the motion layer (PUB-10 budget; the Lighthouse CI job of step C
+  is still missing) and a contrast finding on the tagline of the ported public header
+  (pre-existing, PUB-01 allow-list). A local gitleaks run is still open from step C.
+
+### Proposed changes to shared files
+
+All shared files of this step were edited directly by the integrator: `CLAUDE.md` (dev-seed
+line, motion convention, `CHROMIUM_PATH`), chapter 09 and 11, `messages.properties`,
+`layout/private.html`, `docs/plan.md` §Status and §8.1, `docs/parity-matrix.md`,
+`docs/adr/README.md`, `route-matrix.tsv`, the schema files.

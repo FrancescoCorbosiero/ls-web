@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «Registrati» (ADM-03; chapter 04 §3.3: the same columns, newest first; search and pagination added, ADR 0017). -->
+<!-- «Registrati» (ADM-03; chapter 04 §3.3: the same columns, newest first; search and pagination added, ADR 0017; «Nuovo cliente», ADM-12; rows as cards on a phone, ADR 0029). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.customers.title} + ' · ' + #{layout.private.backoffice}">Registrati · Gestione</title>
@@ -7,20 +7,32 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{backoffice/layout :: nav('customers')}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{backoffice/layout :: nav('customers')}"></th:block>
-    <h1 th:text="#{backoffice.customers.title}">Clienti registrati</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{backoffice.customers.title}">Clienti registrati</h1>
+        <p class="lede" th:text="#{backoffice.customers.lead}">Tutti i clienti, i più recenti in alto.</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" href="/gestione/clienti/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-plus"/></svg><span th:text="#{backoffice.customers.new}">Nuovo cliente</span></a>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
-    <form method="get" th:action="@{/gestione/clienti/}" class="input-group mb-m" role="search">
+    <form method="get" th:action="@{/gestione/clienti/}" class="search-bar" role="search">
       <label class="visually-hidden" for="q" th:text="#{backoffice.customers.search}">Cerca</label>
       <input class="input" id="q" name="q" type="search" maxlength="100" th:value="${q}" th:placeholder="#{backoffice.customers.searchHint}">
-      <button type="submit" class="btn btn-secondary" th:text="#{backoffice.search}">Cerca</button>
+      <button type="submit" class="btn btn-light"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-search"/></svg><span th:text="#{backoffice.search}">Cerca</span></button>
     </form>
     <th:block th:replace="~{backoffice/layout :: pageInfo(${page})}"></th:block>
-    <p class="muted" th:if="${page.totalElements == 0 and q.isEmpty()}" th:text="#{backoffice.customers.empty}">Nessun utente registrato</p>
-    <div class="table-wrap" th:if="${page.totalElements > 0}">
-      <table class="table" data-table="customers">
+    <p class="muted" th:if="${page.totalElements == 0 and !q.isEmpty()}" th:text="#{backoffice.list.none}">Nessun risultato.</p>
+    <div class="empty" th:if="${page.totalElements == 0 and q.isEmpty()}" data-empty>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-users"/></svg>
+      <h2 th:text="#{backoffice.customers.empty}">Nessun utente registrato</h2>
+    </div>
+    <div class="data-table-wrap" th:if="${page.totalElements > 0}">
+      <table class="data-table stacked" data-table="customers">
         <thead><tr>
           <th scope="col" th:text="#{backoffice.customers.col.id}">ID</th>
           <th scope="col" th:text="#{backoffice.customers.col.companyName}">Ragione sociale</th>
@@ -36,25 +48,22 @@
         </tr></thead>
         <tbody>
           <tr th:each="c : ${page.content}" th:attr="data-customer=${c.id}">
-            <td th:text="${c.id}">1</td>
-            <td><a th:href="@{/gestione/clienti/{id}/(id=${c.id})}" th:text="${c.companyName}">Ditta</a></td>
-            <td th:text="${c.email}">email</td>
-            <td th:text="${c.addressLine}">via</td>
-            <td th:text="${c.province}">MB</td>
-            <td th:text="${c.city}">Seregno</td>
-            <td th:text="${c.postalCode}">20831</td>
-            <td th:text="${c.phone}">tel</td>
-            <td th:text="${c.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</td>
-            <td><span class="badge" th:text="#{'customers.status.' + ${c.status.name()}}">Attivo</span></td>
-            <td th:text="${fmt.date(c.registeredAt)}">01/01/2026</td>
+            <td class="muted" th:attr="data-label=#{backoffice.customers.col.id}" th:text="${c.id}">1</td>
+            <td class="strong" th:attr="data-label=#{backoffice.customers.col.companyName}"><a th:href="@{/gestione/clienti/{id}/(id=${c.id})}" th:text="${c.companyName}">Ditta</a></td>
+            <td th:attr="data-label=#{backoffice.customers.col.email}" th:text="${c.email}">email</td>
+            <td th:attr="data-label=#{backoffice.customers.col.address}" th:text="${c.addressLine}">via</td>
+            <td th:attr="data-label=#{backoffice.customers.col.province}" th:text="${c.province}">MB</td>
+            <td th:attr="data-label=#{backoffice.customers.col.city}" th:text="${c.city}">Seregno</td>
+            <td th:attr="data-label=#{backoffice.customers.col.postalCode}" th:text="${c.postalCode}">20831</td>
+            <td th:attr="data-label=#{backoffice.customers.col.phone}" th:text="${c.phone}">tel</td>
+            <td th:attr="data-label=#{backoffice.customers.col.emailVerified}" th:text="${c.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</td>
+            <td th:attr="data-label=#{backoffice.customers.col.status}"><span th:replace="~{layout/private :: customerStatus(${c.status})}">Attivo</span></td>
+            <td th:attr="data-label=#{backoffice.customers.col.registeredAt}" th:text="${fmt.date(c.registeredAt)}">01/01/2026</td>
           </tr>
         </tbody>
       </table>
     </div>
-    <nav class="actions" th:if="${page.totalPages > 1}" th:aria-label="#{backoffice.pager.label}">
-      <a class="btn btn-secondary btn-sm" th:if="${page.hasPrevious()}" th:href="@{/gestione/clienti/(q=${q}, pagina=${page.number})}" th:text="#{backoffice.pager.previous}">Precedente</a>
-      <a class="btn btn-secondary btn-sm" th:if="${page.hasNext()}" th:href="@{/gestione/clienti/(q=${q}, pagina=${page.number + 2})}" th:text="#{backoffice.pager.next}">Successiva</a>
-    </nav>
+    <th:block th:replace="~{backoffice/layout :: pager(${page}, @{/gestione/clienti/(q=${q}, pagina=${page.number})}, @{/gestione/clienti/(q=${q}, pagina=${page.number + 2})})}"></th:block>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

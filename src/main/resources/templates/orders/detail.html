@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<!-- Order detail (CUS-05): lines grouped (not per unit), the recomputed totals, recipient, state, tracking; changes via the office (Q-12). -->
+<!--
+  Order detail (CUS-05; ADR 0029): state and tracking steps, lines grouped (not per unit) with the
+  recomputed totals, shipment data, recipient and sender, the dates of the order's life; while it
+  is pending, «Modifica» and «Annulla l'ordine» (CUS-07), or the office's contacts when changes
+  stay with the office (Q-12 seam).
+-->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{orders.detail.title(${order.displayCode()})} + ' · ' + ${business.brandName}">Ordine · Logistica Sanchez</title>
@@ -7,67 +12,124 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
-    <h1 th:text="#{orders.detail.title(${order.displayCode()})}">Ordine</h1>
-    <p><span class="badge" th:text="#{'orders.status.' + ${order.status.name()}}">In attesa</span>
-      <span class="muted" th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span></p>
-    <p class="callout callout-info" th:if="${order.status.name() == 'PENDING'}" th:text="#{orders.detail.pendingHint}">L'ordine è in attesa di conferma dal nostro centro logistico: riceverai un'e-mail con il codice definitivo e l'importo.</p>
-    <p class="callout" th:if="${order.status.name() == 'DECLINED'}" th:text="#{orders.detail.declinedHint}">L'ordine non è stato accettato. Per chiarimenti contatta il centro logistico.</p>
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/area-clienti/ordini/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{orders.detail.back}">Torna ai tuoi ordini</span></a>
+        <h1 th:text="#{orders.detail.title(${order.displayCode()})}">Ordine</h1>
+        <p class="page-meta">
+          <span th:replace="~{layout/private :: orderStatus(${order.status})}">In attesa</span>
+          <span th:replace="~{layout/private :: trackingPill(${order})}">Presa in carico</span>
+          <span th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span>
+        </p>
+      </div>
+      <div class="page-actions" th:if="${selfService and order.editableByCustomer()}">
+        <a class="btn" th:href="@{/area-clienti/ordini/{c}/modifica(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+        <a class="btn btn-danger" th:href="@{/area-clienti/ordini/{c}/annulla(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{orders.action.cancel}">Annulla l'ordine</span></a>
+      </div>
+    </div>
+    <th:block th:replace="~{layout/private :: flash}"></th:block>
 
-    <div class="grid-2">
-      <section class="card">
-        <h2 th:text="#{orders.detail.shipment}">Dettaglio spedizione</h2>
-        <dl>
-          <dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.displayCode()}">-</dd>
-          <dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd>
-          <dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${order.packageCount ?: '-'}">-</dd>
-          <dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd>
-          <dt th:text="#{orders.field.notes}">Note</dt><dd th:text="${order.customerNotes ?: '-'}">-</dd>
-          <dt th:text="#{orders.col.tracking}">Tracking</dt><dd th:text="${order.status.name() == 'APPROVED'} ? ${order.trackingLabel} : '-'">-</dd>
-          <dt th:text="#{orders.col.amount}">Importo</dt><dd th:text="${order.amountText()}">-</dd>
-        </dl>
-      </section>
-      <section class="card">
-        <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
-        <dl>
-          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.recipient.name}">-</dd>
-          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.recipient.addressOneLine()}">-</dd>
-          <dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.recipient.phone ?: '-'}">-</dd>
-          <dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.recipient.email ?: '-'}">-</dd>
-        </dl>
-        <h2 th:text="#{orders.detail.sender}">Mittente</h2>
-        <dl>
-          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.sender.name}">-</dd>
-          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.sender.addressOneLine()}">-</dd>
-        </dl>
-      </section>
+    <div class="callout callout-info" role="status" th:if="${order.isPending()}">
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>
+      <div>
+        <p th:text="#{orders.detail.pendingHint}">L'ordine è in attesa di conferma dal nostro centro logistico: riceverai un'e-mail con il codice definitivo e l'importo.</p>
+        <p class="muted" th:text="${selfService} ? #{orders.detail.selfServiceHint} : #{orders.detail.changes(${business.officeEmail}, ${business.phoneDisplay()})}">Finché non lo conferma puoi modificarlo o annullarlo.</p>
+      </div>
+    </div>
+    <div class="callout callout-error" role="status" th:if="${order.isDeclined()}">
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <div>
+        <p th:text="#{orders.detail.declinedHint}">L'ordine non è stato accettato. Per chiarimenti contatta il centro logistico.</p>
+        <p th:if="${order.declineReason != null}" th:text="#{orders.detail.declineReason(${order.declineReason})}">Motivo</p>
+      </div>
+    </div>
+    <div class="callout" role="status" th:if="${order.isCancelled()}" data-cancelled>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg>
+      <p th:text="${order.cancelledByCustomer()} ? #{orders.detail.cancelledByYou(${fmt.dateTime(order.cancelledAt)})} : #{orders.detail.cancelledByOffice(${fmt.dateTime(order.cancelledAt)})}">Annullato il</p>
     </div>
 
-    <h2 th:text="#{orders.detail.lines}">Pallet e colli</h2>
-    <div class="table-wrap">
-      <table class="table">
-        <thead><tr>
-          <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
-          <th scope="col" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
-          <th scope="col" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
-          <th scope="col" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
-          <th scope="col" th:text="#{orders.line.weightKg}">Peso (kg)</th>
-          <th scope="col" th:text="#{orders.line.quantity}">Quantità</th>
-        </tr></thead>
-        <tbody>
-          <tr th:each="l : ${order.lines}">
-            <td th:text="${l.kind.label()}">Epal</td>
-            <td th:text="${l.heightCm}">0</td><td th:text="${l.lengthCm}">0</td><td th:text="${l.widthCm}">0</td>
-            <td th:text="${fmt.number(l.weightKg, 0)}">0</td><td th:text="${l.quantity}">0</td>
-          </tr>
-        </tbody>
-        <tfoot><tr><th scope="row" colspan="4" th:text="#{orders.totals}">Totale</th><td colspan="2" th:text="${order.weightText()} + ' · ' + ${order.volumeText()}">0 kg · 0 m³</td></tr></tfoot>
-      </table>
+    <section class="panel mb-m" th:if="${order.isApproved()}" aria-labelledby="tracking-title" data-tracking-steps>
+      <div class="panel-head">
+        <h2 id="tracking-title" th:text="#{orders.detail.trackingTitle}">Dove si trova</h2>
+        <a class="btn btn-light btn-xs" th:href="@{/tracking/(code=${order.code})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-route"/></svg><span th:text="#{orders.detail.publicTracking}">Pagina di tracking</span></a>
+      </div>
+      <ol class="track">
+        <li th:each="s : ${steps}" th:classappend="${s.id() <= order.trackingStateId} ? 'is-done'" th:attr="aria-current=${s.id() == order.trackingStateId} ? 'step' : null"><span th:text="${s.stepLabel()}">Presa in carico</span></li>
+      </ol>
+      <p class="muted small mt-s mb-0" th:if="${order.trackingUpdatedAt != null}" th:text="#{orders.detail.trackingUpdatedAt(${fmt.dateTime(order.trackingUpdatedAt)})}">Aggiornato il</p>
+    </section>
+
+    <div class="app-grid main-aside">
+      <div class="stack">
+        <section class="panel">
+          <h2 th:text="#{orders.detail.lines}">Pallet e colli</h2>
+          <div class="data-table-wrap">
+            <table class="data-table stacked">
+              <thead><tr>
+                <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
+                <th scope="col" class="num" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.weightKg}">Peso (kg)</th>
+                <th scope="col" class="num" th:text="#{orders.line.quantity}">Quantità</th>
+              </tr></thead>
+              <tbody>
+                <tr th:each="l : ${order.lines}">
+                  <td th:attr="data-label=#{orders.line.kind}" th:text="${l.kind.label()}">Epal</td>
+                  <td class="num" th:attr="data-label=#{orders.line.heightCm}" th:text="${l.heightCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.lengthCm}" th:text="${l.lengthCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.widthCm}" th:text="${l.widthCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.weightKg}" th:text="${fmt.number(l.weightKg, 0)}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.quantity}" th:text="${l.quantity}">0</td>
+                </tr>
+              </tbody>
+              <tfoot><tr><th scope="row" colspan="4" th:text="#{orders.totals}">Totale</th><td class="num" colspan="2" th:text="${order.weightText()} + ' · ' + ${order.volumeText()}">0 kg · 0 m³</td></tr></tfoot>
+            </table>
+          </div>
+        </section>
+        <section class="panel">
+          <h2 th:text="#{orders.detail.shipment}">Dettaglio spedizione</h2>
+          <dl class="facts">
+            <div><dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.displayCode()}">-</dd></div>
+            <div><dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd></div>
+            <div><dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${order.packageCount ?: '-'}">-</dd></div>
+            <div><dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd></div>
+            <div><dt th:text="#{orders.col.tracking}">Tracking</dt><dd th:text="${order.isApproved()} ? ${order.trackingLabel} : '-'">-</dd></div>
+            <div><dt th:text="#{orders.col.amount}">Importo</dt><dd th:text="${order.isApproved()} ? ${order.amountText()} : '-'">-</dd></div>
+            <div class="span-all"><dt th:text="#{orders.field.notes}">Note</dt><dd class="facts-note" th:text="${order.customerNotes ?: '-'}">-</dd></div>
+          </dl>
+        </section>
+      </div>
+      <div class="stack">
+        <section class="panel">
+          <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
+          <dl class="facts">
+            <div class="span-all"><dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.recipient.name}">-</dd></div>
+            <div class="span-all"><dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.recipient.addressOneLine()}">-</dd></div>
+            <div><dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.recipient.phone ?: '-'}">-</dd></div>
+            <div><dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.recipient.email ?: '-'}">-</dd></div>
+          </dl>
+          <h3 th:text="#{orders.detail.sender}">Mittente</h3>
+          <dl class="facts">
+            <div class="span-all"><dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.sender.name}">-</dd></div>
+            <div class="span-all"><dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.sender.addressOneLine()}">-</dd></div>
+          </dl>
+        </section>
+        <section class="panel">
+          <h2 th:text="#{orders.detail.history}">Cronologia</h2>
+          <ol class="timeline">
+            <li><span class="when" th:text="${fmt.dateTime(order.submittedAt)}">data</span><span th:text="#{orders.history.submitted}">Ordine inviato</span></li>
+            <li th:if="${order.editedAt != null}"><span class="when" th:text="${fmt.dateTime(order.editedAt)}">data</span><span th:text="${order.editedByCustomer()} ? #{orders.history.editedByYou} : #{orders.history.editedByOffice}">Modificato</span></li>
+            <li th:if="${order.approvedAt != null}"><span class="when" th:text="${fmt.dateTime(order.approvedAt)}">data</span><span th:text="#{orders.history.approved(${order.code})}">Confermato</span></li>
+            <li th:if="${order.declinedAt != null}"><span class="when" th:text="${fmt.dateTime(order.declinedAt)}">data</span><span th:text="#{orders.history.declined}">Rifiutato</span></li>
+            <li th:if="${order.cancelledAt != null}"><span class="when" th:text="${fmt.dateTime(order.cancelledAt)}">data</span><span th:text="#{orders.history.cancelled}">Annullato</span></li>
+          </ol>
+        </section>
+      </div>
     </div>
-    <p class="muted" th:text="#{orders.detail.changes(${business.officeEmail}, ${business.phoneDisplay()})}">Per modificare o annullare un ordine in attesa scrivi all'ufficio.</p>
-    <p><a href="/area-clienti/ordini/" th:text="#{orders.detail.back}">Torna ai tuoi ordini</a></p>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

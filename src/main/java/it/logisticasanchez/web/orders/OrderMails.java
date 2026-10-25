@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
  * The e-mails of the orders module (chapter 09 "E-mails"; legacy wording of 12c §1 through the
  * reader notes; brand «Logistica Sanchez», Q-37): EML-04 order received (new, Q-07), EML-05
  * approved (code, detail, amount, tracking link) / declined (quoting the code), EML-06 new order
- * to the office, EML-09 delivered. Labels, Italian numbers, no staff notes (12c §1.6).
+ * to the office and, new with CUS-07, the office notices of a pending order changed or withdrawn
+ * by the customer, EML-09 delivered. Labels, Italian numbers, no staff notes (12c §1.6).
  */
 @Component
 public class OrderMails {
@@ -60,6 +61,50 @@ public class OrderMails {
         return layout.office(
                 KIND_OFFICE_NOTIFICATION,
                 "Nuova richiesta di spedizione in attesa di conferma",
+                content,
+                order.sender().email());
+    }
+
+    /** EML-06 office notice (new, CUS-07): the customer changed a pending order; the full detail as it is now. */
+    EmailMessage changedByCustomer(OrderView order) {
+        Content content = Content.titled(business.brandName() + " - Notifica")
+                .paragraph("Hai una nuova notifica: un cliente ha modificato una richiesta di spedizione in attesa di"
+                        + " conferma. Ecco i dati aggiornati.")
+                .table(
+                        "Richiesta",
+                        List.of(
+                                new Row("Azione", "Richiesta di spedizione modificata dal cliente"),
+                                new Row("Cliente", order.sender().email()),
+                                new Row("Codice provvisorio", order.tempCode())));
+        detail(content, order, false);
+        content.button("Apri l'ordine", backofficeOrderUrl(order));
+        return layout.office(
+                KIND_OFFICE_NOTIFICATION,
+                "Richiesta di spedizione " + order.tempCode() + " modificata dal cliente",
+                content,
+                order.sender().email());
+    }
+
+    /** EML-06 office notice (new, CUS-07): the customer withdrew a pending order. */
+    EmailMessage cancelledByCustomer(OrderView order) {
+        Content content = Content.titled(business.brandName() + " - Notifica")
+                .paragraph("Hai una nuova notifica: un cliente ha annullato una richiesta di spedizione in attesa di"
+                        + " conferma. Non serve fare altro.")
+                .table(
+                        "Richiesta",
+                        List.of(
+                                new Row("Azione", "Richiesta di spedizione annullata dal cliente"),
+                                new Row("Cliente", order.sender().email()),
+                                new Row("Codice provvisorio", order.tempCode()),
+                                new Row(
+                                        "Destinatario",
+                                        order.recipient().name() + ", "
+                                                + order.recipient().city()),
+                                new Row("Codice documento trasporto", order.transportDocumentCode())))
+                .button("Apri l'ordine", backofficeOrderUrl(order));
+        return layout.office(
+                KIND_OFFICE_NOTIFICATION,
+                "Richiesta di spedizione " + order.tempCode() + " annullata dal cliente",
                 content,
                 order.sender().email());
     }
@@ -157,6 +202,11 @@ public class OrderMails {
 
     private String orderUrl(OrderView order) {
         return business.siteUrl() + OrderRoutes.LIST + order.displayCode() + "/";
+    }
+
+    /** The order's page in the back office ({@code /gestione/ordini/{id}/}, backoffice module's route). */
+    private String backofficeOrderUrl(OrderView order) {
+        return business.siteUrl() + AuthRoutes.BACKOFFICE + "ordini/" + order.id() + "/";
     }
 
     private String trackingUrl(OrderView order) {

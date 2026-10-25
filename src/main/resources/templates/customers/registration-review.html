@@ -8,9 +8,13 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${reregister} ? ${values['email']} : null, ${reregister} ? '/area-clienti/logout' : null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{customers.review.heading}">Controlla i dati inseriti</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{customers.review.heading}">Controlla i dati inseriti</h1>
+      </div>
+    </div>
     <p class="lede" th:text="#{customers.review.lead}">Se è tutto corretto premi «Conferma»: la richiesta passa all'ufficio per l'approvazione.</p>
     <div class="table-wrap">
       <table class="table summary">
@@ -32,8 +36,8 @@
       <input type="hidden" name="email" th:value="${values['email']}">
       <input type="hidden" th:each="f : ${values}" th:if="${f.key != 'email'}" th:name="${f.key}" th:value="${f.value}">
       <input type="hidden" name="website" value="">
-      <button type="submit" name="step" value="confirm" class="btn btn-primary" th:text="#{customers.review.confirm}">Conferma</button>
-      <button type="submit" name="step" value="edit" class="btn btn-secondary" th:text="#{customers.review.edit}">Modifica</button>
+      <button type="submit" name="step" value="confirm" class="btn" th:text="#{customers.review.confirm}">Conferma</button>
+      <button type="submit" name="step" value="edit" class="btn btn-light" th:text="#{customers.review.edit}">Modifica</button>
     </form>
   </div>
 </main>
