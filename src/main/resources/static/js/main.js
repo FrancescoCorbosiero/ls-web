@@ -243,6 +243,7 @@ const widgets = [
   ['[data-coverage]', () => import('./coverage.js')],
   ['[data-map]', () => import('./map.js')],
   ['[data-ajax-form]', () => import('./forms.js')],
+  ['body[data-page="home"]', () => import('./motion/index.js')], // ls-web: home motion (ADR 0030)
 ];
 for (const [selector, load] of widgets) {
   const nodes = $$(selector);

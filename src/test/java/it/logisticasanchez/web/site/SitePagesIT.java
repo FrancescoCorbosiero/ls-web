@@ -313,4 +313,49 @@ class SitePagesIT extends AbstractPostgresIT {
         String js = Files.readString(Path.of("src/main/resources/static/js/tracking.js"), StandardCharsets.UTF_8);
         assertThat(js).contains("TRACKING.endpoint");
     }
+
+    /**
+     * ADR 0030: the home's motion is a module main.js imports on the home only, with GSAP vendored
+     * under {@code /js/vendor/gsap/}; the page gains no script tag and no motion hook (its {@code
+     * <main>} stays the ls-home port, PUB-01), and no motion module writes a {@code style}
+     * attribute or markup the public CSP would refuse (PUB-05).
+     */
+    @Test
+    void theHomeMotionIsAModuleOfMainJsAndLeavesTheMarkupAlone() throws Exception {
+        String home = mvc.perform(get("/").header("Host", "logisticasanchez.com"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        assertThat(home)
+                .doesNotContain("gsap")
+                .doesNotContain("/js/motion/")
+                .doesNotContainPattern("data-(split|scrub|count|kicker|rail)");
+        String mainJs = Files.readString(Path.of("src/main/resources/static/js/main.js"), StandardCharsets.UTF_8);
+        assertThat(mainJs).contains("['body[data-page=\"home\"]', () => import('./motion/index.js')]");
+        for (String path : List.of(
+                "/js/motion/index.js",
+                "/js/motion/registry.js",
+                "/js/motion/core.js",
+                "/js/motion/config.js",
+                "/js/vendor/gsap/gsap.min.js",
+                "/js/vendor/gsap/ScrollTrigger.min.js",
+                "/js/vendor/gsap/SplitText.min.js")) {
+            mvc.perform(get(path).header("Host", "logisticasanchez.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith("text/javascript"))
+                    .andExpect(header().string("Content-Security-Policy", SecurityHeadersFilter.PUBLIC_CSP));
+        }
+        try (var modules = Files.walk(Path.of("src/main/resources/static/js/motion"))) {
+            for (Path module : modules.filter(p -> p.toString().endsWith(".js")).toList()) {
+                assertThat(Files.readString(module, StandardCharsets.UTF_8))
+                        .as("%s", module)
+                        .doesNotContain("setAttribute('style'")
+                        .doesNotContain("cssText")
+                        .doesNotContain("innerHTML")
+                        .doesNotContain("insertAdjacentHTML")
+                        .doesNotContain("eval(");
+            }
+        }
+    }
 }

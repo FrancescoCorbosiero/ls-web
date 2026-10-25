@@ -4577,3 +4577,44 @@ html.reveal-on [data-reveal].is-in {
     font-size: 0.8em;
   }
 }
+
+/* ==========================================================================
+   ls-web addition: home motion (ADR 0030)
+   The CSS half of /js/motion/ (after alpacode-motion's engine): only what a
+   GSAP move reads or ends on. Each rule waits for html.has-motion, which the
+   script sets on the home when motion is welcome, and every variable defaults
+   to its end state, so without JavaScript or under reduced motion the page is
+   the complete, static page above. Nothing here hides anything.
+   ========================================================================== */
+/* split-lines: each line rises inside a mask (SplitText, overflow: clip); the
+   padding/negative-margin pair grows the mask enough to keep accents and
+   descenders of Barlow Condensed 800 without moving the layout. */
+.split-line-mask {
+  padding: 0.1em 0 0.12em;
+  margin: -0.1em 0 -0.12em;
+}
+/* kicker: the lime square of the logo stamps in, through --kick (0 → 1). */
+html.has-motion .kicker::before {
+  transform: scale(var(--kick, 1)) rotate(calc((1 - var(--kick, 1)) * -90deg));
+}
+/* rail: the dashed connectors between the steps draw in, through --rail (0 → 1):
+   downwards while the steps stack, rightwards once they sit in a row. */
+html.has-motion .step:not(:last-child)::after {
+  transform-origin: 50% 0;
+  transform: scaleY(var(--rail, 1));
+}
+@media (min-width: 900px) {
+  html.has-motion .step:not(:last-child)::after {
+    transform-origin: 0 50%;
+    transform: scaleX(var(--rail, 1));
+  }
+}
+/* count: steady digits while a figure counts up. */
+.stat-value.is-counting {
+  font-variant-numeric: tabular-nums;
+}
+/* Loops run only on screen: the page's infinite CSS loops pause off screen. */
+html.has-motion .is-offscreen,
+html.has-motion .is-offscreen * {
+  animation-play-state: paused;
+}
