@@ -26,6 +26,9 @@ import org.hibernate.type.SqlTypes;
 @Table(name = "customer")
 public class Customer {
 
+    static final String SOURCE_CUSTOMER_AREA = "CUSTOMER_AREA";
+    static final String SOURCE_BACKOFFICE = "BACKOFFICE";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -87,7 +90,7 @@ public class Customer {
     private Instant anonymisedAt;
 
     @Column(name = "source", nullable = false, length = 16, updatable = false)
-    private String source = "CUSTOMER_AREA";
+    private String source = SOURCE_CUSTOMER_AREA;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -106,6 +109,23 @@ public class Customer {
         this.emailVerifiedAt = verifiedAt;
         this.status = verifiedAt == null ? CustomerStatus.PENDING_VERIFICATION : CustomerStatus.PENDING_APPROVAL;
         apply(data);
+    }
+
+    /**
+     * A customer created by staff in the back office (ADM-12, ADR 0028): ACTIVE at once, approved by
+     * that staff member, source BACKOFFICE; the e-mail is verified by its first sign-in link (V013).
+     */
+    static Customer createdByStaff(String email, RegistrationData data, Instant now, long staffUserId) {
+        Customer customer = new Customer();
+        customer.email = Objects.requireNonNull(email, "email");
+        customer.registeredAt = Objects.requireNonNull(now, "now");
+        customer.createdAt = now;
+        customer.status = CustomerStatus.ACTIVE;
+        customer.approvedAt = now;
+        customer.approvedBy = staffUserId;
+        customer.source = SOURCE_BACKOFFICE;
+        customer.apply(data);
+        return customer;
     }
 
     /** Copies the registration fields (used at registration and at a declined customer's re-registration). */
@@ -130,6 +150,14 @@ public class Customer {
             return true;
         }
         return false;
+    }
+
+    /** Staff correct the registration data (ADM-12); never the login e-mail (CUS-06) nor an anonymised row. */
+    void correct(RegistrationData data) {
+        if (anonymisedAt != null) {
+            throw new RuleViolationException("I dati di un cliente anonimizzato non si modificano.");
+        }
+        apply(data);
     }
 
     /** Staff approve: only a verified customer waiting for approval (Q-28). */
@@ -280,5 +308,13 @@ public class Customer {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public String getSource() {
+        return source;
+    }
+
+    public int getVersion() {
+        return version;
     }
 }

@@ -334,9 +334,9 @@ class BackofficeOrdersIT extends AbstractPostgresIT {
                         order.id()))
                 .isEqualTo(1);
         // the lines of the worked example are three, grouped with their quantity (2, 1, 3)
-        int lines = detail.split("<td>Epal</td>|<td>Pallet Generico/Colli</td>").length - 1;
+        int lines = detail.split("\">Epal</td>|\">Pallet Generico/Colli</td>").length - 1;
         assertThat(lines).isEqualTo(3);
-        assertThat(detail).contains("<td>2</td>").contains("<td>3</td>");
+        assertThat(detail).contains("data-label=\"Quantità\">2</td>").contains("data-label=\"Quantità\">3</td>");
         mvc.perform(post("/gestione/ordini/" + order.id() + "/note")
                         .session(session)
                         .with(csrf())

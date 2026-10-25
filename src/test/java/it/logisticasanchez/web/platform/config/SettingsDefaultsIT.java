@@ -66,7 +66,7 @@ class SettingsDefaultsIT extends AbstractPostgresIT {
         assertThat(orders.amount().vatIncludedDefault()).isFalse();
         assertThat(orders.transportDocument().required()).isTrue();
         assertThat(orders.lines().warnHeightCm()).isEqualTo(240);
-        assertThat(orders.customerChanges()).isEqualTo(OrdersProperties.CustomerChanges.OFFICE_ONLY);
+        assertThat(orders.customerChanges()).isEqualTo(OrdersProperties.CustomerChanges.SELF_SERVICE);
         assertThat(retention.outboxBodiesDays()).isEqualTo(30);
         assertThat(retention.loginTokensHoursAfterExpiry()).isEqualTo(24);
         assertThat(compat.cors().allowedOrigins()).containsExactly("https://logisticasanchez.com");

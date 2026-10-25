@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -94,6 +95,16 @@ public class PlatformExceptionHandler {
     public void validationFailed(Exception e, HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         responder.respond(request, response, ErrorCode.VALIDATION_FAILED, null);
+    }
+
+    /**
+     * Two changes of the same record committed at the same moment: the services refuse a page
+     * built on an older version themselves (ADR 0028); this is the race the JPA version check
+     * catches at commit.
+     */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public void staleData(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        responder.respond(request, response, ErrorCode.STALE_DATA, null);
     }
 
     @ExceptionHandler(AccessDeniedException.class)

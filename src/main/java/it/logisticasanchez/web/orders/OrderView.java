@@ -30,11 +30,61 @@ public record OrderView(
         Instant approvedAt,
         Instant declinedAt,
         String declineReason,
-        List<Line> lines) {
+        List<Line> lines,
+        int version,
+        String source,
+        Instant cancelledAt,
+        String cancelledByType,
+        String cancelReason,
+        Instant editedAt,
+        String editedByType) {
 
     /** The definitive code once approved, the temporary one before (chapter 08 §2.5). */
     public String displayCode() {
         return code != null ? code : tempCode;
+    }
+
+    public boolean isPending() {
+        return status == OrderStatus.PENDING;
+    }
+
+    public boolean isApproved() {
+        return status == OrderStatus.APPROVED;
+    }
+
+    public boolean isDeclined() {
+        return status == OrderStatus.DECLINED;
+    }
+
+    public boolean isCancelled() {
+        return status == OrderStatus.CANCELLED;
+    }
+
+    /** CUS-07: the customer may still change or cancel it (until the office decides). */
+    public boolean editableByCustomer() {
+        return status == OrderStatus.PENDING;
+    }
+
+    /** ADM-11: staff may edit or cancel it (an approved one only as ADMIN, checked by the service). */
+    public boolean editableByStaff() {
+        return status == OrderStatus.PENDING || status == OrderStatus.APPROVED;
+    }
+
+    public boolean cancelledByCustomer() {
+        return ShipmentOrder.BY_CUSTOMER.equals(cancelledByType);
+    }
+
+    public boolean editedByCustomer() {
+        return ShipmentOrder.BY_CUSTOMER.equals(editedByType);
+    }
+
+    public boolean createdByStaff() {
+        return ShipmentOrder.SOURCE_BACKOFFICE.equals(source);
+    }
+
+    /** Units of every line (pallets, EPAL and parcels together). */
+    public int unitCount() {
+        return lines.stream().mapToInt(Line::quantity).sum();
     }
 
     /** The legacy CMS showed «-» for a temporary code (ADM-04). */

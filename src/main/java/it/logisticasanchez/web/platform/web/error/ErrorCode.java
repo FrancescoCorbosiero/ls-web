@@ -35,6 +35,11 @@ public enum ErrorCode {
             HttpStatus.CONFLICT,
             "code_conflict",
             "E' già stata effettuata una registrazione con questo codice. Si prega di riprovare con un nuovo codice."),
+    /** New text: two changes of the same record at the same moment (the version check at commit, ADR 0028). */
+    STALE_DATA(
+            HttpStatus.CONFLICT,
+            "stale_data",
+            "I dati sono stati modificati nel frattempo da un'altra persona. Ricarica la pagina e riprova."),
     /** New text. */
     UNSUPPORTED_MEDIA_TYPE(
             HttpStatus.UNSUPPORTED_MEDIA_TYPE, "unsupported_media_type", "Formato della richiesta non supportato."),

@@ -25,14 +25,14 @@ public class TrackingCatalog {
     @Transactional(readOnly = true)
     public List<StateView> states() {
         return states.findAllByOrderByIdAsc().stream()
-                .map(s -> new StateView(s.getId(), s.getName(), s.getLabel(), s.getPublicTitle()))
+                .map(s -> new StateView(s.getId(), s.getName(), s.getLabel(), s.getPublicTitle(), s.getStepLabel()))
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public Optional<StateView> state(int id) {
         return states.findById((short) id)
-                .map(s -> new StateView(s.getId(), s.getName(), s.getLabel(), s.getPublicTitle()));
+                .map(s -> new StateView(s.getId(), s.getName(), s.getLabel(), s.getPublicTitle(), s.getStepLabel()));
     }
 
     /** The active services the wizard offers, the «none» entry first (ADM-10, OP-R6). */
@@ -49,7 +49,8 @@ public class TrackingCatalog {
         return services.findById(id).map(s -> new ServiceView(s.getId(), s.getLabel(), s.isNone()));
     }
 
-    public record StateView(short id, String name, String label, String publicTitle) {}
+    /** A tracking state; {@code stepLabel} is the short step name of the progress bar (null for NON_GESTITO). */
+    public record StateView(short id, String name, String label, String publicTitle, String stepLabel) {}
 
     public record ServiceView(int id, String label, boolean none) {}
 }

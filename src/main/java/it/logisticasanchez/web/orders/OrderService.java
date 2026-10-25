@@ -10,6 +10,8 @@ import it.logisticasanchez.web.platform.config.OrdersProperties;
 import it.logisticasanchez.web.platform.events.DomainEvent;
 import it.logisticasanchez.web.platform.events.DomainEvents;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
+import it.logisticasanchez.web.platform.web.error.ClientErrorException;
+import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import it.logisticasanchez.web.tracking.TrackingState;
@@ -20,10 +22,12 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -104,18 +108,8 @@ public class OrderService {
             throw new RuleViolationException("L'ordine non è completo.");
         }
         Instant now = clock.instant();
-        ShipmentOrder.Party sender = new ShipmentOrder.Party(
-                customer.companyName(),
-                customer.addressLine(),
-                customer.province(),
-                customer.city(),
-                customer.postalCode(),
-                customer.phone(),
-                customer.email());
-        OrderDraft.Recipient r = draft.recipient();
-        ShipmentOrder.Party recipient = new ShipmentOrder.Party(
-                r.name(), r.addressLine(), r.province(), r.city(), r.postalCode(), r.phone(), r.email());
-        ShipmentOrder order = new ShipmentOrder(customerId, tempCode(), draft.idempotencyKey(), now, sender, recipient);
+        ShipmentOrder order = new ShipmentOrder(
+                customerId, tempCode(), draft.idempotencyKey(), now, sender(customer), party(draft.recipient()));
         String packages = ItalianFormats.trim(draft.packageCount());
         order.setDetails(
                 ItalianFormats.trim(draft.transportDocumentCode()),
@@ -180,6 +174,9 @@ public class OrderService {
             if (search.trackingStateId() != null) {
                 where.add(cb.equal(
                         root.get("trackingStateId"), search.trackingStateId().shortValue()));
+            }
+            if (search.undelivered()) {
+                where.add(cb.notEqual(root.get("trackingStateId"), TrackingState.CONSEGNATO));
             }
             if (search.customerId() != null) {
                 where.add(cb.equal(root.get("customerId"), search.customerId()));
@@ -269,23 +266,23 @@ public class OrderService {
      */
     @Transactional
     public OrderView approve(long orderId, long staffUserId, String codeText, String amountText) {
+        return approve(orderId, staffUserId, null, codeText, amountText);
+    }
+
+    /**
+     * ADM-04 approve on the version of the order the staff member saw ({@code expectedVersion},
+     * null = no check): an order the customer changed in the meantime (CUS-07) is refused, so no
+     * amount is set on lines nobody looked at.
+     */
+    @Transactional
+    public OrderView approve(
+            long orderId, long staffUserId, Integer expectedVersion, String codeText, String amountText) {
         ShipmentOrder order = orders.findById(orderId).orElseThrow();
-        String code = ItalianFormats.trim(codeText);
-        if (code.isEmpty()) {
-            throw new RuleViolationException("Inserisci il codice della spedizione.");
+        if (expectedVersion != null) {
+            requireVersion(order, expectedVersion);
         }
-        if (code.length() > CODE_MAX) {
-            throw new RuleViolationException("Il codice può avere al massimo " + CODE_MAX + " caratteri.");
-        }
-        if (orders.existsByCodeNormalised(code.toLowerCase(Locale.ROOT))) {
-            throw new RuleViolationException("E' già stata effettuata una registrazione con questo codice."
-                    + " Si prega di riprovare con un nuovo codice.");
-        }
-        BigDecimal amount = ItalianFormats.parseDecimal(amountText)
-                .filter(a -> a.signum() > 0 && a.stripTrailingZeros().scale() <= 2)
-                .orElseThrow(
-                        () -> new RuleViolationException("Inserisci un importo maggiore di zero, per esempio 180,50."))
-                .setScale(2);
+        String code = validCode(codeText, null);
+        BigDecimal amount = validAmount(amountText);
         Instant now = clock.instant();
         order.approve(code, amount, rules.amount().vatIncludedDefault(), staffUserId, now, TrackingState.PRESA); // Q-05
         trackingEvents.save(
@@ -305,7 +302,16 @@ public class OrderService {
     /** ADM-04 decline: DECLINED + EML-05 (decline text quoting the temporary code). */
     @Transactional
     public OrderView decline(long orderId, long staffUserId, String reason) {
+        return decline(orderId, staffUserId, null, reason);
+    }
+
+    /** ADM-04 decline on the version the staff member saw (null = no check), as {@link #approve(long, long, Integer, String, String)}. */
+    @Transactional
+    public OrderView decline(long orderId, long staffUserId, Integer expectedVersion, String reason) {
         ShipmentOrder order = orders.findById(orderId).orElseThrow();
+        if (expectedVersion != null) {
+            requireVersion(order, expectedVersion);
+        }
         order.decline(staffUserId, clock.instant(), reason);
         OrderView view = view(order);
         notifications.enqueue(mails.declined(view));
@@ -314,6 +320,163 @@ public class OrderService {
                 .change(Map.of("status", OrderStatus.PENDING.name()), Map.of("status", OrderStatus.DECLINED.name())));
         events.publish(new DomainEvent.OrderDeclined(order.getId(), staffUserId));
         return view;
+    }
+
+    /** Q-12 seam: SELF_SERVICE (owner, 2026-10-25) lets the customer change and cancel its pending orders (CUS-07); OFFICE_ONLY keeps changes with the office. */
+    public boolean customerSelfService() {
+        return rules.customerChanges() == OrdersProperties.CustomerChanges.SELF_SERVICE; // Q-12
+    }
+
+    /**
+     * CUS-07: the customer replaces the lines, the shipment data and the recipient of its own
+     * PENDING order, on the version it opened. Refused when changes stay with the office (Q-12),
+     * once the office decided, or when the order changed meanwhile. The office gets a notice
+     * (EML-06); the audit log keeps the values before and after (personal ones apart).
+     */
+    @Transactional
+    public OrderView updateByCustomer(
+            long customerId, long customerUserId, String code, int expectedVersion, OrderContent content) {
+        ShipmentOrder order = customerOrder(customerId, code);
+        requireCustomerMayChange(order);
+        requireVersion(order, expectedVersion);
+        AuditEntry entry = AuditEntry.of(AuditActorType.CUSTOMER, customerUserId, "order.update")
+                .entity("shipment_order", order.getId(), order.getTempCode());
+        apply(order, content, ShipmentOrder.BY_CUSTOMER, entry);
+        OrderView view = view(order);
+        notifications.enqueue(mails.changedByCustomer(view));
+        audit.record(entry);
+        events.publish(new DomainEvent.OrderChanged(order.getId()));
+        return view;
+    }
+
+    /** CUS-07: the customer withdraws its own PENDING order (status CANCELLED, nothing deleted); the office gets a notice (EML-06). */
+    @Transactional
+    public OrderView cancelByCustomer(long customerId, long customerUserId, String code, int expectedVersion) {
+        ShipmentOrder order = customerOrder(customerId, code);
+        requireCustomerMayChange(order);
+        requireVersion(order, expectedVersion);
+        order.cancel(ShipmentOrder.BY_CUSTOMER, null, null, clock.instant());
+        OrderView view = view(order);
+        notifications.enqueue(mails.cancelledByCustomer(view));
+        audit.record(AuditEntry.of(AuditActorType.CUSTOMER, customerUserId, "order.cancel")
+                .entity("shipment_order", order.getId(), order.getTempCode())
+                .change(Map.of("status", OrderStatus.PENDING.name()), Map.of("status", OrderStatus.CANCELLED.name())));
+        events.publish(new DomainEvent.OrderCancelled(order.getId()));
+        return view;
+    }
+
+    /**
+     * ADM-11: staff enter an order for an ACTIVE customer (a phone or e-mail request): a PENDING
+     * order with a temporary code and the customer as sender, source BACKOFFICE, then approved
+     * as any other (ADM-04). {@code formKey} (one per form) makes a repeated submission harmless.
+     * No e-mail: the customer receives the confirmation at approval (EML-05).
+     */
+    @Transactional
+    public OrderView createByStaff(long staffUserId, long customerId, UUID formKey, OrderContent content) {
+        if (formKey != null) {
+            Optional<ShipmentOrder> existing = orders.findByIdempotencyKey(formKey);
+            if (existing.isPresent()) {
+                return view(existing.get());
+            }
+        }
+        CustomerView customer = customers
+                .find(customerId)
+                .filter(c -> !c.anonymised())
+                .orElseThrow(() -> new RuleViolationException("Scegli il cliente mittente."));
+        if (!customer.canOrder()) {
+            throw new RuleViolationException("Il cliente non è attivo: approvalo prima di inserire un ordine.");
+        }
+        ShipmentOrder order = new ShipmentOrder(
+                customerId,
+                tempCode(),
+                formKey,
+                clock.instant(),
+                sender(customer),
+                party(content.recipient()),
+                ShipmentOrder.SOURCE_BACKOFFICE);
+        order.setDetails(
+                content.transportDocumentCode(), content.packageCount(), content.accessoryServiceId(), content.notes());
+        for (OrderDraft.Line line : content.lines()) {
+            order.addLine(
+                    line.kind(), line.heightCm(), line.lengthCm(), line.widthCm(), line.weightKg(), line.quantity());
+        }
+        order = orders.save(order);
+        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "order.create")
+                .entity("shipment_order", order.getId(), order.getTempCode())
+                .change(null, facts(order)));
+        events.publish(new DomainEvent.OrderCreated(order.getId(), customerId));
+        return view(order);
+    }
+
+    /**
+     * ADM-11: staff change the lines, shipment data and recipient of an order on the version they
+     * opened — a PENDING one for every staff member, an APPROVED one only as ADMIN (chapter 08
+     * §2.4: corrections after approval are audited ADMIN actions), who may also correct the
+     * definitive code (unique, Q-06) and the amount (> 0). DECLINED and CANCELLED orders are closed.
+     * No e-mail (ADR 0028).
+     */
+    @Transactional
+    public OrderView updateByStaff(
+            long orderId,
+            long staffUserId,
+            boolean admin,
+            int expectedVersion,
+            OrderContent content,
+            ApprovalCorrection correction) {
+        ShipmentOrder order = orders.findById(orderId).orElseThrow();
+        requireStaffMayChange(order, admin);
+        requireVersion(order, expectedVersion);
+        AuditEntry entry = AuditEntry.of(AuditActorType.STAFF, staffUserId, "order.update")
+                .entity("shipment_order", order.getId(), order.displayCode());
+        if (order.getStatus() == OrderStatus.APPROVED && correction != null) {
+            String code = validCode(correction.code(), order.getId());
+            BigDecimal amount = validAmount(correction.amount());
+            Map<String, Object> before =
+                    new LinkedHashMap<>(Map.of("code", order.getCode(), "amount", order.getAmount()));
+            order.correctApproval(code, amount);
+            entry.change(before, Map.of("code", code, "amount", amount));
+        }
+        apply(order, content, ShipmentOrder.BY_STAFF, entry);
+        audit.record(entry);
+        events.publish(new DomainEvent.OrderChanged(order.getId()));
+        return view(order);
+    }
+
+    /**
+     * ADM-11: staff cancel an order on the version they opened — a PENDING one (the customer
+     * withdrew it by phone; «Rifiuta» remains the office's refusal, with its e-mail) or, as
+     * ADMIN, an APPROVED one (public tracking then answers as for an unknown code). Nothing is
+     * deleted; no e-mail (ADR 0028).
+     */
+    @Transactional
+    public OrderView cancelByStaff(long orderId, long staffUserId, boolean admin, int expectedVersion, String reason) {
+        ShipmentOrder order = orders.findById(orderId).orElseThrow();
+        requireStaffMayChange(order, admin);
+        requireVersion(order, expectedVersion);
+        String text = ItalianFormats.trim(reason);
+        if (text.length() > 500) {
+            throw new RuleViolationException("Il motivo può avere al massimo 500 caratteri.");
+        }
+        String previous = order.getStatus().name();
+        order.cancel(ShipmentOrder.BY_STAFF, staffUserId, text, clock.instant());
+        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "order.cancel")
+                .entity("shipment_order", order.getId(), order.displayCode())
+                .change(Map.of("status", previous), Map.of("status", OrderStatus.CANCELLED.name()))
+                .personal(null, text.isEmpty() ? null : Map.of("reason", text)));
+        events.publish(new DomainEvent.OrderCancelled(order.getId()));
+        return view(order);
+    }
+
+    /** The orders waiting for approval (the back-office navigation and home). */
+    @Transactional(readOnly = true)
+    public long countPendingApproval() {
+        return orders.countByStatus(OrderStatus.PENDING);
+    }
+
+    /** The approved orders not delivered yet: the shipments whose tracking staff still follow (the back-office home). */
+    @Transactional(readOnly = true)
+    public long countInTransit() {
+        return orders.countByStatusAndTrackingStateIdNot(OrderStatus.APPROVED, TrackingState.CONSEGNATO);
     }
 
     /**
@@ -383,6 +546,138 @@ public class OrderService {
         return notes.findById(orderId).map(OrderInternalNote::getBody);
     }
 
+    /** The definitive code typed by staff (ADM-04, ADM-11): trimmed, at most {@value #CODE_MAX} characters, unique ignoring case (Q-06). */
+    private String validCode(String codeText, Long exceptOrderId) {
+        String code = ItalianFormats.trim(codeText);
+        if (code.isEmpty()) {
+            throw new RuleViolationException("Inserisci il codice della spedizione.");
+        }
+        if (code.length() > CODE_MAX) {
+            throw new RuleViolationException("Il codice può avere al massimo " + CODE_MAX + " caratteri.");
+        }
+        String normalised = code.toLowerCase(Locale.ROOT);
+        boolean taken = exceptOrderId == null
+                ? orders.existsByCodeNormalised(normalised)
+                : orders.existsByCodeNormalisedAndIdNot(normalised, exceptOrderId);
+        if (taken) {
+            throw new RuleViolationException("E' già stata effettuata una registrazione con questo codice."
+                    + " Si prega di riprovare con un nuovo codice.");
+        }
+        return code;
+    }
+
+    /** The amount for the customer (12c §4.2): a euro amount > 0 with at most two decimals, comma or point. */
+    private static BigDecimal validAmount(String amountText) {
+        return ItalianFormats.parseDecimal(amountText)
+                .filter(a -> a.signum() > 0 && a.stripTrailingZeros().scale() <= 2)
+                .orElseThrow(
+                        () -> new RuleViolationException("Inserisci un importo maggiore di zero, per esempio 180,50."))
+                .setScale(2);
+    }
+
+    private ShipmentOrder customerOrder(long customerId, String code) {
+        String key = ItalianFormats.trim(code).toLowerCase(Locale.ROOT);
+        return orders.findByCustomerIdAndAnyCode(customerId, key)
+                .orElseThrow(() -> new ClientErrorException(ErrorCode.NOT_FOUND));
+    }
+
+    private void requireCustomerMayChange(ShipmentOrder order) {
+        if (!customerSelfService()) {
+            throw new RuleViolationException("Per modificare o annullare l'ordine contatta il centro logistico.");
+        }
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuleViolationException(
+                    "Il centro logistico ha già gestito l'ordine: non si può più modificare né annullare.");
+        }
+    }
+
+    private static void requireStaffMayChange(ShipmentOrder order, boolean admin) {
+        switch (order.getStatus()) {
+            case PENDING -> {}
+            case APPROVED -> {
+                if (!admin) {
+                    throw new RuleViolationException(
+                            "Solo un amministratore può modificare o annullare un ordine già confermato.");
+                }
+            }
+            default -> throw new RuleViolationException("L'ordine è chiuso: non si può più modificare né annullare.");
+        }
+    }
+
+    /** Optimistic check of the page the change comes from: the order must still be the one that was shown. */
+    private static void requireVersion(ShipmentOrder order, int expectedVersion) {
+        if (order.getVersion() != expectedVersion) {
+            throw new RuleViolationException(
+                    "L'ordine è stato modificato nel frattempo: controlla i dati aggiornati e riprova.");
+        }
+    }
+
+    /** Applies an edit and records its before/after values on {@code entry} (personal ones apart). */
+    private void apply(ShipmentOrder order, OrderContent content, String byType, AuditEntry entry) {
+        Map<String, Object> before = facts(order);
+        Map<String, Object> personalBefore = personalFacts(order);
+        order.setDetails(
+                content.transportDocumentCode(), content.packageCount(), content.accessoryServiceId(), content.notes());
+        order.setRecipient(party(content.recipient()));
+        order.replaceLines(content.lines());
+        order.edited(byType, clock.instant());
+        Map<String, Object> after = facts(order);
+        Map<String, Object> merged = new LinkedHashMap<>(before);
+        Map<String, Object> mergedAfter = new LinkedHashMap<>(after);
+        if (entry.before() != null) {
+            merged.putAll(entry.before());
+        }
+        if (entry.after() != null) {
+            mergedAfter.putAll(entry.after());
+        }
+        entry.change(merged, mergedAfter).personal(personalBefore, personalFacts(order));
+    }
+
+    /** The non-personal facts of an order for the audit log. */
+    private static Map<String, Object> facts(ShipmentOrder order) {
+        Map<String, Object> facts = new LinkedHashMap<>();
+        facts.put("status", order.getStatus().name());
+        facts.put("lines", order.getLines().size());
+        facts.put("totalWeightKg", order.getTotalWeightKg());
+        facts.put("totalVolumeM3", order.getTotalVolumeM3());
+        facts.put("transportDocumentCode", order.getTransportDocumentCode());
+        facts.put("packageCount", order.getPackageCount() == null ? "-" : order.getPackageCount());
+        facts.put("accessoryServiceId", order.getAccessoryServiceId() == null ? 0 : order.getAccessoryServiceId());
+        facts.put("source", order.getSource());
+        return facts;
+    }
+
+    /** The personal values of an order (recipient, notes), stored apart in the audit detail. */
+    private static Map<String, Object> personalFacts(ShipmentOrder order) {
+        ShipmentOrder.Party r = order.recipient();
+        Map<String, Object> facts = new LinkedHashMap<>();
+        facts.put("recipient", r.name() + ", " + r.addressOneLine());
+        facts.put("recipientPhone", r.phone() == null ? "-" : r.phone());
+        facts.put("recipientEmail", r.email() == null ? "-" : r.email());
+        facts.put("notes", order.getCustomerNotes() == null ? "-" : order.getCustomerNotes());
+        return facts;
+    }
+
+    /** The sender snapshot (Q-13): the customer's registered data at the time of the order. */
+    private static ShipmentOrder.Party sender(CustomerView customer) {
+        return new ShipmentOrder.Party(
+                customer.companyName(),
+                customer.addressLine(),
+                customer.province(),
+                customer.city(),
+                customer.postalCode(),
+                customer.phone(),
+                customer.email());
+    }
+
+    private static ShipmentOrder.Party party(OrderDraft.Recipient r) {
+        return new ShipmentOrder.Party(
+                r.name(), r.addressLine(), r.province(), r.city(), r.postalCode(), r.phone(), r.email());
+    }
+
+    /** ADM-11: the definitive code and the amount an ADMIN may correct on an approved order (raw text, validated as at approval). */
+    public record ApprovalCorrection(String code, String amount) {}
+
     OrderView view(ShipmentOrder o) {
         return new OrderView(
                 o.getId(),
@@ -427,7 +722,14 @@ public class OrderService {
                                 l.getQuantity(),
                                 l.getLineWeightKg(),
                                 l.getLineVolumeM3()))
-                        .toList());
+                        .toList(),
+                o.getVersion(),
+                o.getSource(),
+                o.getCancelledAt(),
+                o.getCancelledByType(),
+                o.getCancelReason(),
+                o.getEditedAt(),
+                o.getEditedByType());
     }
 
     private String label(short stateId) {

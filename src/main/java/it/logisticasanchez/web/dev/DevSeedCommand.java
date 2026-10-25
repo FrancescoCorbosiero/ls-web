@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import org.springframework.boot.ApplicationArguments;
@@ -32,9 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
  * passwords printed once; synthetic customers with their login identity in every state (ACTIVE,
  * PENDING_APPROVAL, PENDING_VERIFICATION, DECLINED) on {@code .example} addresses; and, for the
  * ACTIVE customer, one order per order and tracking state (pending, approved in PRESA, approved
- * and delivered, declined) through the real services, so their e-mails land in the local mail
+ * and delivered, declined, cancelled) through the real services, so their e-mails land in the local mail
  * directory. Re-running it sets new passwords on the seed accounts and leaves existing customers
- * and orders alone. Run as {@code java -jar app.jar dev-seed
+ * and orders alone (it only adds a seed order that is missing). Run as {@code java -jar app.jar dev-seed
  * --spring.profiles.active=local}; the bean does not exist outside local and test.
  */
 @Component
@@ -107,31 +108,62 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
         return 0;
     }
 
-    /** One order per state for the ACTIVE customer: pending, approved (PRESA), delivered (CONSEGNATO), declined. */
+    /**
+     * One order per state for the ACTIVE customer: pending, approved (PRESA), delivered
+     * (CONSEGNATO), declined, cancelled. Each is created only when its DDT is missing, so a
+     * database seeded by an earlier version gains the states added since.
+     */
     private String orders(long staffId) {
         long customerId =
                 jdbc.queryForObject("select id from customer where email = ?", Long.class, ACTIVE_CUSTOMER_EMAIL);
         long userId =
                 jdbc.queryForObject("select id from customer_user where email = ?", Long.class, ACTIVE_CUSTOMER_EMAIL);
-        Integer existing = jdbc.queryForObject(
-                "select count(*) from shipment_order where customer_id = ?", Integer.class, customerId);
-        if (existing != null && existing > 0) {
-            return "già presenti";
+        List<String> created = new ArrayList<>();
+        if (absent(customerId, "DDT-SEED-0001")) {
+            OrderView pending = orders.submit(
+                    customerId, userId, draft("DDT-SEED-0001", "Destinatario Uno S.r.l.", "Milano", "20121"));
+            created.add(pending.tempCode() + " (PENDING)");
         }
-        OrderView pending =
-                orders.submit(customerId, userId, draft("DDT-SEED-0001", "Destinatario Uno S.r.l.", "Milano", "20121"));
-        OrderView approved =
-                orders.submit(customerId, userId, draft("DDT-SEED-0002", "Destinatario Due S.r.l.", "Como", "22100"));
-        orders.approve(approved.id(), staffId, "TEST-0002", "180,50");
-        OrderView delivered =
-                orders.submit(customerId, userId, draft("DDT-SEED-0003", "Destinatario Tre S.r.l.", "Lecco", "23900"));
-        orders.approve(delivered.id(), staffId, "TEST-0003", "95,00");
-        orders.setTrackingState(delivered.id(), staffId, TrackingState.CONSEGNATO);
-        OrderView declined = orders.submit(
-                customerId, userId, draft("DDT-SEED-0004", "Destinatario Quattro S.r.l.", "Bergamo", "24121"));
-        orders.decline(declined.id(), staffId, "Merce non trasportabile");
-        return pending.tempCode() + " (PENDING), TEST-0002 (APPROVED, PRESA), TEST-0003 (APPROVED, CONSEGNATO), "
-                + declined.tempCode() + " (DECLINED)";
+        if (absent(customerId, "DDT-SEED-0002")) {
+            OrderView approved = orders.submit(
+                    customerId, userId, draft("DDT-SEED-0002", "Destinatario Due S.r.l.", "Como", "22100"));
+            orders.approve(approved.id(), staffId, "TEST-0002", "180,50");
+            created.add("TEST-0002 (APPROVED, PRESA)");
+        }
+        if (absent(customerId, "DDT-SEED-0003")) {
+            OrderView delivered = orders.submit(
+                    customerId, userId, draft("DDT-SEED-0003", "Destinatario Tre S.r.l.", "Lecco", "23900"));
+            orders.approve(delivered.id(), staffId, "TEST-0003", "95,00");
+            orders.setTrackingState(delivered.id(), staffId, TrackingState.CONSEGNATO);
+            created.add("TEST-0003 (APPROVED, CONSEGNATO)");
+        }
+        if (absent(customerId, "DDT-SEED-0004")) {
+            OrderView declined = orders.submit(
+                    customerId, userId, draft("DDT-SEED-0004", "Destinatario Quattro S.r.l.", "Bergamo", "24121"));
+            orders.decline(declined.id(), staffId, "Merce non trasportabile");
+            created.add(declined.tempCode() + " (DECLINED)");
+        }
+        if (absent(customerId, "DDT-SEED-0005")) {
+            OrderView cancelled = orders.submit(
+                    customerId, userId, draft("DDT-SEED-0005", "Destinatario Cinque S.r.l.", "Lodi", "26900"));
+            orders.cancelByStaff(
+                    cancelled.id(),
+                    staffId,
+                    false,
+                    orders.find(cancelled.id()).orElseThrow().version(),
+                    "Il cliente ha annullato per telefono");
+            created.add(cancelled.tempCode() + " (CANCELLED)");
+        }
+        return created.isEmpty() ? "già presenti" : String.join(", ", created);
+    }
+
+    private boolean absent(long customerId, String transportDocumentCode) {
+        Integer count = jdbc.queryForObject(
+                "select count(*) from shipment_order where customer_id = ? and transport_document_code = ?",
+                Integer.class,
+                customerId,
+                transportDocumentCode);
+        return count == null || count == 0;
     }
 
     private static OrderDraft draft(String ddt, String recipient, String city, String cap) {

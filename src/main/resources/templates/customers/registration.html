@@ -13,13 +13,17 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${reregister} ? ${values['email']} : null, ${reregister} ? '/area-clienti/logout' : null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{customers.registration.heading}">Inserisci i dati dell'azienda</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{customers.registration.heading}">Inserisci i dati dell'azienda</h1>
+      </div>
+    </div>
     <p class="lede" th:if="${!reregister}" th:text="#{customers.registration.lead}">Compila i dati con cui vuoi essere registrato: l'ufficio li verifica e ti conferma via e-mail.</p>
     <p class="callout callout-info" th:if="${reregister}" th:text="#{customers.registration.reregisterLead}">La tua registrazione precedente non è stata accettata. Controlla e correggi i dati, poi inviali di nuovo.</p>
     <p class="callout" role="alert" th:if="${!errors.isEmpty()}" th:text="#{customers.error.summary}">Controlla i campi evidenziati.</p>
-    <form method="post" th:action="@{/area-clienti/registrazione/}" class="form-grid" novalidate>
+    <form method="post" th:action="@{/area-clienti/registrazione/}" class="fields" novalidate>
       <input type="hidden" name="t" th:value="${token}" th:if="${token != null}">
       <input type="hidden" name="step" value="review">
       <div class="hp-field" aria-hidden="true"><label for="website">Sito web</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
@@ -47,7 +51,7 @@
       </th:block>
 
       <p class="muted" th:utext="#{customers.registration.privacy}">Inviando i dati accetti l'<a href="/privacy/">informativa privacy</a>.</p>
-      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{customers.registration.next}">Avanti</button></div>
+      <div class="form-actions"><button type="submit" class="btn" th:text="#{customers.registration.next}">Avanti</button></div>
     </form>
   </div>
 </main>

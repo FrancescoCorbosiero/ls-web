@@ -1,35 +1,55 @@
 <!DOCTYPE html>
 <!--
-  Fragments shared by the back-office pages (ADR 0017): the section navigation of chapter 10 §2
-  («In Approvazione», «Registrati», «Ordini», «Tracking», «Report», «Impostazioni» for ADMIN), the
-  flash message after an action, the row-count line. Pages include layout/private for head,
-  header and footer. Model attribute `staff` (StaffSession) comes from BackofficeModelAttributes.
+  Fragments shared by the back-office pages (ADR 0017, ADR 0029): the section navigation of chapter
+  10 §2 (the legacy CMS names «In Approvazione», «Registrati», «Ordini da approvare», «Ordini»,
+  «Tracking», «Report», «Impostazioni» for ADMIN) grouped by customers and shipments, with the
+  number of records waiting in each queue; the flash message after an action, the refused-rule
+  callout, the row-count line and the pager. Pages include layout/private for head, header and
+  footer. Model attributes `staff` (StaffSession) and `queue` (WorkQueue) come from
+  BackofficeModelAttributes (and BackofficeHome for the home).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head><title>fragments</title></head>
 <body>
 
-<nav class="breadcrumbs mb-m" th:fragment="nav(active)" th:aria-label="#{backoffice.nav.label}">
-  <a href="/gestione/" th:attr="aria-current=${active == 'home' ? 'page' : null}" th:text="#{backoffice.nav.home}">Gestione</a>
-  <a href="/gestione/clienti/in-approvazione/" th:attr="aria-current=${active == 'customersPending' ? 'page' : null}" th:text="#{backoffice.nav.customersPending}">In Approvazione</a>
-  <a href="/gestione/clienti/" th:attr="aria-current=${active == 'customers' ? 'page' : null}" th:text="#{backoffice.nav.customers}">Registrati</a>
-  <a href="/gestione/ordini/in-approvazione/" th:attr="aria-current=${active == 'ordersPending' ? 'page' : null}" th:text="#{backoffice.nav.ordersPending}">Ordini da approvare</a>
-  <a href="/gestione/ordini/" th:attr="aria-current=${active == 'orders' ? 'page' : null}" th:text="#{backoffice.nav.orders}">Ordini</a>
-  <a href="/gestione/tracking/" th:attr="aria-current=${active == 'tracking' ? 'page' : null}" th:text="#{backoffice.nav.tracking}">Tracking</a>
-  <a href="/gestione/report/" th:attr="aria-current=${active == 'reports' ? 'page' : null}" th:text="#{backoffice.nav.reports}">Report</a>
-  <a href="/gestione/impostazioni/" th:if="${staff.admin}" th:attr="aria-current=${active == 'settings' ? 'page' : null}" th:text="#{backoffice.nav.settings}">Impostazioni</a>
+<nav class="app-nav" th:fragment="nav(active)" th:aria-label="#{backoffice.nav.label}">
+  <div class="container">
+    <ul role="list">
+      <li><a href="/gestione/" th:attr="aria-current=${active == 'home' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-dashboard"/></svg><span th:text="#{backoffice.nav.home}">Panoramica</span></a></li>
+      <li class="nav-split" aria-hidden="true"></li>
+      <li><a href="/gestione/ordini/in-approvazione/" th:attr="aria-current=${active == 'ordersPending' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-inbox"/></svg><span th:text="#{backoffice.nav.ordersPending}">Ordini da approvare</span><span class="count" th:if="${queue != null and queue.orders() > 0}" th:text="${queue.orders()}" th:title="#{backoffice.nav.waiting(${queue.orders()})}" data-count="orders">3</span></a></li>
+      <li><a href="/gestione/ordini/" th:attr="aria-current=${active == 'orders' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-package"/></svg><span th:text="#{backoffice.nav.orders}">Ordini</span></a></li>
+      <li><a href="/gestione/tracking/" th:attr="aria-current=${active == 'tracking' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-route"/></svg><span th:text="#{backoffice.nav.tracking}">Tracking</span></a></li>
+      <li class="nav-split" aria-hidden="true"></li>
+      <li><a href="/gestione/clienti/in-approvazione/" th:attr="aria-current=${active == 'customersPending' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-check"/></svg><span th:text="#{backoffice.nav.customersPending}">In Approvazione</span><span class="count" th:if="${queue != null and queue.customers() > 0}" th:text="${queue.customers()}" th:title="#{backoffice.nav.waiting(${queue.customers()})}" data-count="customers">2</span></a></li>
+      <li><a href="/gestione/clienti/" th:attr="aria-current=${active == 'customers' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-users"/></svg><span th:text="#{backoffice.nav.customers}">Registrati</span></a></li>
+      <li class="nav-split" aria-hidden="true"></li>
+      <li><a href="/gestione/report/" th:attr="aria-current=${active == 'reports' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg><span th:text="#{backoffice.nav.reports}">Report</span></a></li>
+      <li th:if="${staff.admin}"><a href="/gestione/impostazioni/" th:attr="aria-current=${active == 'settings' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-sliders"/></svg><span th:text="#{backoffice.nav.settings}">Impostazioni</span></a></li>
+    </ul>
+  </div>
 </nav>
 
 <th:block th:fragment="flash">
-  <p class="callout callout-info" role="status" th:if="${flash != null}" data-flash th:text="${flash}">Fatto.</p>
+  <th:block th:replace="~{layout/private :: flash}"></th:block>
 </th:block>
 
-<p class="callout" role="alert" th:fragment="error(message)" th:if="${message != null}" data-error th:text="${message}">Errore</p>
+<th:block th:fragment="error(message)">
+  <th:block th:replace="~{layout/private :: error(${message})}"></th:block>
+</th:block>
 
 <th:block th:fragment="pageInfo(page)">
-  <p class="muted" th:if="${page.totalElements == 0}" th:text="#{backoffice.list.none}">Nessun risultato.</p>
-  <p class="muted" th:if="${page.totalElements > 0}" th:text="#{backoffice.list.count(${page.totalElements}, ${page.number + 1}, ${page.totalPages})}">Risultati</p>
+  <p class="muted small mb-s" th:if="${page.totalElements > 0}" th:text="#{backoffice.list.count(${page.totalElements}, ${page.number + 1}, ${page.totalPages})}">Risultati</p>
 </th:block>
+
+<!-- pager(page, previousUrl, nextUrl): the row count and the previous/next links (a div: the selector «nav» would also match a <nav>). -->
+<div class="pager" role="navigation" th:fragment="pager(page, previousUrl, nextUrl)" th:if="${page.totalPages > 1}" th:aria-label="#{backoffice.pager.label}">
+  <span class="muted small" th:text="#{backoffice.list.count(${page.totalElements}, ${page.number + 1}, ${page.totalPages})}">Risultati</span>
+  <span class="page-actions">
+    <a class="btn btn-light btn-sm" th:if="${page.hasPrevious()}" th:href="${previousUrl}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.pager.previous}">Pagina precedente</span></a>
+    <a class="btn btn-light btn-sm" th:if="${page.hasNext()}" th:href="${nextUrl}"><span th:text="#{backoffice.pager.next}">Pagina successiva</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-right"/></svg></a>
+  </span>
+</div>
 
 </body>
 </html>

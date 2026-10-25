@@ -4,11 +4,8 @@ import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
-import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import jakarta.servlet.http.HttpSession;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
@@ -20,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * The new-order wizard (CUS-04; chapter 03 §6 copy, fixes OP-01…07, OP-12…16, OP-23, OP-25): the
- * lines and order fields («Inserisci i dati dell'ordine», «Aggiungi Pallet/Colli», live totals
- * recomputed from the lines), the recipient («Inserisci i dati del destinatario»), the summary,
- * the confirmation and the final screen with the legacy wording («Logistica Sanchez», Q-37). The
- * draft lives in the session; its idempotency key makes a repeated confirmation harmless. Only
- * an ACTIVE customer gets in (CUS-03). Server-rendered forms: everything works without JavaScript.
+ * The new order (CUS-04; chapter 03 §6 content and rules, fixes OP-01…07, OP-12…16, OP-23, OP-25;
+ * ADR 0029 for the page): one form with the lines as editable rows, the shipment data and the
+ * recipient, the totals beside them (live with JavaScript, recomputed on every round trip
+ * without it), then the summary («Controlla i dati inseriti») and the final screen with the
+ * legacy wording («Logistica Sanchez», Q-37). The draft lives in the session; its idempotency
+ * key makes a repeated confirmation harmless (OP-02). Only an ACTIVE customer gets in (CUS-03).
  */
 @Controller
 public class OrderWizardController {
@@ -34,143 +31,61 @@ public class OrderWizardController {
 
     private final OrderService orders;
     private final OrderValidator validator;
+    private final OrderForm forms;
     private final CustomerService customers;
     private final TrackingCatalog catalog;
 
     public OrderWizardController(
-            OrderService orders, OrderValidator validator, CustomerService customers, TrackingCatalog catalog) {
+            OrderService orders,
+            OrderValidator validator,
+            OrderForm forms,
+            CustomerService customers,
+            TrackingCatalog catalog) {
         this.orders = orders;
         this.validator = validator;
+        this.forms = forms;
         this.customers = customers;
         this.catalog = catalog;
     }
 
     @GetMapping(OrderRoutes.NEW)
-    public String lines(
+    public String form(
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             HttpSession session,
             Model model) {
-        CustomerView customer = customerOrNull(authentication, model);
-        if (customer == null) {
+        if (customerOrNull(authentication, model) == null) {
             return "redirect:" + OrderRoutes.LIST;
         }
-        OrderDraft draft = draft(session);
-        return linesPage(model, draft, Map.of(), Map.of(), detailValues(draft), Map.of());
+        return formPage(model, forms.of(draft(session)));
     }
 
+    /** The form's buttons: «Aggiungi riga», «Elimina» (answered with the page, everything typed kept) and «Continua». */
     @PostMapping(OrderRoutes.NEW)
-    public String linesAction(
+    public String formAction(
             @RequestParam Map<String, String> form,
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             HttpSession session,
             Model model) {
-        CustomerView customer = customerOrNull(authentication, model);
-        if (customer == null) {
+        if (customerOrNull(authentication, model) == null) {
             return "redirect:" + OrderRoutes.LIST;
         }
-        OrderDraft draft = draft(session);
-        String action = form.getOrDefault("action", "next");
-        // the order fields travel with every action so that nothing typed is lost
-        Map<String, String> details = new LinkedHashMap<>();
-        for (String field : List.of("transportDocumentCode", "packageCount", "accessoryServiceId", "notes")) {
-            details.put(field, ItalianFormats.trim(form.get(field)));
-        }
-        if (validator.isService(details.get("accessoryServiceId"))) {
-            draft.setDetails(
-                    details.get("transportDocumentCode"),
-                    details.get("packageCount"),
-                    validator.storedServiceId(details.get("accessoryServiceId")),
-                    details.get("notes"));
-        }
-        switch (action) {
-            case "addLine" -> {
-                OrderValidator.LineResult result = validator.line(form);
-                if (!result.valid()) {
-                    Map<String, String> lineValues = new LinkedHashMap<>();
-                    for (String field : List.of("kind", "heightCm", "lengthCm", "widthCm", "weightKg", "quantity")) {
-                        lineValues.put(field, ItalianFormats.trim(form.get(field)));
-                    }
-                    return linesPage(model, draft, lineValues, result.errors(), details, Map.of());
-                }
-                OrderDraft.Line line = result.line();
-                draft.addLine(
-                        line.kind(),
-                        line.heightCm(),
-                        line.lengthCm(),
-                        line.widthCm(),
-                        line.weightKg(),
-                        line.quantity());
-                return "redirect:" + OrderRoutes.NEW + "#righe";
+        OrderForm.Model typed = forms.read(form);
+        switch (forms.action(form)) {
+            case ADD_LINE -> {
+                return formPage(model, forms.withRowAdded(typed));
             }
-            case "removeLine" -> {
-                String id = form.getOrDefault("lineId", "");
-                if (id.matches("^[0-9]{1,9}$")) {
-                    draft.removeLine(Long.parseLong(id));
-                }
-                return "redirect:" + OrderRoutes.NEW + "#righe";
+            case REMOVE_LINE -> {
+                return formPage(model, forms.withRowRemoved(typed, forms.removedIndex(form)));
             }
             default -> {
-                Map<String, String> errors = validator.details(details, draft.lines());
-                if (!errors.isEmpty()) {
-                    return linesPage(model, draft, Map.of(), Map.of(), details, errors);
+                OrderForm.Submission submission = forms.validate(typed);
+                if (!submission.valid()) {
+                    return formPage(model, submission.model());
                 }
-                return "redirect:" + OrderRoutes.NEW_RECIPIENT;
+                draft(session).replace(submission.content());
+                return "redirect:" + OrderRoutes.NEW_REVIEW;
             }
         }
-    }
-
-    @GetMapping(OrderRoutes.NEW_RECIPIENT)
-    public String recipient(
-            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
-            HttpSession session,
-            Model model) {
-        CustomerView customer = customerOrNull(authentication, model);
-        if (customer == null) {
-            return "redirect:" + OrderRoutes.LIST;
-        }
-        OrderDraft draft = draft(session);
-        if (draft.lines().isEmpty()) {
-            return "redirect:" + OrderRoutes.NEW;
-        }
-        Map<String, String> values = new LinkedHashMap<>();
-        OrderDraft.Recipient r = draft.recipient();
-        if (r != null) {
-            values.put("name", r.name());
-            values.put("addressLine", r.addressLine());
-            values.put("province", r.province());
-            values.put("city", r.city());
-            values.put("postalCode", r.postalCode());
-            values.put("phone", r.phone() == null ? "" : r.phone());
-            values.put("email", r.email() == null ? "" : r.email());
-        }
-        model.addAttribute("values", values);
-        model.addAttribute("errors", Map.of());
-        return "orders/wizard-recipient";
-    }
-
-    @PostMapping(OrderRoutes.NEW_RECIPIENT)
-    public String recipientSubmit(
-            @RequestParam Map<String, String> form,
-            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
-            HttpSession session,
-            Model model) {
-        CustomerView customer = customerOrNull(authentication, model);
-        if (customer == null) {
-            return "redirect:" + OrderRoutes.LIST;
-        }
-        OrderDraft draft = draft(session);
-        OrderValidator.RecipientResult result = validator.recipient(form);
-        if (!result.valid()) {
-            Map<String, String> values = new LinkedHashMap<>();
-            for (String field : List.of("name", "addressLine", "province", "city", "postalCode", "phone", "email")) {
-                values.put(field, ItalianFormats.trim(form.get(field)));
-            }
-            model.addAttribute("values", values);
-            model.addAttribute("errors", result.errors());
-            return "orders/wizard-recipient";
-        }
-        draft.setRecipient(result.recipient());
-        return "redirect:" + OrderRoutes.NEW_REVIEW;
     }
 
     @GetMapping(OrderRoutes.NEW_REVIEW)
@@ -178,17 +93,20 @@ public class OrderWizardController {
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             HttpSession session,
             Model model) {
-        CustomerView customer = customerOrNull(authentication, model);
-        if (customer == null) {
+        if (customerOrNull(authentication, model) == null) {
             return "redirect:" + OrderRoutes.LIST;
         }
         OrderDraft draft = draft(session);
         if (!draft.isComplete()) {
-            return "redirect:" + (draft.lines().isEmpty() ? OrderRoutes.NEW : OrderRoutes.NEW_RECIPIENT);
+            return "redirect:" + OrderRoutes.NEW;
         }
         model.addAttribute("draft", draft);
         model.addAttribute("serviceLabel", serviceLabel(draft.accessoryServiceId()));
         model.addAttribute("warnings", validator.warnings(draft.lines()));
+        model.addAttribute(
+                "units",
+                draft.lines().stream().mapToInt(OrderDraft.Line::quantity).sum());
+        model.addAttribute("selfService", orders.customerSelfService());
         return "orders/wizard-review";
     }
 
@@ -199,8 +117,7 @@ public class OrderWizardController {
             Model model,
             RedirectAttributes redirect) {
         CustomerPrincipal principal = CustomerSessionService.require(authentication);
-        CustomerView customer = customerOrNull(authentication, model);
-        if (customer == null) {
+        if (customerOrNull(authentication, model) == null) {
             return "redirect:" + OrderRoutes.LIST;
         }
         OrderDraft draft = draft(session);
@@ -220,37 +137,16 @@ public class OrderWizardController {
         if (customerOrNull(authentication, model) == null || !model.containsAttribute(SUBMITTED_CODE)) {
             return "redirect:" + OrderRoutes.LIST;
         }
+        model.addAttribute("selfService", orders.customerSelfService());
         return "orders/wizard-done";
     }
 
-    private String linesPage(
-            Model model,
-            OrderDraft draft,
-            Map<String, String> lineValues,
-            Map<String, String> lineErrors,
-            Map<String, String> details,
-            Map<String, String> errors) {
-        model.addAttribute("draft", draft);
-        model.addAttribute("lineValues", lineValues);
-        model.addAttribute("lineErrors", lineErrors);
-        model.addAttribute("values", details);
-        model.addAttribute("errors", errors);
+    private String formPage(Model model, OrderForm.Model form) {
+        model.addAttribute("form", form);
         model.addAttribute("services", catalog.activeServices());
         model.addAttribute("kinds", LineKind.values());
-        return "orders/wizard-lines";
-    }
-
-    private static Map<String, String> detailValues(OrderDraft draft) {
-        Map<String, String> values = new LinkedHashMap<>();
-        values.put("transportDocumentCode", draft.transportDocumentCode());
-        values.put("packageCount", draft.packageCount());
-        values.put(
-                "accessoryServiceId",
-                draft.accessoryServiceId() == null
-                        ? ""
-                        : draft.accessoryServiceId().toString());
-        values.put("notes", draft.notes());
-        return values;
+        model.addAttribute("mode", "new");
+        return "orders/order-form";
     }
 
     private String serviceLabel(Integer serviceId) {

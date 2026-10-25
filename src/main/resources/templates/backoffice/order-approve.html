@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «Approva ordine» (ADM-04; chapter 04 §4.4: «Codice» and «Importo Totale (per cliente)», both required; ADR 0007). -->
+<!-- «Approva ordine» (ADM-04; chapter 04 §4.4: «Codice» and «Importo Totale (per cliente)», both required; ADR 0007; on the version of the order shown, ADR 0028). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.orders.approve} + ' · ' + #{layout.private.backoffice}">Approva ordine · Gestione</title>
@@ -7,29 +7,76 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
-  <div class="container container-narrow">
-    <th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
-    <h1 th:text="#{backoffice.orders.approve}">Approva ordine</h1>
-    <p class="muted" th:text="#{backoffice.orderApprove.lead(${order.tempCode}, ${order.sender.name}, ${order.recipient.name}, ${order.recipient.city})}">Ordine provvisorio</p>
+<th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="@{/gestione/ordini/{id}/(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.order.backToOrder}">Torna all'ordine</span></a>
+        <h1 th:text="#{backoffice.orders.approve}">Approva ordine</h1>
+        <p class="lede" th:text="#{backoffice.orderApprove.lead(${order.tempCode}, ${order.sender.name}, ${order.recipient.name}, ${order.recipient.city})}">Ordine provvisorio</p>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
-    <form method="post" th:action="@{/gestione/ordini/{id}/approva(id=${order.id})}" class="form-grid">
-      <div class="field">
-        <label class="label" for="codice" th:text="#{backoffice.orderApprove.code}">Codice</label>
-        <input class="input" id="codice" name="codice" type="text" maxlength="64" required autocomplete="off" th:value="${values['codice']}">
-        <p class="field-hint" th:text="#{backoffice.orderApprove.codeHint}">Il codice definitivo della spedizione, unico.</p>
-      </div>
-      <div class="field">
-        <label class="label" for="importo" th:text="#{backoffice.orderApprove.amount}">Importo Totale (per cliente)</label>
-        <input class="input" id="importo" name="importo" type="text" inputmode="decimal" maxlength="20" required autocomplete="off" th:value="${values['importo']}">
-        <p class="field-hint" th:text="#{backoffice.orderApprove.amountHint}">In euro, con la virgola: per esempio 180,50.</p>
-      </div>
-      <p class="actions">
-        <button type="submit" class="btn btn-primary" th:text="#{backoffice.confirm.yes}">Conferma</button>
-        <a class="btn btn-secondary" href="/gestione/ordini/in-approvazione/" th:text="#{backoffice.confirm.no}">Annulla</a>
-      </p>
-    </form>
-    <p><a th:href="@{/gestione/ordini/{id}/(id=${order.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a></p>
+    <div class="callout callout-warn" role="status" th:if="${order.editedByCustomer()}" data-edited>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{backoffice.order.editedByCustomer(${fmt.dateTime(order.editedAt)})}">Il cliente ha modificato l'ordine.</p>
+    </div>
+    <div class="app-grid main-aside">
+      <section class="panel">
+        <h2 th:text="#{backoffice.orderApprove.summary}">L'ordine in breve</h2>
+        <dl class="facts mb-m">
+          <div><dt th:text="#{backoffice.orders.col.customer}">Cliente mittente</dt><dd th:text="${order.sender.name}">-</dd></div>
+          <div><dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd></div>
+          <div class="span-all"><dt th:text="#{orders.col.recipient}">Destinatario</dt><dd th:text="${order.recipient.name} + ', ' + ${order.recipient.addressOneLine()}">-</dd></div>
+          <div><dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd></div>
+          <div><dt th:text="#{orders.totals}">Totale</dt><dd th:text="${order.weightText()} + ' · ' + ${order.volumeText()}">-</dd></div>
+        </dl>
+        <div class="data-table-wrap">
+          <table class="data-table stacked">
+            <thead><tr>
+              <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
+              <th scope="col" class="num" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
+              <th scope="col" class="num" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
+              <th scope="col" class="num" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
+              <th scope="col" class="num" th:text="#{orders.line.weightKg}">Peso (kg)</th>
+              <th scope="col" class="num" th:text="#{orders.line.quantity}">Quantità</th>
+            </tr></thead>
+            <tbody>
+              <tr th:each="l : ${order.lines}">
+                <td th:attr="data-label=#{orders.line.kind}" th:text="${l.kind.label()}">Epal</td>
+                <td class="num" th:attr="data-label=#{orders.line.heightCm}" th:text="${l.heightCm}">0</td>
+                <td class="num" th:attr="data-label=#{orders.line.lengthCm}" th:text="${l.lengthCm}">0</td>
+                <td class="num" th:attr="data-label=#{orders.line.widthCm}" th:text="${l.widthCm}">0</td>
+                <td class="num" th:attr="data-label=#{orders.line.weightKg}" th:text="${fmt.number(l.weightKg, 0)}">0</td>
+                <td class="num" th:attr="data-label=#{orders.line.quantity}" th:text="${l.quantity}">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel">
+        <h2 th:text="#{backoffice.orderApprove.formTitle}">Codice e importo</h2>
+        <form method="post" th:action="@{/gestione/ordini/{id}/approva(id=${order.id})}" class="fields">
+          <input type="hidden" name="versione" th:value="${order.version}">
+          <div class="field span-all">
+            <label class="label" for="codice" th:text="#{backoffice.orderApprove.code}">Codice</label>
+            <input class="input input-code" id="codice" name="codice" type="text" maxlength="64" required autocomplete="off" th:value="${values['codice']}">
+            <p class="field-hint" th:text="#{backoffice.orderApprove.codeHint}">Il codice definitivo della spedizione, unico.</p>
+          </div>
+          <div class="field span-all">
+            <label class="label" for="importo" th:text="#{backoffice.orderApprove.amount}">Importo Totale (per cliente)</label>
+            <input class="input" id="importo" name="importo" type="text" inputmode="decimal" maxlength="20" required autocomplete="off" th:value="${values['importo']}">
+            <p class="field-hint" th:text="#{backoffice.orderApprove.amountHint}">In euro, con la virgola: per esempio 180,50.</p>
+          </div>
+          <p class="form-actions span-all">
+            <button type="submit" class="btn"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{backoffice.confirm.yes}">Conferma</span></button>
+            <a class="btn btn-light" href="/gestione/ordini/in-approvazione/" th:text="#{backoffice.confirm.no}">Annulla</a>
+          </p>
+          <p class="muted small span-all" th:text="#{backoffice.orderApprove.mailHint}">Il cliente riceve l'e-mail di conferma con codice, importo e link al tracking.</p>
+        </form>
+      </section>
+    </div>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<!--
+  The order form (CUS-04, CUS-07, ADM-11; ADR 0029), shared by the customer area and the back
+  office: the lines as editable rows (legacy fields and labels of chapter 03 §6: «Tipo Pallet»,
+  «Altezza (cm)»…, OP-R4), the shipment data (DDT required, Q-24; «Numero Colli (facoltativo)»;
+  the accessory service; notes) and the recipient (OP-R7, e-mail optional), with the totals of
+  OP-R5 beside them. `f` is an OrderForm.Model. Without JavaScript «Aggiungi riga» and «Elimina»
+  are submit buttons answered by the server; /js/app.js does the same in place and keeps the
+  totals live. The first, visually hidden button makes Enter mean «continue», never «delete».
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head><title>fragments</title></head>
+<body>
+
+<button th:fragment="defaultSubmit(label)" type="submit" name="action" value="save" class="visually-hidden" tabindex="-1" aria-hidden="true" th:text="${label}">Continua</button>
+
+<div th:fragment="lineRow(f, row, kinds)" class="line-row" data-line-row th:classappend="${f.hasError(row)} ? 'has-error'">
+  <span class="line-no" th:attr="data-line-no=#{orders.form.row('{n}')}" th:text="#{orders.form.row(${row.index + 1})}">Riga 1</span>
+  <div class="field line-kind">
+    <label class="line-label" th:for="${row.name('kind')}" th:text="#{orders.line.kindLabel}">Tipo Pallet</label>
+    <select class="select" th:id="${row.name('kind')}" th:name="${row.name('kind')}" th:attr="aria-invalid=${f.error(row.name('kind')) != null}">
+      <option value="" th:selected="${row.get('kind') == ''}" th:text="#{orders.line.kindChoose}">Seleziona il tipo</option>
+      <option th:each="k : ${kinds}" th:value="${k.name()}" th:text="${k.label()}" th:selected="${row.get('kind') == k.name()}" th:attr="data-length-cm=${k.name() == 'EPAL'} ? '120' : null, data-width-cm=${k.name() == 'EPAL'} ? '80' : null">Epal</option>
+    </select>
+    <p class="field-error" th:if="${f.error(row.name('kind')) != null}" th:text="#{${f.error(row.name('kind'))}}">Errore</p>
+  </div>
+  <div class="field" th:each="field : ${ {'heightCm','lengthCm','widthCm','weightKg','quantity'} }">
+    <label class="line-label" th:for="${row.name(field)}" th:text="#{'orders.line.' + ${field}}">Altezza (cm)</label>
+    <input class="input" type="text" th:attr="inputmode=${field == 'weightKg'} ? 'decimal' : 'numeric', aria-invalid=${f.error(row.name(field)) != null}" th:id="${row.name(field)}" th:name="${row.name(field)}" th:value="${row.get(field)}" maxlength="9" autocomplete="off">
+    <p class="field-error" th:if="${f.error(row.name(field)) != null}" th:text="#{${f.error(row.name(field))}}">Errore</p>
+  </div>
+  <div class="line-total">
+    <span><strong data-line-weight th:text="${row.weightTotal}">–</strong> kg</span>
+    <span><strong data-line-volume th:text="${row.volumeTotal}">–</strong> m³</span>
+  </div>
+  <div class="line-remove">
+    <button type="submit" class="btn btn-remove" name="action" th:value="'removeLine.' + ${row.index}" formnovalidate data-remove-line th:attr="aria-label=#{orders.form.removeRow(${row.index + 1})}, data-label=#{orders.form.removeRow('{n}')}, title=#{orders.line.remove}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-trash"/></svg></button>
+  </div>
+</div>
+
+<section th:fragment="lines(f, kinds, step)" class="panel" id="righe" aria-labelledby="righe-title">
+  <div class="form-step"><span class="form-step-num" aria-hidden="true" th:text="${step}">1</span><h2 id="righe-title" th:text="#{orders.form.linesTitle}">Pallet e colli</h2></div>
+  <p class="form-step-hint" th:text="#{orders.form.linesHint}">Una riga per ogni tipo di unità: misure in centimetri, peso di una singola unità in chili.</p>
+  <div class="callout callout-error" role="alert" th:if="${f.error('lines') != null}" data-lines-error>
+    <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+    <p th:text="#{${f.error('lines')}}">Aggiungi almeno una riga di pallet o colli.</p>
+  </div>
+  <div class="line-head" aria-hidden="true">
+    <span th:text="#{orders.line.kind}">Tipo</span>
+    <span class="num" th:text="#{orders.line.heightCm}">Altezza (cm)</span>
+    <span class="num" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</span>
+    <span class="num" th:text="#{orders.line.widthCm}">Larghezza (cm)</span>
+    <span class="num" th:text="#{orders.line.weightKg}">Peso (kg)</span>
+    <span class="num" th:text="#{orders.line.quantity}">Quantità</span>
+    <span class="num" th:text="#{orders.line.totals}">Totale riga</span>
+    <span></span>
+  </div>
+  <div class="lines" data-lines>
+    <th:block th:each="row : ${f.rows}">
+      <div th:replace="~{orders/form :: lineRow(${f}, ${row}, ${kinds})}"></div>
+    </th:block>
+  </div>
+  <div class="lines-actions">
+    <button type="submit" class="btn btn-light btn-sm" name="action" value="addLine" formnovalidate data-add-line th:attr="data-max=${f.maxRows()}" th:disabled="${!f.canAddRow()}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{orders.form.addRow}">Aggiungi riga</span></button>
+    <p class="hint" th:text="#{orders.form.addRowHint}">Scegli «Epal» e la base 120 × 80 cm si compila da sola.</p>
+  </div>
+  <template data-line-template><div th:replace="~{orders/form :: lineRow(${f}, ${f.template()}, ${kinds})}"></div></template>
+</section>
+
+<section th:fragment="details(f, services, step)" class="panel" id="spedizione" aria-labelledby="spedizione-title">
+  <div class="form-step"><span class="form-step-num" aria-hidden="true" th:text="${step}">2</span><h2 id="spedizione-title" th:text="#{orders.form.shipmentTitle}">Dati della spedizione</h2></div>
+  <div class="fields">
+    <div class="field">
+      <label class="label" for="transportDocumentCode" th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</label>
+      <input class="input" id="transportDocumentCode" name="transportDocumentCode" type="text" maxlength="100" autocomplete="off" th:value="${f.value('transportDocumentCode')}" th:attr="aria-invalid=${f.error('transportDocumentCode') != null}">
+      <p class="field-error" th:if="${f.error('transportDocumentCode') != null}" th:text="#{${f.error('transportDocumentCode')}}">Errore</p>
+    </div>
+    <div class="field">
+      <label class="label" for="packageCount" th:text="#{orders.field.packageCountOptional}">Numero Colli (facoltativo)</label>
+      <input class="input" id="packageCount" name="packageCount" type="text" inputmode="numeric" maxlength="6" autocomplete="off" th:value="${f.value('packageCount')}" th:attr="aria-invalid=${f.error('packageCount') != null}">
+      <p class="field-error" th:if="${f.error('packageCount') != null}" th:text="#{${f.error('packageCount')}}">Errore</p>
+    </div>
+    <div class="field span-all">
+      <label class="label" for="accessoryServiceId" th:text="#{orders.field.accessoryServiceChoose}">Seleziona servizio</label>
+      <select class="select" id="accessoryServiceId" name="accessoryServiceId" th:attr="aria-invalid=${f.error('accessoryServiceId') != null}">
+        <option th:each="s : ${services}" th:value="${s.none()} ? '' : ${s.id()}" th:text="${s.label()}" th:selected="${s.none()} ? ${f.value('accessoryServiceId') == ''} : ${f.value('accessoryServiceId') == #strings.toString(s.id())}">Nessun servizio accessorio</option>
+      </select>
+      <p class="field-error" th:if="${f.error('accessoryServiceId') != null}" th:text="#{${f.error('accessoryServiceId')}}">Errore</p>
+    </div>
+    <div class="field span-all">
+      <label class="label" for="notes" th:text="#{orders.field.notesOptional}">Note (facoltativo)</label>
+      <textarea class="textarea" id="notes" name="notes" rows="3" maxlength="2000" th:text="${f.value('notes')}" th:attr="aria-invalid=${f.error('notes') != null}"></textarea>
+      <p class="field-error" th:if="${f.error('notes') != null}" th:text="#{${f.error('notes')}}">Errore</p>
+    </div>
+  </div>
+</section>
+
+<section th:fragment="recipient(f, step)" class="panel" id="destinatario" aria-labelledby="destinatario-title">
+  <div class="form-step"><span class="form-step-num" aria-hidden="true" th:text="${step}">3</span><h2 id="destinatario-title" th:text="#{orders.form.recipientTitle}">Destinatario</h2></div>
+  <p class="form-step-hint" th:text="#{orders.form.recipientHint}">Dove consegniamo la merce.</p>
+  <div class="fields cols-3">
+    <div class="field span-all">
+      <label class="label" for="name" th:text="#{orders.field.name}">Ragione Sociale/Nominativo</label>
+      <input class="input" id="name" name="name" type="text" maxlength="200" autocomplete="off" th:value="${f.value('name')}" th:attr="aria-invalid=${f.error('name') != null}">
+      <p class="field-error" th:if="${f.error('name') != null}" th:text="#{${f.error('name')}}">Errore</p>
+    </div>
+    <div class="field span-all">
+      <label class="label" for="addressLine" th:text="#{orders.field.addressLine}">Via</label>
+      <input class="input" id="addressLine" name="addressLine" type="text" maxlength="200" autocomplete="off" th:value="${f.value('addressLine')}" th:attr="aria-invalid=${f.error('addressLine') != null}">
+      <p class="field-error" th:if="${f.error('addressLine') != null}" th:text="#{${f.error('addressLine')}}">Errore</p>
+    </div>
+    <div class="field">
+      <label class="label" for="city" th:text="#{orders.field.city}">Città</label>
+      <input class="input" id="city" name="city" type="text" maxlength="100" autocomplete="off" th:value="${f.value('city')}" th:attr="aria-invalid=${f.error('city') != null}">
+      <p class="field-error" th:if="${f.error('city') != null}" th:text="#{${f.error('city')}}">Errore</p>
+    </div>
+    <div class="field">
+      <label class="label" for="province" th:text="#{orders.field.province}">Provincia</label>
+      <input class="input" id="province" name="province" type="text" maxlength="60" autocomplete="off" th:value="${f.value('province')}" th:attr="aria-invalid=${f.error('province') != null}">
+      <p class="field-error" th:if="${f.error('province') != null}" th:text="#{${f.error('province')}}">Errore</p>
+    </div>
+    <div class="field">
+      <label class="label" for="postalCode" th:text="#{orders.field.postalCode}">CAP</label>
+      <input class="input" id="postalCode" name="postalCode" type="text" inputmode="numeric" maxlength="10" autocomplete="off" th:value="${f.value('postalCode')}" th:attr="aria-invalid=${f.error('postalCode') != null}">
+      <p class="field-error" th:if="${f.error('postalCode') != null}" th:text="#{${f.error('postalCode')}}">Errore</p>
+    </div>
+    <div class="field">
+      <label class="label" for="phone" th:text="#{orders.field.phoneOptional}">Telefono (facoltativo)</label>
+      <input class="input" id="phone" name="phone" type="tel" maxlength="30" autocomplete="off" th:value="${f.value('phone')}" th:attr="aria-invalid=${f.error('phone') != null}">
+      <p class="field-error" th:if="${f.error('phone') != null}" th:text="#{${f.error('phone')}}">Errore</p>
+    </div>
+    <div class="field span-2">
+      <label class="label" for="email" th:text="#{orders.field.emailOptional}">Email del destinatario (facoltativo)</label>
+      <input class="input" id="email" name="email" type="email" maxlength="254" autocomplete="off" th:value="${f.value('email')}" th:attr="aria-invalid=${f.error('email') != null}">
+      <p class="field-error" th:if="${f.error('email') != null}" th:text="#{${f.error('email')}}">Errore</p>
+    </div>
+  </div>
+</section>
+
+<aside th:fragment="summary(f, submitLabel, cancelUrl, cancelLabel, note)" class="panel summary-panel" aria-labelledby="totale-title">
+  <div class="order-summary">
+    <h2 class="summary-title panel-title" id="totale-title" th:text="#{orders.form.summaryTitle}">Totale</h2>
+    <dl class="summary-figures">
+      <div><dt th:text="#{orders.form.weight}">Peso</dt><dd><span data-total-weight th:text="${f.totalWeight}">0,00</span> <small th:text="#{orders.unit.kg}">kg</small></dd></div>
+      <div><dt th:text="#{orders.form.volume}">Volume</dt><dd><span data-total-volume th:text="${f.totalVolume}">0,00</span> <small th:text="#{orders.unit.m3}">m³</small></dd></div>
+      <div><dt th:text="#{orders.form.units}">Unità</dt><dd><span data-total-units th:text="${f.units}">0</span></dd></div>
+    </dl>
+    <button type="submit" class="btn" name="action" value="save"><span th:text="${submitLabel}">Continua</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-right"/></svg></button>
+    <a class="btn btn-light summary-secondary" th:href="${cancelUrl}" th:text="${cancelLabel}">Annulla</a>
+    <p class="summary-note" th:if="${note != null}" th:text="${note}">Nota</p>
+  </div>
+</aside>
+
+</body>
+</html>

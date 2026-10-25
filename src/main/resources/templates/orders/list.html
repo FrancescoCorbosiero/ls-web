@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<!-- «I miei ordini» (CUS-05) and the status of a pending or declined customer (CUS-03; legacy «pendingFormText»). -->
+<!--
+  «I miei ordini» (CUS-05; ADR 0029): the home of the customer area. The status of a pending or
+  declined customer (CUS-03; legacy «pendingFormText»), the counts of the orders waiting for the
+  office, travelling and delivered, the list filtered by those groups (a table, cards on a phone)
+  and, while an order is pending, «Modifica» (CUS-07).
+-->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{orders.list.title} + ' · ' + ${business.brandName}">I miei ordini · Logistica Sanchez</title>
@@ -7,48 +12,101 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
-    <h1 th:text="#{orders.list.title}">I miei ordini</h1>
+    <div class="page-head">
+      <div>
+        <p class="kicker" th:text="${customer.companyName}">Ditta</p>
+        <h1 th:text="#{orders.list.title}">I miei ordini</h1>
+      </div>
+      <div class="page-actions" th:if="${customer.canOrder()}">
+        <a class="btn" href="/area-clienti/ordini/nuovo/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{orders.list.newOrder}">Nuovo ordine</span></a>
+      </div>
+    </div>
+    <th:block th:replace="~{layout/private :: flash}"></th:block>
 
     <div th:if="${customer.status.name() == 'PENDING_APPROVAL' or customer.status.name() == 'PENDING_VERIFICATION'}" class="callout callout-info" role="status" data-customer-status="pending">
-      <p th:text="#{customers.status.pending.text}">La tua richiesta di registrazione è andata a buon fine, a breve verrà approvata</p>
-      <p class="muted mb-0" th:text="#{customers.status.pending.hint}">Appena l'ufficio approva la registrazione ricevi un'e-mail e puoi inserire il primo ordine.</p>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>
+      <div>
+        <p class="strong" th:text="#{customers.status.pending.text}">La tua richiesta di registrazione è andata a buon fine, a breve verrà approvata</p>
+        <p class="muted" th:text="#{customers.status.pending.hint}">Appena l'ufficio approva la registrazione ricevi un'e-mail e puoi inserire il primo ordine.</p>
+      </div>
     </div>
-    <div th:if="${customer.status.name() == 'DECLINED'}" class="callout" role="status" data-customer-status="declined">
-      <p th:text="#{customers.status.declined.text}">La tua richiesta di registrazione non è stata accettata.</p>
-      <p th:if="${customer.declineReason != null}" th:text="#{customers.status.declined.reason(${customer.declineReason})}">Motivo</p>
-      <p class="mb-0"><a class="btn btn-secondary btn-sm" href="/area-clienti/registrazione/" th:text="#{customers.status.declined.again}">Registrati di nuovo con i dati corretti</a></p>
+    <div th:if="${customer.status.name() == 'DECLINED'}" class="callout callout-error" role="status" data-customer-status="declined">
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <div>
+        <p class="strong" th:text="#{customers.status.declined.text}">La tua richiesta di registrazione non è stata accettata.</p>
+        <p th:if="${customer.declineReason != null}" th:text="#{customers.status.declined.reason(${customer.declineReason})}">Motivo</p>
+        <p class="callout-actions"><a class="btn btn-light btn-sm" href="/area-clienti/registrazione/" th:text="#{customers.status.declined.again}">Registrati di nuovo con i dati corretti</a></p>
+      </div>
     </div>
 
-    <p th:if="${customer.canOrder()}" class="actions"><a class="btn btn-primary" href="/area-clienti/ordini/nuovo/" th:text="#{orders.list.newOrder}">Nuovo ordine</a></p>
+    <ul class="tiles" role="list" th:if="${allCount > 0}" data-tiles>
+      <li><a class="tile" th:classappend="${count_attesa > 0} ? 'is-attention'" href="/area-clienti/ordini/?stato=attesa">
+        <span class="tile-top"><span class="tile-value" th:text="${count_attesa}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-inbox"/></svg></span>
+        <span class="tile-label" th:text="#{orders.list.tile.pending}">In attesa di conferma</span>
+      </a></li>
+      <li><a class="tile" href="/area-clienti/ordini/?stato=viaggio">
+        <span class="tile-top"><span class="tile-value" th:text="${count_viaggio}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-truck"/></svg></span>
+        <span class="tile-label" th:text="#{orders.list.tile.travelling}">In viaggio</span>
+      </a></li>
+      <li><a class="tile" href="/area-clienti/ordini/?stato=consegnati">
+        <span class="tile-top"><span class="tile-value" th:text="${count_consegnati}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-package-check"/></svg></span>
+        <span class="tile-label" th:text="#{orders.list.tile.delivered}">Consegnati</span>
+      </a></li>
+      <li><a class="tile" href="/area-clienti/ordini/">
+        <span class="tile-top"><span class="tile-value" th:text="${allCount}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-clipboard-list"/></svg></span>
+        <span class="tile-label" th:text="#{orders.list.tile.all}">Ordini inviati</span>
+      </a></li>
+    </ul>
 
-    <p class="muted" th:if="${orders.isEmpty()}" th:text="#{orders.list.empty}">Non hai ancora inviato ordini.</p>
-    <div class="table-wrap" th:if="${!orders.isEmpty()}">
-      <table class="table">
-        <thead>
-          <tr>
-            <th scope="col" th:text="#{orders.col.code}">Codice</th>
-            <th scope="col" th:text="#{orders.col.date}">Data</th>
-            <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
-            <th scope="col" th:text="#{orders.col.status}">Stato</th>
-            <th scope="col" th:text="#{orders.col.tracking}">Tracking</th>
-            <th scope="col" th:text="#{orders.col.amount}">Importo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr th:each="o : ${orders}" th:attr="data-order=${o.displayCode()}">
-            <td><a th:href="@{/area-clienti/ordini/{c}/(c=${o.displayCode()})}" th:text="${o.displayCode()}">TEMP-…</a></td>
-            <td th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
-            <td th:text="${o.recipient.name} + ', ' + ${o.recipient.city}">Destinatario</td>
-            <td><span class="badge" th:text="#{'orders.status.' + ${o.status.name()}}">In attesa</span></td>
-            <td th:text="${o.status.name() == 'APPROVED'} ? ${o.trackingLabel} : '-'">-</td>
-            <td th:text="${o.amount != null} ? ${o.amountText()} : '-'">-</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="empty" th:if="${allCount == 0}" data-empty>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-package"/></svg>
+      <h2 th:text="#{orders.list.emptyTitle}">Nessun ordine, per ora</h2>
+      <p th:text="#{orders.list.empty}">Non hai ancora inviato ordini.</p>
+      <a class="btn" th:if="${customer.canOrder()}" href="/area-clienti/ordini/nuovo/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{orders.list.firstOrder}">Inserisci il primo ordine</span></a>
     </div>
+
+    <th:block th:if="${allCount > 0}">
+      <ul class="status-tabs" role="list" th:aria-label="#{orders.list.filter}">
+        <li><a href="/area-clienti/ordini/" th:attr="aria-current=${group == '' ? 'page' : null}"><span th:text="#{orders.list.group.all}">Tutti</span><span class="count" th:text="${allCount}">0</span></a></li>
+        <li><a href="/area-clienti/ordini/?stato=attesa" th:attr="aria-current=${group == 'attesa' ? 'page' : null}"><span th:text="#{orders.list.group.pending}">In attesa</span><span class="count" th:text="${count_attesa}">0</span></a></li>
+        <li><a href="/area-clienti/ordini/?stato=viaggio" th:attr="aria-current=${group == 'viaggio' ? 'page' : null}"><span th:text="#{orders.list.group.travelling}">In viaggio</span><span class="count" th:text="${count_viaggio}">0</span></a></li>
+        <li><a href="/area-clienti/ordini/?stato=consegnati" th:attr="aria-current=${group == 'consegnati' ? 'page' : null}"><span th:text="#{orders.list.group.delivered}">Consegnati</span><span class="count" th:text="${count_consegnati}">0</span></a></li>
+        <li><a href="/area-clienti/ordini/?stato=chiusi" th:attr="aria-current=${group == 'chiusi' ? 'page' : null}"><span th:text="#{orders.list.group.closed}">Rifiutati o annullati</span><span class="count" th:text="${count_chiusi}">0</span></a></li>
+      </ul>
+      <p class="muted" th:if="${orders.isEmpty()}" th:text="#{orders.list.groupEmpty}">Nessun ordine in questo gruppo.</p>
+      <div class="data-table-wrap" th:if="${!orders.isEmpty()}">
+        <table class="data-table stacked" data-table="customer-orders">
+          <thead>
+            <tr>
+              <th scope="col" th:text="#{orders.col.code}">Codice</th>
+              <th scope="col" th:text="#{orders.col.date}">Data</th>
+              <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
+              <th scope="col" th:text="#{orders.col.status}">Stato</th>
+              <th scope="col" th:text="#{orders.col.tracking}">Tracking</th>
+              <th scope="col" class="num" th:text="#{orders.col.amount}">Importo</th>
+              <th scope="col"><span class="visually-hidden" th:text="#{orders.line.actions}">Azioni</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="o : ${orders}" th:attr="data-order=${o.displayCode()}">
+              <td class="code" th:attr="data-label=#{orders.col.code}"><a th:href="@{/area-clienti/ordini/{c}/(c=${o.displayCode()})}" th:text="${o.displayCode()}">TEMP-…</a></td>
+              <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+              <td th:attr="data-label=#{orders.col.recipient}"><span th:text="${o.recipient.name}">Destinatario</span><span class="sub" th:text="${o.recipient.city} + ' (' + ${o.recipient.province} + ')'">Città</span></td>
+              <td th:attr="data-label=#{orders.col.status}"><span th:replace="~{layout/private :: orderStatus(${o.status})}">In attesa</span></td>
+              <td th:attr="data-label=#{orders.col.tracking}"><span th:replace="~{layout/private :: trackingPill(${o})}">Presa in carico</span><span class="muted" th:if="${!o.isApproved()}">-</span></td>
+              <td class="num" th:attr="data-label=#{orders.col.amount}" th:text="${o.isApproved()} ? ${o.amountText()} : '-'">-</td>
+              <td class="row-actions">
+                <a class="btn btn-light btn-xs" th:if="${selfService and o.editableByCustomer()}" th:href="@{/area-clienti/ordini/{c}/modifica(c=${o.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+                <a class="btn btn-light btn-xs" th:href="@{/area-clienti/ordini/{c}/(c=${o.displayCode()})}"><span th:text="#{orders.action.view}">Dettaglio</span></a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </th:block>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

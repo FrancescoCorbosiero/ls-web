@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Wizard step 3 (CUS-04; OP-16 fix: a summary with labelled buttons instead of «clicca nuovamente Avanti»). -->
+<!-- The summary (CUS-04 step 2 of 2; OP-16 fix: labelled buttons instead of «clicca nuovamente Avanti»; ADR 0029). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{orders.wizard.title} + ' · ' + ${business.brandName}">Nuovo ordine · Logistica Sanchez</title>
@@ -7,62 +7,100 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{layout/private :: customerNav('new', true)}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{layout/private :: customerNav('new', true)}"></th:block>
-    <p class="kicker" th:text="#{orders.wizard.step(3, 3)}">Passo 3 di 3</p>
-    <h1 th:text="#{orders.wizard.reviewHeading}">Controlla i dati inseriti</h1>
-    <p class="lede" th:text="#{orders.wizard.reviewLead}">Se è tutto corretto premi «Conferma l'ordine»: la richiesta passa al nostro centro logistico.</p>
-    <p class="callout" th:each="w : ${warnings}" th:text="#{${w}}">Attenzione</p>
-
-    <h2 th:text="#{orders.detail.lines}">Pallet e colli</h2>
-    <div class="table-wrap">
-      <table class="table">
-        <thead><tr>
-          <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
-          <th scope="col" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
-          <th scope="col" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
-          <th scope="col" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
-          <th scope="col" th:text="#{orders.line.weightKg}">Peso (kg)</th>
-          <th scope="col" th:text="#{orders.line.quantity}">Quantità</th>
-        </tr></thead>
-        <tbody>
-          <tr th:each="l : ${draft.lines()}">
-            <td th:text="${l.kind.label()}">Epal</td>
-            <td th:text="${l.heightCm}">0</td><td th:text="${l.lengthCm}">0</td><td th:text="${l.widthCm}">0</td>
-            <td th:text="${fmt.number(l.weightKg, 0)}">0</td><td th:text="${l.quantity}">0</td>
-          </tr>
-        </tbody>
-        <tfoot><tr><th scope="row" colspan="4" th:text="#{orders.totals}">Totale</th><td colspan="2" data-review-totals th:text="${fmt.number(draft.totalWeightKg(), 2)} + ' kg · ' + ${fmt.number(draft.totalVolumeM3(), 2)} + ' m³'">0</td></tr></tfoot>
-      </table>
+    <div class="page-head">
+      <div>
+        <ol class="stepper" th:aria-label="#{orders.wizard.steps}">
+          <li class="is-done"><a href="/area-clienti/ordini/nuovo/" th:text="#{orders.wizard.stepData}">Dati dell'ordine</a></li>
+          <li aria-current="step" th:text="#{orders.wizard.stepReview}">Riepilogo e invio</li>
+        </ol>
+        <h1 th:text="#{orders.wizard.reviewHeading}">Controlla i dati inseriti</h1>
+        <p class="lede" th:text="#{orders.wizard.reviewLead}">Se è tutto corretto premi «Conferma l'ordine»: la richiesta passa al nostro centro logistico.</p>
+      </div>
+    </div>
+    <div class="callout callout-warn" role="status" th:each="w : ${warnings}">
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{${w}}">Attenzione</p>
     </div>
 
-    <div class="grid-2">
-      <section class="card">
-        <h2 th:text="#{orders.wizard.detailsHeading}">Dati della spedizione</h2>
-        <dl>
-          <dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${draft.transportDocumentCode()}">-</dd>
-          <dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${draft.packageCount().isEmpty()} ? '-' : ${draft.packageCount()}">-</dd>
-          <dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${serviceLabel}">-</dd>
-          <dt th:text="#{orders.field.notes}">Note</dt><dd th:text="${draft.notes().isEmpty()} ? '-' : ${draft.notes()}">-</dd>
-        </dl>
-        <p><a href="/area-clienti/ordini/nuovo/" th:text="#{orders.wizard.editLines}">Modifica righe e dati</a></p>
-      </section>
-      <section class="card">
-        <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
-        <dl>
-          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${draft.recipient().name()}">-</dd>
-          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${draft.recipient().addressLine()} + ', ' + ${draft.recipient().postalCode()} + ' ' + ${draft.recipient().city()} + ' (' + ${draft.recipient().province()} + ')'">-</dd>
-          <dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${draft.recipient().phone() ?: '-'}">-</dd>
-          <dt th:text="#{orders.field.email}">Email</dt><dd th:text="${draft.recipient().email() ?: '-'}">-</dd>
-        </dl>
-        <p><a href="/area-clienti/ordini/nuovo/destinatario/" th:text="#{orders.wizard.editRecipient}">Modifica destinatario</a></p>
-      </section>
+    <div class="app-grid main-aside">
+      <div class="stack">
+        <section class="panel">
+          <div class="panel-head">
+            <h2 th:text="#{orders.detail.lines}">Pallet e colli</h2>
+            <a class="btn btn-light btn-xs" href="/area-clienti/ordini/nuovo/#righe"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table stacked">
+              <thead><tr>
+                <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
+                <th scope="col" class="num" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
+                <th scope="col" class="num" th:text="#{orders.line.weightKg}">Peso (kg)</th>
+                <th scope="col" class="num" th:text="#{orders.line.quantity}">Quantità</th>
+                <th scope="col" class="num" th:text="#{orders.line.totals}">Totale riga</th>
+              </tr></thead>
+              <tbody>
+                <tr th:each="l : ${draft.lines()}">
+                  <td th:attr="data-label=#{orders.line.kind}" th:text="${l.kind.label()}">Epal</td>
+                  <td class="num" th:attr="data-label=#{orders.line.heightCm}" th:text="${l.heightCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.lengthCm}" th:text="${l.lengthCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.widthCm}" th:text="${l.widthCm}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.weightKg}" th:text="${fmt.number(l.weightKg, 0)}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.quantity}" th:text="${l.quantity}">0</td>
+                  <td class="num" th:attr="data-label=#{orders.line.totals}" th:text="${fmt.number(l.weightTotal(), 2)} + ' kg · ' + ${fmt.number(l.volumeTotal(), 2)} + ' m³'">0</td>
+                </tr>
+              </tbody>
+              <tfoot><tr><th scope="row" colspan="6" th:text="#{orders.totals}">Totale</th><td class="num" data-review-totals th:text="${fmt.number(draft.totalWeightKg(), 2)} + ' kg · ' + ${fmt.number(draft.totalVolumeM3(), 2)} + ' m³'">0</td></tr></tfoot>
+            </table>
+          </div>
+        </section>
+        <div class="app-grid cols-2">
+          <section class="panel">
+            <div class="panel-head">
+              <h2 th:text="#{orders.wizard.detailsHeading}">Dati della spedizione</h2>
+              <a class="btn btn-light btn-xs" href="/area-clienti/ordini/nuovo/#spedizione"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+            </div>
+            <dl class="facts">
+              <div class="span-all"><dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${draft.transportDocumentCode()}">-</dd></div>
+              <div><dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${draft.packageCount().isEmpty()} ? '-' : ${draft.packageCount()}">-</dd></div>
+              <div><dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${serviceLabel}">-</dd></div>
+              <div class="span-all"><dt th:text="#{orders.field.notes}">Note</dt><dd class="facts-note" th:text="${draft.notes().isEmpty()} ? '-' : ${draft.notes()}">-</dd></div>
+            </dl>
+          </section>
+          <section class="panel" data-recipient>
+            <div class="panel-head">
+              <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
+              <a class="btn btn-light btn-xs" href="/area-clienti/ordini/nuovo/#destinatario"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+            </div>
+            <dl class="facts">
+              <div class="span-all"><dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${draft.recipient().name()}">-</dd></div>
+              <div class="span-all"><dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${draft.recipient().addressLine()} + ', ' + ${draft.recipient().postalCode()} + ' ' + ${draft.recipient().city()} + ' (' + ${draft.recipient().province()} + ')'">-</dd></div>
+              <div><dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${draft.recipient().phone() ?: '-'}">-</dd></div>
+              <div><dt th:text="#{orders.field.email}">Email</dt><dd th:text="${draft.recipient().email() ?: '-'}">-</dd></div>
+            </dl>
+          </section>
+        </div>
+      </div>
+      <aside class="panel summary-panel">
+        <div class="order-summary">
+          <h2 class="summary-title panel-title" th:text="#{orders.form.summaryTitle}">Totale</h2>
+          <dl class="summary-figures">
+            <div><dt th:text="#{orders.form.weight}">Peso</dt><dd><span th:text="${fmt.number(draft.totalWeightKg(), 2)}">0,00</span> <small th:text="#{orders.unit.kg}">kg</small></dd></div>
+            <div><dt th:text="#{orders.form.volume}">Volume</dt><dd><span th:text="${fmt.number(draft.totalVolumeM3(), 2)}">0,00</span> <small th:text="#{orders.unit.m3}">m³</small></dd></div>
+            <div><dt th:text="#{orders.form.units}">Unità</dt><dd th:text="${units}">0</dd></div>
+          </dl>
+          <form method="post" th:action="@{/area-clienti/ordini/nuovo/riepilogo/}">
+            <button type="submit" class="btn btn-lg"><span th:text="#{orders.wizard.confirm}">Conferma l'ordine</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-right"/></svg></button>
+          </form>
+          <a class="btn btn-light summary-secondary" href="/area-clienti/ordini/nuovo/" th:text="#{orders.wizard.back}">Indietro</a>
+          <p class="summary-note" th:if="${selfService}" th:text="#{orders.wizard.confirmNote}">Dopo l'invio puoi ancora modificare o annullare l'ordine finché il centro logistico non lo conferma.</p>
+        </div>
+      </aside>
     </div>
-
-    <form method="post" th:action="@{/area-clienti/ordini/nuovo/riepilogo/}" class="actions">
-      <button type="submit" class="btn btn-primary btn-lg" th:text="#{orders.wizard.confirm}">Conferma l'ordine</button>
-    </form>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

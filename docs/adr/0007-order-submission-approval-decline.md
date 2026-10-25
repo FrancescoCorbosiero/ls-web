@@ -1,6 +1,6 @@
 # 0007 · Order submission, temporary codes, idempotency, approval and decline rules
 
-* **Status:** Accepted
+* **Status:** Accepted; Q-12 is amended by [ADR 0028](0028-record-editing.md) (owner decision of 2026-10-25: the customer changes or cancels its own pending order, `SELF_SERVICE`; staff create, correct and cancel orders)
 * **Date:** 2026-10-24
 * **Requirement IDs:** CUS-03, CUS-04, CUS-05, ADM-04, ADM-07, EML-04, EML-05, EML-06 (chapter 09) · **Questions:** Q-05 (amount VAT flag), Q-06 (code uniqueness), Q-12 (changes via the office), Q-13 (sender snapshot) · **Findings:** OP-02, OP-S1, D-03, D-06, D-79 (plan §7)
 
@@ -39,7 +39,8 @@ with an e-mail whose recipient was not checked against the order (D-06). Chapter
 pending, definitive code, date, recipient, state, tracking label and amount once approved —;
 `/area-clienti/ordini/{codice}/` opens by code **or** temporary code, trimmed and ignoring case;
 another customer's code and an unknown code are **404** through the error model. Changes and
-cancellations go through the office (Q-12 default `OFFICE_ONLY`): the detail says so.
+cancellations go through the office (Q-12 default `OFFICE_ONLY`): the detail says so. *(Superseded on
+2026-10-25 by ADR 0028: the default is now `SELF_SERVICE`; `OFFICE_ONLY` keeps this behaviour.)*
 
 ### Approval (`OrderService.approve`, ADM-04)
 

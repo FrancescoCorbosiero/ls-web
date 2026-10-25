@@ -80,6 +80,18 @@ public class OrderLine {
         this.lineVolumeM3 = OrderTotals.lineVolume(heightCm, lengthCm, widthCm, quantity);
     }
 
+    /** An edit of the order (CUS-07, ADM-11) rewrites the line in place, keeping its number, and recomputes its totals. */
+    void update(LineKind kind, int heightCm, int lengthCm, int widthCm, BigDecimal weightKg, int quantity) {
+        this.kind = kind;
+        this.heightCm = heightCm;
+        this.lengthCm = lengthCm;
+        this.widthCm = widthCm;
+        this.weightKg = weightKg;
+        this.quantity = quantity;
+        this.lineWeightKg = OrderTotals.lineWeight(weightKg, quantity);
+        this.lineVolumeM3 = OrderTotals.lineVolume(heightCm, lengthCm, widthCm, quantity);
+    }
+
     public Long getId() {
         return id;
     }

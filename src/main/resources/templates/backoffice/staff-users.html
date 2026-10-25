@@ -7,13 +7,17 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
-    <h1 th:text="#{backoffice.staffUsers.title}">Utenti della gestione</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{backoffice.staffUsers.title}">Utenti della gestione</h1>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
-    <div class="table-wrap">
-      <table class="table" data-table="staff-users">
+    <div class="data-table-wrap">
+      <table class="data-table" data-table="staff-users">
         <thead><tr>
           <th scope="col" th:text="#{auth.staff.login.username}">Username</th>
           <th scope="col" th:text="#{backoffice.staffUsers.name}">Nome</th>
@@ -37,7 +41,7 @@
     <h2 class="mt-m" th:text="#{backoffice.staffUsers.create}">Nuovo utente</h2>
     <p class="muted" th:text="#{backoffice.staffUsers.createHint}">L'utente riceve per e-mail un link, valido 24 ore, con cui sceglie la sua password. Nessuna password passa di qui.</p>
     <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
-    <form method="post" th:action="@{/gestione/impostazioni/utenti/}" class="form-grid cols-2 card">
+    <form method="post" th:action="@{/gestione/impostazioni/utenti/}" class="panel fields mb-m">
       <div class="field">
         <label class="label" for="username" th:text="#{auth.staff.login.username}">Username</label>
         <input class="input" id="username" name="username" type="text" maxlength="100" required autocomplete="off" th:value="${values['username']}">
@@ -57,7 +61,7 @@
           <option th:each="r : ${roles}" th:value="${r.name()}" th:selected="${values['ruolo'] == r.name()}" th:text="#{'backoffice.staffUsers.role.' + ${r.name()}}">Operatore</option>
         </select>
       </div>
-      <p class="actions span-2"><button type="submit" class="btn btn-primary" th:text="#{backoffice.staffUsers.submit}">Crea l'utente e invia il link</button></p>
+      <p class="form-actions span-all"><button type="submit" class="btn" th:text="#{backoffice.staffUsers.submit}">Crea l'utente e invia il link</button></p>
     </form>
     <p class="mt-m"><a href="/gestione/impostazioni/" th:text="#{backoffice.settings.back}">Torna alle impostazioni</a></p>
   </div>

@@ -7,16 +7,22 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{layout/private :: customerNav('orders', true)}"></th:block>
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <th:block th:replace="~{layout/private :: customerNav('orders', true)}"></th:block>
-    <h1 th:text="#{orders.done.title}">Ordine inviato</h1>
-    <p class="lede" data-order-done th:text="#{orders.done.text(${business.brandName})}">Il tuo ordine è stato inoltrato correttamente! Ti preghiamo di attendere la conferma via email dal nostro centro logistico. Grazie per aver scelto Logistica Sanchez!</p>
-    <p th:text="#{orders.done.code(${submittedCode})}">Codice provvisorio</p>
-    <p class="actions">
-      <a class="btn btn-primary" th:href="@{/area-clienti/ordini/{c}/(c=${submittedCode})}" th:text="#{orders.done.view}">Vedi l'ordine</a>
-      <a class="btn btn-secondary" href="/area-clienti/ordini/nuovo/" th:text="#{orders.done.another}">Effettua un nuovo ordine</a>
-    </p>
+    <section class="panel">
+      <div class="empty">
+        <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-circle-check"/></svg>
+        <h1 class="panel-title" th:text="#{orders.done.title}">Ordine inviato</h1>
+        <p class="ink" data-order-done th:text="#{orders.done.text(${business.brandName})}">Il tuo ordine è stato inoltrato correttamente! Ti preghiamo di attendere la conferma via email dal nostro centro logistico. Grazie per aver scelto Logistica Sanchez!</p>
+        <p th:text="#{orders.done.code(${submittedCode})}">Codice provvisorio</p>
+        <p th:if="${selfService}" th:text="#{orders.done.changes}">Finché il centro logistico non lo conferma puoi ancora modificarlo o annullarlo dalla sua pagina.</p>
+        <p class="form-actions">
+          <a class="btn" th:href="@{/area-clienti/ordini/{c}/(c=${submittedCode})}" th:text="#{orders.done.view}">Vedi l'ordine</a>
+          <a class="btn btn-light" href="/area-clienti/ordini/nuovo/" th:text="#{orders.done.another}">Effettua un nuovo ordine</a>
+        </p>
+      </div>
+    </section>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

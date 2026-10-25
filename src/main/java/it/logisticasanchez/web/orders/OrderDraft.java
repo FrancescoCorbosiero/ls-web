@@ -94,6 +94,33 @@ public final class OrderDraft implements Serializable {
         return !lines.isEmpty() && !transportDocumentCode.isBlank() && recipient != null;
     }
 
+    /** The order form validated (CUS-04): its lines, shipment data and recipient replace the draft's. */
+    public void replace(OrderContent content) {
+        lines.clear();
+        for (Line line : content.lines()) {
+            addLine(line.kind(), line.heightCm(), line.lengthCm(), line.widthCm(), line.weightKg(), line.quantity());
+        }
+        setDetails(
+                content.transportDocumentCode(),
+                content.packageCount() == null ? "" : content.packageCount().toString(),
+                content.accessoryServiceId(),
+                content.notes() == null ? "" : content.notes());
+        setRecipient(content.recipient());
+    }
+
+    /** The draft as the content of an order (after {@link #isComplete()}). */
+    public OrderContent content() {
+        String packages = packageCount == null ? "" : packageCount.strip();
+        String text = notes == null ? "" : notes.strip();
+        return new OrderContent(
+                lines,
+                transportDocumentCode.strip(),
+                packages.isEmpty() ? null : Integer.valueOf(packages),
+                accessoryServiceId,
+                text.isEmpty() ? null : text,
+                recipient);
+    }
+
     /** One line of the dialog (OP-R4) with its legacy totals. */
     public record Line(
             long id, LineKind kind, int heightCm, int lengthCm, int widthCm, BigDecimal weightKg, int quantity)

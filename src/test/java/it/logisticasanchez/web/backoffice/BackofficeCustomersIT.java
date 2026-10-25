@@ -246,7 +246,8 @@ class BackofficeCustomersIT extends AbstractPostgresIT {
         assertThat(page)
                 .contains("Con Ordini S.r.l.")
                 .contains("data-order=\"" + order.tempCode() + "\"")
-                .contains("Destinatario Pagina, Monza")
+                .contains(">Destinatario Pagina<")
+                .contains(">Monza<")
                 .contains("/gestione/ordini/" + order.id() + "/");
         mvc.perform(get("/gestione/clienti/999999999/").session(session)).andExpect(status().isNotFound());
     }

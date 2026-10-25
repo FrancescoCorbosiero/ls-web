@@ -43,10 +43,11 @@ scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"   # PostgreSQL 16
 ./mvnw spotless:apply                 # format Java sources and pom.xml
 ./mvnw -B -ntp -DskipTests package    # jar only: target/ls-web-0.1.0-SNAPSHOT.jar
 JAR=target/ls-web-0.1.0-SNAPSHOT.jar; DB="--spring.profiles.active=local --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls"
-java -jar $JAR dev-seed $DB           # local/test only: admin.seed + operatore.seed (passwords printed once), 4 customers, 4 orders
+java -jar $JAR dev-seed $DB           # local/test only: admin.seed + operatore.seed (passwords printed once), 4 customers, 5 orders
 java -jar $JAR create-staff-user --username=admin --role=ADMIN --name="Nome Cognome" $DB   # one-time set-password link
 SERVER_PORT=8080 java -jar $JAR $DB   # http://localhost:8080/  /area-clienti/  /gestione/  (mail sink: .local/mail/*.eml)
 e2e/run.sh [playwright args]          # E2E: fresh ls_web_e2e, dev-seed, app on :8089, Playwright (cd e2e && npm ci once)
+CHROMIUM_PATH=/opt/pw-browsers/chromium e2e/run.sh   # where the pre-installed Chromium is not Playwright 1.56.1's (this environment)
 tools/parity-matrix.py [--check]      # regenerate docs/parity-matrix.md Status from the tags and the last reports
 python3 tools/port-ls-home-pages.py --check   # public templates still equal a fresh port of legacy/ls-home (needs the checkout)
 tools/ci/guard-tracked-files.sh       # files that must never be tracked
@@ -72,6 +73,12 @@ CI installs Chromium itself. Runbooks (Italian): `docs/runbooks/local-setup.md`,
   controller); outside production no e-mail reaches real recipients.
 * Public pages reuse the design system and the vanilla JS widgets; no client-side
   framework; keep the Lighthouse and axe budgets and the CSP green.
+* Home motion is `static/js/motion/`, after alpacode-motion@7b1a203 (ADR 0030): start from the
+  section's story in that repo's catalog, copy the entry, map its hook in `config.js`; never
+  add hooks to the home's `<main>`.
+* The private areas use `static/css/app.css` on top of `main.css`, the `app-icons.svg` sprite
+  and `static/js/app.js` as progressive enhancement only (ADR 0029): every screen works without
+  JavaScript; the order form is `OrderForm` with the fragments of `orders/form.html`.
 * No secrets in the repository: configuration comes from the environment. Never ask for
   passwords, tokens or keys in the chat.
 * Real personal data (dumps, snapshots, probe answers, reports) never go into git, test

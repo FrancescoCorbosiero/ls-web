@@ -14,10 +14,14 @@ public record OrdersProperties(
         @DefaultValue Code code,
         @DefaultValue TransportDocument transportDocument,
         @DefaultValue Lines lines,
-        /** Q-12: a sent order is changed or cancelled only by asking the office, while pending. */
-        @NotNull @DefaultValue("OFFICE_ONLY") CustomerChanges customerChanges // Q-12
+        /**
+         * Q-12, answered by the owner on 2026-10-25: the customer changes or cancels its own
+         * order in the customer area while it is pending (CUS-07); OFFICE_ONLY restores «ask the office».
+         */
+        @NotNull @DefaultValue("SELF_SERVICE") CustomerChanges customerChanges // Q-12
         ) {
 
+    /** Who changes a sent, pending order (Q-12): the office on request, or the customer itself. */
     public enum CustomerChanges {
         OFFICE_ONLY,
         SELF_SERVICE

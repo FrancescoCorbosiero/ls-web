@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<!--
+  The customer's order form (ADR 0029): a new order (CUS-04, mode 'new': step 1 of 2, then the
+  summary) or a change to a pending one (CUS-07, mode 'edit': saved at once, with the version of
+  the order the page showed). The sections and the totals are the fragments of orders/form.html.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${mode == 'edit'} ? #{orders.edit.title(${order.displayCode()})} : #{orders.wizard.title}) + ' · ' + ${business.brandName}">Nuovo ordine · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<th:block th:replace="~{layout/private :: customerNav(${mode == 'edit'} ? 'orders' : 'new', true)}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:if="${mode == 'edit'}" th:href="@{/area-clienti/ordini/{c}/(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{orders.edit.back}">Torna all'ordine</span></a>
+        <ol class="stepper" th:if="${mode == 'new'}" th:aria-label="#{orders.wizard.steps}">
+          <li aria-current="step" th:text="#{orders.wizard.stepData}">Dati dell'ordine</li>
+          <li th:text="#{orders.wizard.stepReview}">Riepilogo e invio</li>
+        </ol>
+        <h1 th:text="${mode == 'edit'} ? #{orders.edit.title(${order.displayCode()})} : #{orders.wizard.linesHeading}">Inserisci i dati dell'ordine</h1>
+        <p class="lede" th:text="${mode == 'edit'} ? #{orders.edit.lead} : #{orders.wizard.lead}">Pallet e colli, dati della spedizione e destinatario: tutto in una pagina.</p>
+      </div>
+    </div>
+
+    <th:block th:replace="~{layout/private :: error(${error})}"></th:block>
+    <div class="callout callout-error" role="alert" th:if="${form.hasErrors()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+
+    <form method="post" class="order-layout" novalidate data-order-form
+          th:action="${mode == 'edit'} ? @{/area-clienti/ordini/{c}/modifica(c=${order.displayCode()})} : @{/area-clienti/ordini/nuovo/}">
+      <button th:replace="~{orders/form :: defaultSubmit(${mode == 'edit'} ? #{orders.form.save} : #{orders.form.continue})}">Continua</button>
+      <input type="hidden" name="versione" th:if="${mode == 'edit'}" th:value="${version}">
+      <div class="stack">
+        <section th:replace="~{orders/form :: lines(${form}, ${kinds}, 1)}"></section>
+        <section th:replace="~{orders/form :: details(${form}, ${services}, 2)}"></section>
+        <section th:replace="~{orders/form :: recipient(${form}, 3)}"></section>
+      </div>
+      <aside th:replace="~{orders/form :: summary(${form}, ${mode == 'edit'} ? #{orders.form.save} : #{orders.form.continue}, ${mode == 'edit'} ? '/area-clienti/ordini/' + ${order.displayCode()} + '/' : '/area-clienti/ordini/', #{orders.form.cancel}, ${mode == 'edit'} ? #{orders.edit.note} : #{orders.form.note})}"></aside>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+<th:block th:replace="~{layout/private :: appScript}"></th:block>
+</body>
+</html>

@@ -7,10 +7,14 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{layout/private :: customerNav('profile', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <th:block th:replace="~{layout/private :: customerNav('profile', ${customer.canOrder()})}"></th:block>
-    <h1 th:text="#{customers.profile.title}">Il tuo profilo</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{customers.profile.title}">Il tuo profilo</h1>
+      </div>
+    </div>
     <p class="callout callout-info" role="status" th:if="${emailSent}" th:text="#{auth.customer.request.sent}">Ti abbiamo inviato un'email: segui il link per continuare</p>
     <p class="callout" role="alert" th:if="${emailInvalid}" th:text="#{customers.error.email}">Inserisci un indirizzo e-mail valido.</p>
     <div class="table-wrap">
@@ -30,16 +34,16 @@
       </table>
     </div>
     <p th:text="#{customers.profile.changeHint}">I dati dell'azienda vengono modificati dal nostro ufficio: scrivici indicando cosa cambiare.</p>
-    <p><a class="btn btn-secondary" th:href="'mailto:' + ${business.officeEmail} + '?subject=' + #{customers.profile.changeSubject(${customer.email})}" th:text="#{customers.profile.changeAction}">Chiedi una modifica</a></p>
+    <p><a class="btn btn-light" th:href="'mailto:' + ${business.officeEmail} + '?subject=' + #{customers.profile.changeSubject(${customer.email})}" th:text="#{customers.profile.changeAction}">Chiedi una modifica</a></p>
 
     <h2 th:text="#{customers.profile.emailHeading}">Cambia l'indirizzo e-mail di accesso</h2>
     <p class="muted" th:text="#{customers.profile.emailLead}">Ti inviamo un link al nuovo indirizzo: il cambio avviene solo quando lo confermi da lì. L'indirizzo attuale riceve un avviso.</p>
-    <form method="post" th:action="@{/area-clienti/profilo/email}" class="form-grid">
+    <form method="post" th:action="@{/area-clienti/profilo/email}" class="fields">
       <div class="field">
         <label class="label" for="newEmail" th:text="#{customers.profile.newEmail}">Nuova e-mail</label>
         <input class="input" id="newEmail" name="newEmail" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
       </div>
-      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{customers.profile.emailSubmit}">Invia il link di conferma</button></div>
+      <div class="form-actions"><button type="submit" class="btn" th:text="#{customers.profile.emailSubmit}">Invia il link di conferma</button></div>
     </form>
   </div>
 </main>

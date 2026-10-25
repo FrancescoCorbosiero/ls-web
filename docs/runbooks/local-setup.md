@@ -56,7 +56,7 @@ Passo per passo:
 JAR=target/ls-web-0.1.0-SNAPSHOT.jar
 DB="--spring.profiles.active=local --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls"
 java -jar $JAR dev-seed $DB        # admin.seed / operatore.seed (password stampate una sola volta),
-                                   # quattro clienti .example in ogni stato, quattro ordini
+                                   # quattro clienti .example in ogni stato, cinque ordini (uno per stato)
 SERVER_PORT=8080 java -jar $JAR $DB
 ```
 

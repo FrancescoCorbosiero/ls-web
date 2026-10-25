@@ -7,13 +7,17 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('staff', null, null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{auth.staff.login.title}">Login</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.staff.login.title}">Login</h1>
+      </div>
+    </div>
     <p class="callout callout-info" th:if="${passwordSet}" th:text="#{auth.staff.login.passwordSet}">Password impostata. Ora puoi accedere.</p>
     <p class="callout callout-info" th:if="${loggedOut}" th:text="#{auth.staff.login.loggedOut}">Sei uscito dalla gestione.</p>
-    <p class="callout field-error" role="alert" th:if="${loginError}" th:text="#{auth.staff.login.error}">Username o password errate.</p>
-    <form method="post" th:action="@{/gestione/login}" class="form-grid">
+    <p class="callout callout-error" role="alert" th:if="${loginError}" th:text="#{auth.staff.login.error}">Username o password errate.</p>
+    <form method="post" th:action="@{/gestione/login}" class="fields">
       <div class="field">
         <label class="label" for="username" th:text="#{auth.staff.login.username}">Username</label>
         <input class="input" id="username" name="username" type="text" autocomplete="username" required autofocus>
@@ -22,7 +26,7 @@
         <label class="label" for="password" th:text="#{auth.staff.login.password}">Password</label>
         <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
       </div>
-      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{auth.staff.login.submit}">Accedi</button></div>
+      <div class="form-actions"><button type="submit" class="btn" th:text="#{auth.staff.login.submit}">Accedi</button></div>
     </form>
   </div>
 </main>

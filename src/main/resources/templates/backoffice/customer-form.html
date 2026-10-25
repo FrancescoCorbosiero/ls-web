@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<!--
+  Staff customer form (ADM-12; ADR 0028, 0029): «Nuovo cliente» (login e-mail, the registration
+  fields of CUS-02, the welcome e-mail EML-03 by default) or «Modifica dati» of an existing one
+  (the login e-mail read-only: it changes only on the customer's confirmed request, CUS-06),
+  on the version it showed. Errors are message keys per field, as at registration.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${customer == null} ? #{backoffice.customers.new} : #{backoffice.customerForm.editTitle(${customer.companyName})}) + ' · ' + #{layout.private.backoffice}">Nuovo cliente · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('customers')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="${customer == null} ? '/gestione/clienti/' : '/gestione/clienti/' + ${customer.id} + '/'"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="${customer == null} ? #{backoffice.customer.back} : #{backoffice.customer.backToCustomer}">Torna ai clienti</span></a>
+        <h1 th:text="${customer == null} ? #{backoffice.customers.new} : #{backoffice.customerForm.editTitle(${customer.companyName})}">Nuovo cliente</h1>
+        <p class="lede" th:text="${customer == null} ? #{backoffice.customerForm.newLead} : #{backoffice.customerForm.editLead}">Un cliente che ti ha contattato per telefono o e-mail: è subito attivo.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <div class="callout callout-error" role="alert" th:if="${!errors.isEmpty()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{customers.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" novalidate th:action="${customer == null} ? @{/gestione/clienti/nuovo} : @{/gestione/clienti/{id}/modifica(id=${customer.id})}">
+      <input type="hidden" name="versione" th:if="${customer != null}" th:value="${version}">
+      <section class="panel mb-m">
+        <h2 th:text="#{backoffice.customerForm.access}">Accesso all'area clienti</h2>
+        <div class="fields">
+          <div class="field span-all" th:if="${customer == null}">
+            <label class="label" for="email" th:text="#{customers.field.email}">Email</label>
+            <input class="input" id="email" name="email" type="email" maxlength="254" autocomplete="off" th:value="${values['email']}" th:attr="aria-invalid=${errors['email'] != null}">
+            <p class="field-error" th:if="${errors['email'] != null}" th:text="#{${errors['email']}}">Errore</p>
+            <p class="field-hint" th:text="#{backoffice.customerForm.emailHint}">È l'indirizzo con cui il cliente accede: riceve lì il link di accesso.</p>
+          </div>
+          <div class="field span-all" th:if="${customer != null}">
+            <span class="label" th:text="#{customers.field.email}">Email</span>
+            <p class="ink strong mb-0" th:text="${customer.email}">email</p>
+            <p class="field-hint" th:text="#{backoffice.customerForm.emailLocked}">L'e-mail di accesso cambia solo su richiesta del cliente, dal suo profilo.</p>
+          </div>
+          <label class="check-field span-all" th:if="${customer == null}">
+            <input type="checkbox" name="benvenuto" value="on" th:checked="${values['benvenuto'] == 'on'}">
+            <span th:text="#{backoffice.customerForm.welcome}">Invia al cliente l'e-mail di benvenuto con il link all'area clienti</span>
+          </label>
+        </div>
+      </section>
+      <section class="panel mb-m">
+        <h2 th:text="#{backoffice.customer.data}">Dati del cliente</h2>
+        <div class="fields">
+          <th:block th:each="f : ${ {'companyName','addressLine','city','province','postalCode','phone','vatNumber','taxCode'} }">
+            <div class="field" th:classappend="${f == 'companyName' or f == 'addressLine'} ? 'span-all'">
+              <label class="label" th:for="${f}" th:text="#{'customers.field.' + ${f}}">Campo</label>
+              <input class="input" type="text" th:id="${f}" th:name="${f}" th:value="${values.get(f)}" th:attr="aria-invalid=${errors.get(f) != null}, maxlength=${f == 'companyName' or f == 'addressLine'} ? 200 : (${f == 'city'} ? 100 : (${f == 'province'} ? 60 : 30)), inputmode=${f == 'postalCode'} ? 'numeric' : null, autocomplete='off'">
+              <p class="field-error" th:if="${errors.get(f) != null}" th:text="#{${errors.get(f)}}">Errore</p>
+            </div>
+          </th:block>
+        </div>
+      </section>
+      <p class="form-actions">
+        <button type="submit" class="btn"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="${customer == null} ? #{backoffice.customerForm.create} : #{orders.form.save}">Salva</span></button>
+        <a class="btn btn-light" th:href="${customer == null} ? '/gestione/clienti/' : '/gestione/clienti/' + ${customer.id} + '/'" th:text="#{orders.form.cancel}">Annulla</a>
+      </p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

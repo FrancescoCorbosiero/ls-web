@@ -16,6 +16,7 @@ import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.support.AbstractPostgresIT;
 import it.logisticasanchez.web.support.CustomerTestData;
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.hamcrest.Matchers;
@@ -32,12 +33,15 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 /**
- * CUS-04 (chapter 09; chapter 03 §6 with the §10 fixes; chapter 08 §2.4 "Order"): the wizard pages
- * with the legacy copy, lines validated (type required, integers ≥ 1), live totals on the §6.3
- * example, DDT required, package count stored, service and notes, recipient rules, the summary,
- * the confirmation creating one PENDING order with a {@code TEMP-} code whose stored data equal
- * the input, the final screen with the corrected brand, EML-04 to the customer and EML-06 to the
- * office; idempotency of the draft; a non-ACTIVE customer refused (CUS-03).
+ * CUS-04 (chapter 09; chapter 03 §6 with the §10 fixes; chapter 08 §2.4 "Order"; ADR 0029 for the
+ * page): one form with the lines as rows, the shipment data and the recipient, with the legacy
+ * labels; rows added and removed without JavaScript, everything typed kept; the totals of the
+ * §6.3 example recomputed on every round trip; lines validated row by row (type required,
+ * integers ≥ 1), blank rows ignored, DDT required, package count stored, service and notes,
+ * recipient rules; the summary, the confirmation creating one PENDING order with a {@code TEMP-}
+ * code whose stored data equal the input, the final screen with the corrected brand, EML-04 to
+ * the customer and EML-06 to the office; idempotency of the draft; a non-ACTIVE customer refused
+ * (CUS-03).
  */
 @Tag("CUS-04")
 @Tag("CUS-03")
@@ -46,6 +50,10 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 @SpringBootTest
 @AutoConfigureMockMvc
 class OrderWizardIT extends AbstractPostgresIT {
+
+    private static final String NEW = "/area-clienti/ordini/nuovo/";
+    private static final String REVIEW = "/area-clienti/ordini/nuovo/riepilogo/";
+    private static final String DONE = "/area-clienti/ordini/nuovo/inviato/";
 
     @Autowired
     private MockMvc mvc;
@@ -74,96 +82,110 @@ class OrderWizardIT extends AbstractPostgresIT {
     }
 
     @Test
-    void theHappyPathThroughThePages() throws Exception {
-        mvc.perform(get("/area-clienti/ordini/nuovo/").session(session).accept("text/html"))
+    void theHappyPathThroughTheFormAndTheSummary() throws Exception {
+        String blank = mvc.perform(get(NEW).session(session).accept("text/html"))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Cache-Control", "no-store"))
-                .andExpect(content().string(Matchers.containsString("Inserisci i dati dell&#39;ordine")))
-                .andExpect(content().string(Matchers.containsString("Aggiungi Pallet/Colli")))
-                .andExpect(content().string(Matchers.containsString("data-total-weight>0,00<")))
-                .andExpect(content().string(Matchers.containsString("Numero Colli (facoltativo)")))
-                .andExpect(content().string(Matchers.containsString("Documento di trasporto")))
-                .andExpect(content().string(Matchers.containsString(">Nessun servizio accessorio<")))
-                .andExpect(content().string(Matchers.containsString(">Sponda idraulica<")))
-                .andExpect(content().string(Matchers.containsString("Pallet Generico/Colli")))
-                .andExpect(content().string(Matchers.containsString(">Epal<")));
-
-        // the §6.3 lines, one by one
-        addLine("EPAL", "180", "120", "80", "450", "2").andExpect(status().isFound());
-        addLine("GENERIC", "100", "120", "80", "300", "1").andExpect(status().isFound());
-        addLine("GENERIC", "40", "30", "30", "12", "3").andExpect(status().isFound());
-        String page = mvc.perform(
-                        get("/area-clienti/ordini/nuovo/").session(session).accept("text/html"))
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        assertThat(page)
+        assertThat(blank)
+                .contains("Inserisci i dati dell&#39;ordine")
+                .contains("Tipo Pallet")
+                .contains("Altezza (cm)")
+                .contains("Aggiungi riga")
+                .contains("data-total-weight>0,00<")
+                .contains("Numero Colli (facoltativo)")
+                .contains("Documento di trasporto")
+                .contains(">Nessun servizio accessorio<")
+                .contains(">Sponda idraulica<")
+                .contains("Pallet Generico/Colli")
+                .contains(">Epal<")
+                .contains("Ragione Sociale/Nominativo")
+                .contains("Telefono (facoltativo)")
+                .contains("Email del destinatario (facoltativo)")
+                .contains("name=\"line.0.kind\"")
+                .doesNotContain("name=\"line.1.kind\"");
+        // Enter submits the hidden «Continua» placed before every other button, never «Elimina»
+        assertThat(blank.indexOf("value=\"save\"")).isPositive().isLessThan(blank.indexOf("value=\"addLine\""));
+
+        // «Aggiungi riga» without JavaScript: the page comes back with one more row, nothing lost
+        Map<String, String> first = new LinkedHashMap<>();
+        row(first, 0, "EPAL", "180", "120", "80", "450", "2");
+        first.put("transportDocumentCode", "DDT-2026-0042");
+        assertThat(page("addLine", first))
+                .contains("name=\"line.1.kind\"")
+                .contains("value=\"DDT-2026-0042\"")
+                .contains("data-line-weight>900,00<")
+                .contains("data-line-volume>3,46<")
+                .contains("data-total-weight>900,00<")
+                .contains("data-total-units>2<");
+
+        // the §6.3 lines: per-line and grand totals, with no float artefacts
+        assertThat(page("addLine", example()))
+                .contains("name=\"line.3.kind\"")
                 .contains("data-total-weight>1.236,00<")
                 .contains("data-total-volume>4,53<")
-                .contains("3,46 m³")
-                .contains("0,96 m³")
-                .contains("0,11 m³")
-                .contains("data-line=\"1\"")
-                .contains("data-line=\"3\"")
+                .contains("data-line-volume>3,46<")
+                .contains("data-line-volume>0,96<")
+                .contains("data-line-volume>0,11<")
+                .contains("data-total-units>6<")
                 .doesNotContain("0.06999");
 
-        // remove and re-add the first line: the totals follow, ids are never reused
-        mvc.perform(wizard("/area-clienti/ordini/nuovo/")
-                        .param("action", "removeLine")
-                        .param("lineId", "1"))
-                .andExpect(status().isFound());
-        assertThat(pageContent()).contains("data-total-weight>336,00<").doesNotContain("data-line=\"1\"");
-        addLine("EPAL", "180", "120", "80", "450", "2").andExpect(status().isFound());
-        assertThat(pageContent()).contains("data-total-weight>1.236,00<").contains("data-line=\"4\"");
+        // «Elimina» without JavaScript: the row goes, the others are renumbered, the totals follow
+        assertThat(page("removeLine.0", example()))
+                .contains("data-total-weight>336,00<")
+                .contains("name=\"line.0.heightCm\" value=\"100\"")
+                .contains("name=\"line.1.heightCm\" value=\"40\"")
+                .doesNotContain("name=\"line.2.kind\"");
 
-        // the order fields: DDT missing → error; complete → recipient page
-        mvc.perform(wizard("/area-clienti/ordini/nuovo/")
-                        .param("action", "next")
-                        .param("transportDocumentCode", "  "))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Campo obbligatorio.")));
-        mvc.perform(details(Map.of("accessoryServiceId", "99")))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Scegli un servizio dall&#39;elenco.")));
-        mvc.perform(details(Map.of("packageCount", "tre")))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Inserisci un numero intero maggiore di zero.")));
-        mvc.perform(details())
+        // the rules of the shipment data and of the recipient, all on the same page
+        assertThat(page("save", example(Map.of("transportDocumentCode", "  "))))
+                .contains("data-form-errors")
+                .contains("Campo obbligatorio.")
+                .contains("name=\"line.2.weightKg\" value=\"12\"");
+        assertThat(page("save", example(Map.of("accessoryServiceId", "99"))))
+                .contains("Scegli un servizio dall&#39;elenco.");
+        assertThat(page("save", example(Map.of("packageCount", "tre"))))
+                .contains("Inserisci un numero intero maggiore di zero.");
+        assertThat(page("save", example(Map.of("postalCode", "20121-1234", "name", ""))))
+                .contains("Inserisci un CAP di cinque cifre.")
+                .contains("Campo obbligatorio.");
+        assertThat(page("save", example(Map.of("phone", "telefono"))))
+                .contains("Inserisci un numero di telefono valido.");
+
+        // complete (a trailing blank row is ignored) → the summary
+        Map<String, String> complete = example();
+        row(complete, 3, "", "", "", "", "", "");
+        mvc.perform(form("save", complete))
                 .andExpect(status().isFound())
-                .andExpect(header().string("Location", "/area-clienti/ordini/nuovo/destinatario/"));
+                .andExpect(header().string("Location", REVIEW));
 
-        mvc.perform(get("/area-clienti/ordini/nuovo/destinatario/")
-                        .session(session)
-                        .accept("text/html"))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Inserisci i dati del destinatario")))
-                .andExpect(content().string(Matchers.containsString("Telefono (facoltativo)")))
-                .andExpect(content().string(Matchers.containsString("Email del destinatario (facoltativo)")));
-        mvc.perform(recipient(Map.of("postalCode", "20121-1234", "name", "")))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Inserisci un CAP di cinque cifre.")))
-                .andExpect(content().string(Matchers.containsString("Campo obbligatorio.")));
-        mvc.perform(recipient(Map.of("phone", "telefono")))
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Inserisci un numero di telefono valido.")));
-        mvc.perform(recipient())
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location", "/area-clienti/ordini/nuovo/riepilogo/"));
-
-        mvc.perform(get("/area-clienti/ordini/nuovo/riepilogo/")
-                        .session(session)
-                        .accept("text/html"))
+        mvc.perform(get(REVIEW).session(session).accept("text/html"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(Matchers.containsString("Controlla i dati inseriti")))
                 .andExpect(content().string(Matchers.containsString("data-review-totals>1.236,00 kg · 4,53 m³<")))
                 .andExpect(content().string(Matchers.containsString("DDT-2026-0042")))
                 .andExpect(content().string(Matchers.containsString("Sponda idraulica")))
                 .andExpect(content().string(Matchers.containsString("Magazzino Destinatario S.r.l.")))
-                .andExpect(content().string(Matchers.containsString("Conferma l&#39;ordine")));
+                .andExpect(content().string(Matchers.containsString("Conferma l&#39;ordine")))
+                .andExpect(content().string(Matchers.containsString("puoi ancora modificare o annullare")));
+        // back to the form: the draft is there, as typed and normalised
+        assertThat(mvc.perform(get(NEW).session(session).accept("text/html"))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString())
+                .contains("value=\"DDT-2026-0042\"")
+                .contains("name=\"line.0.heightCm\" value=\"180\"")
+                .contains("name=\"line.2.quantity\" value=\"3\"")
+                .doesNotContain("name=\"line.3.kind\"")
+                .contains("value=\"Magazzino Destinatario S.r.l.\"")
+                .contains("data-total-weight>1.236,00<");
 
-        MvcResult confirmed = mvc.perform(wizard("/area-clienti/ordini/nuovo/riepilogo/"))
+        MvcResult confirmed = mvc.perform(
+                        post(REVIEW).session(session).with(csrf()).accept("text/html"))
                 .andExpect(status().isFound())
-                .andExpect(header().string("Location", "/area-clienti/ordini/nuovo/inviato/"))
+                .andExpect(header().string("Location", DONE))
                 .andReturn();
         Map<String, Object> order =
                 jdbc.queryForMap("select * from shipment_order where customer_id = ?", ids.customerId());
@@ -192,6 +214,7 @@ class OrderWizardIT extends AbstractPostgresIT {
         assertThat(order.get("code")).isNull();
         assertThat(order.get("amount")).isNull();
         assertThat(order.get("idempotency_key")).isNotNull();
+        assertThat(order.get("edited_at")).isNull();
         assertThat((BigDecimal) order.get("total_weight_kg")).isEqualByComparingTo("1236.00");
         assertThat((BigDecimal) order.get("total_volume_m3")).isEqualByComparingTo("4.53");
         List<Map<String, Object>> lines = jdbc.queryForList(
@@ -200,25 +223,25 @@ class OrderWizardIT extends AbstractPostgresIT {
                 order.get("id"));
         assertThat(lines).hasSize(3);
         assertThat(lines.get(0))
-                .containsEntry("kind", "GENERIC")
-                .containsEntry("height_cm", 100)
-                .containsEntry("quantity", 1);
-        assertThat(lines.get(1))
-                .containsEntry("kind", "GENERIC")
-                .containsEntry("height_cm", 40)
-                .containsEntry("quantity", 3);
-        assertThat(lines.get(2))
                 .containsEntry("kind", "EPAL")
                 .containsEntry("height_cm", 180)
                 .containsEntry("length_cm", 120)
                 .containsEntry("width_cm", 80)
                 .containsEntry("quantity", 2);
-        assertThat((BigDecimal) lines.get(2).get("weight_kg")).isEqualByComparingTo("450");
-        assertThat((BigDecimal) lines.get(2).get("line_weight_kg")).isEqualByComparingTo("900");
-        assertThat((BigDecimal) lines.get(2).get("line_volume_m3")).isEqualByComparingTo("3.46");
+        assertThat((BigDecimal) lines.get(0).get("weight_kg")).isEqualByComparingTo("450");
+        assertThat((BigDecimal) lines.get(0).get("line_weight_kg")).isEqualByComparingTo("900");
+        assertThat((BigDecimal) lines.get(0).get("line_volume_m3")).isEqualByComparingTo("3.46");
+        assertThat(lines.get(1))
+                .containsEntry("kind", "GENERIC")
+                .containsEntry("height_cm", 100)
+                .containsEntry("quantity", 1);
+        assertThat(lines.get(2))
+                .containsEntry("kind", "GENERIC")
+                .containsEntry("height_cm", 40)
+                .containsEntry("quantity", 3);
 
         MockHttpSession after = (MockHttpSession) confirmed.getRequest().getSession(false);
-        mvc.perform(get("/area-clienti/ordini/nuovo/inviato/").session(after).accept("text/html"))
+        mvc.perform(get(DONE).session(after).accept("text/html"))
                 .andExpect(status().isOk())
                 .andExpect(
                         content()
@@ -227,12 +250,13 @@ class OrderWizardIT extends AbstractPostgresIT {
                                                 "Il tuo ordine è stato inoltrato correttamente! Ti preghiamo di attendere"
                                                         + " la conferma via email dal nostro centro logistico. Grazie per aver scelto Logistica Sanchez!")))
                 .andExpect(content().string(Matchers.not(Matchers.containsString("Sanchez Logistica"))))
-                .andExpect(content().string(Matchers.containsString(tempCode)));
+                .andExpect(content().string(Matchers.containsString(tempCode)))
+                .andExpect(content().string(Matchers.containsString("Effettua un nuovo ordine")));
         // terminal: reloading the final page or confirming again creates nothing
-        mvc.perform(get("/area-clienti/ordini/nuovo/inviato/").session(after)).andExpect(status().isFound());
-        mvc.perform(wizard("/area-clienti/ordini/nuovo/riepilogo/").session(after))
+        mvc.perform(get(DONE).session(after)).andExpect(status().isFound());
+        mvc.perform(post(REVIEW).session(after).with(csrf()).accept("text/html"))
                 .andExpect(status().isFound())
-                .andExpect(header().string("Location", "/area-clienti/ordini/nuovo/"));
+                .andExpect(header().string("Location", NEW));
         assertThat(jdbc.queryForObject(
                         "select count(*) from shipment_order where customer_id = ?", Long.class, ids.customerId()))
                 .isEqualTo(1);
@@ -274,28 +298,48 @@ class OrderWizardIT extends AbstractPostgresIT {
     }
 
     @Test
-    void lineValidationRefusesZeroDecimalsAndAMissingType() throws Exception {
-        addLine("", "180", "120", "80", "450", "2")
-                .andExpect(status().isOk())
-                .andExpect(content()
-                        .string(Matchers.containsString("Scegli il tipo: Pallet Generico/Colli oppure Epal.")));
-        addLine("EPAL", "0", "120", "80", "12,5", "0")
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Inserisci un numero intero maggiore di zero.")))
-                .andExpect(content().string(Matchers.containsString("value=\"12,5\"")));
-        addLine("EPAL", "180", "", "80", "450", "2")
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Campo obbligatorio.")));
-        assertThat(pageContent()).doesNotContain("data-line=");
-        // no line → «Avanti» refused with the legacy rule
-        mvc.perform(details())
-                .andExpect(status().isOk())
-                .andExpect(content().string(Matchers.containsString("Aggiungi almeno una riga di pallet o colli.")));
-        mvc.perform(get("/area-clienti/ordini/nuovo/destinatario/").session(session))
+    void rowsAreValidatedOneByOneAndAnEmptyListIsRefused() throws Exception {
+        Map<String, String> params = example();
+        row(params, 0, "", "180", "120", "80", "450", "2");
+        row(params, 1, "EPAL", "0", "120", "80", "12,5", "0");
+        row(params, 2, "EPAL", "180", "", "80", "450", "2");
+        assertThat(page("save", params))
+                .contains("data-form-errors")
+                .contains("Scegli il tipo: Pallet Generico/Colli oppure Epal.")
+                .contains("Inserisci un numero intero maggiore di zero.")
+                .contains("value=\"12,5\"")
+                .contains("Campo obbligatorio.")
+                .containsPattern("class=\"line-row has-error\"[\\s\\S]*class=\"line-row has-error\"")
+                .contains("data-total-weight>0,00<");
+        // only blank rows → the legacy rule, a single empty row kept to type in
+        Map<String, String> none = example();
+        none.keySet().removeIf(k -> k.startsWith("line."));
+        row(none, 0, "", "", "", "", "", "");
+        row(none, 1, "", "", "", "", "", "");
+        assertThat(page("save", none))
+                .contains("data-lines-error")
+                .contains("Aggiungi almeno una riga di pallet o colli.")
+                .contains("name=\"line.0.kind\"")
+                .doesNotContain("name=\"line.1.kind\"");
+        mvc.perform(get(REVIEW).session(session))
                 .andExpect(status().isFound())
-                .andExpect(header().string("Location", "/area-clienti/ordini/nuovo/"));
-        mvc.perform(get("/area-clienti/ordini/nuovo/riepilogo/").session(session))
-                .andExpect(status().isFound());
+                .andExpect(header().string("Location", NEW));
+        mvc.perform(post(REVIEW).session(session).with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", NEW));
+    }
+
+    @Test
+    void theFormStopsAtFiftyRows() throws Exception {
+        Map<String, String> params = new LinkedHashMap<>();
+        for (int i = 0; i < OrderForm.MAX_LINES + 5; i++) {
+            row(params, i, "GENERIC", "100", "120", "80", "10", "1");
+        }
+        String page = page("addLine", params);
+        assertThat(page)
+                .contains("name=\"line.49.kind\"")
+                .doesNotContain("name=\"line.50.kind\"")
+                .containsPattern("value=\"addLine\"[^>]*disabled");
     }
 
     @Test
@@ -322,6 +366,7 @@ class OrderWizardIT extends AbstractPostgresIT {
         assertThat(first.trackingLabel()).isEqualTo("Non gestito");
         assertThat(first.sender().name()).isEqualTo("Mittente Attivo S.r.l.");
         assertThat(first.recipient().email()).isEqualTo("ricevimento@destinatario.example");
+        assertThat(first.unitCount()).isEqualTo(6);
         // a service of «none» and an empty package count are stored as null
         OrderDraft plain = OrderTestSupport.exampleDraft();
         plain.setDetails("DDT-1", "", null, "");
@@ -341,12 +386,14 @@ class OrderWizardIT extends AbstractPostgresIT {
             mvc.perform(get("/area-clienti/ordini/").session(s).accept("text/html"))
                     .andExpect(status().isOk())
                     .andExpect(content().string(Matchers.containsString("data-customer-status=")))
-                    .andExpect(content()
-                            .string(Matchers.not(Matchers.containsString("href=\"/area-clienti/ordini/nuovo/\""))));
-            mvc.perform(get("/area-clienti/ordini/nuovo/").session(s))
+                    .andExpect(content().string(Matchers.not(Matchers.containsString("href=\"" + NEW + "\""))));
+            mvc.perform(get(NEW).session(s))
                     .andExpect(status().isFound())
                     .andExpect(header().string("Location", "/area-clienti/ordini/"));
-            mvc.perform(post("/area-clienti/ordini/nuovo/riepilogo/").session(s).with(csrf()))
+            mvc.perform(post(NEW).session(s).with(csrf()).param("action", "save"))
+                    .andExpect(status().isFound())
+                    .andExpect(header().string("Location", "/area-clienti/ordini/"));
+            mvc.perform(post(REVIEW).session(s).with(csrf()))
                     .andExpect(status().isFound())
                     .andExpect(header().string("Location", "/area-clienti/ordini/"));
             assertThatThrownBy(() -> orders.submit(
@@ -359,64 +406,53 @@ class OrderWizardIT extends AbstractPostgresIT {
                     .isZero();
         }
         mvc.perform(get("/area-clienti/ordini/").session(session).accept("text/html"))
-                .andExpect(content().string(Matchers.containsString("href=\"/area-clienti/ordini/nuovo/\"")));
+                .andExpect(content().string(Matchers.containsString("href=\"" + NEW + "\"")));
     }
 
-    private org.springframework.test.web.servlet.ResultActions addLine(
-            String kind, String h, String l, String w, String weight, String qty) throws Exception {
-        return mvc.perform(wizard("/area-clienti/ordini/nuovo/")
-                .param("action", "addLine")
-                .param("kind", kind)
-                .param("heightCm", h)
-                .param("lengthCm", l)
-                .param("widthCm", w)
-                .param("weightKg", weight)
-                .param("quantity", qty));
+    /** The §6.3 lines as rows 0–2, the shipment data and the recipient of the example. */
+    static Map<String, String> example() {
+        Map<String, String> params = new LinkedHashMap<>();
+        row(params, 0, "EPAL", "180", "120", "80", "450", "2");
+        row(params, 1, "GENERIC", "100", "120", "80", "300", "1");
+        row(params, 2, "GENERIC", "40", "30", "30", "12", "3");
+        params.put("transportDocumentCode", " DDT-2026-0042 ");
+        params.put("packageCount", "3");
+        params.put("accessoryServiceId", "2");
+        params.put("notes", "Consegna al mattino");
+        params.put("name", "Magazzino Destinatario S.r.l.");
+        params.put("addressLine", "Via Roma 10");
+        params.put("province", "MI");
+        params.put("city", "Milano");
+        params.put("postalCode", "20121");
+        params.put("phone", "02 12345678");
+        params.put("email", "Ricevimento@destinatario.example");
+        return params;
     }
 
-    private MockHttpServletRequestBuilder details() {
-        return details(Map.of());
-    }
-
-    /** The order fields of the example, with {@code overrides} replacing single values (MockMvc params accumulate). */
-    private MockHttpServletRequestBuilder details(Map<String, String> overrides) {
-        Map<String, String> params = new java.util.LinkedHashMap<>(Map.of(
-                "action", "next",
-                "transportDocumentCode", " DDT-2026-0042 ",
-                "packageCount", "3",
-                "accessoryServiceId", "2",
-                "notes", "Consegna al mattino"));
+    /** The example with {@code overrides} replacing single values (MockMvc params accumulate). */
+    static Map<String, String> example(Map<String, String> overrides) {
+        Map<String, String> params = example();
         params.putAll(overrides);
-        MockHttpServletRequestBuilder builder = wizard("/area-clienti/ordini/nuovo/");
+        return params;
+    }
+
+    static void row(Map<String, String> params, int index, String... values) {
+        for (int i = 0; i < OrderForm.LINE_FIELDS.size(); i++) {
+            params.put("line." + index + "." + OrderForm.LINE_FIELDS.get(i), values[i]);
+        }
+    }
+
+    private MockHttpServletRequestBuilder form(String action, Map<String, String> params) {
+        MockHttpServletRequestBuilder builder =
+                post(NEW).session(session).with(csrf()).accept("text/html").param("action", action);
         params.forEach(builder::param);
         return builder;
     }
 
-    private MockHttpServletRequestBuilder recipient() {
-        return recipient(Map.of());
-    }
-
-    private MockHttpServletRequestBuilder recipient(Map<String, String> overrides) {
-        Map<String, String> params = new java.util.LinkedHashMap<>(Map.of(
-                "name", "Magazzino Destinatario S.r.l.",
-                "addressLine", "Via Roma 10",
-                "province", "MI",
-                "city", "Milano",
-                "postalCode", "20121",
-                "phone", "02 12345678",
-                "email", "Ricevimento@destinatario.example"));
-        params.putAll(overrides);
-        MockHttpServletRequestBuilder builder = wizard("/area-clienti/ordini/nuovo/destinatario/");
-        params.forEach(builder::param);
-        return builder;
-    }
-
-    private MockHttpServletRequestBuilder wizard(String path) {
-        return post(path).session(session).with(csrf()).accept("text/html");
-    }
-
-    private String pageContent() throws Exception {
-        return mvc.perform(get("/area-clienti/ordini/nuovo/").session(session).accept("text/html"))
+    /** Posts the form with {@code action} and returns the page it answers with (200: the form again). */
+    private String page(String action, Map<String, String> params) throws Exception {
+        return mvc.perform(form(action, params))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();

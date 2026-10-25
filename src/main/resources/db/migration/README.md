@@ -17,6 +17,9 @@ feature flags: `docs/adr/0025-feature-flags.md`.
 | `V008__feature_flags_and_audit.sql` | `feature_flag`, `audit_log`, `audit_log_detail`, the immutability trigger |
 | `V009__seeds.sql` | the six tracking states, the six accessory services, the 25 flags (all off) |
 | `V010__staff_setup_tokens.sql` | `staff_setup_token` (one-time set-password links, ADM-01, ADR 0003); `email_outbox.kind` also accepts `EML-S1` and the token ciphertext no longer requires a `login_token` reference |
+| `V011__customer_user_pending_email.sql` | `customer_user.pending_email` (the e-mail change of CUS-06) |
+| `V012__report_recipients_and_anonymisation.sql` | `report_recipient` (ADM-09 allow-list), `customer.anonymised_at` (NFR-03) |
+| `V013__record_editing.sql` | `shipment_order` status `CANCELLED` with `cancelled_*`, `cancel_reason`, `edited_at`, `edited_by_type`; customers created by staff are `ACTIVE` before their e-mail is verified (ADR 0028) |
 
 Rules for the next migration: no `legacy_*`, `*_raw` or `data_quality` column (owner
 decision Q-55, no data migration); no `INSERT` into `staff_user`, `customer` or

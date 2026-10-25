@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «Ordini in approvazione» (ADM-04; chapter 04 §3.4: the 13 legacy columns, TEMP codes shown as «-», the legacy empty state). -->
+<!-- «Ordini in approvazione» (ADM-04; chapter 04 §3.4: the 13 legacy columns, TEMP codes shown as «-», the legacy empty state; ADR 0029: orders changed by the customer marked). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.ordersPending.title} + ' · ' + #{layout.private.backoffice}">Ordini da approvare · Gestione</title>
@@ -7,22 +7,35 @@
 </head>
 <body th:attr="hx-headers=${hxHeaders}">
 <th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
-<main id="main" class="section">
+<th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
+<main id="main" class="app-main">
   <div class="container">
-    <th:block th:replace="~{backoffice/layout :: nav('ordersPending')}"></th:block>
-    <h1 th:text="#{backoffice.ordersPending.title}">Ordini in approvazione</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{backoffice.ordersPending.title}">Ordini in approvazione</h1>
+        <p class="lede" th:text="#{backoffice.ordersPending.lead}">Le richieste più vecchie in alto: approvale con codice e importo, oppure rifiutale.</p>
+      </div>
+      <div class="page-actions">
+        <a class="btn btn-light" href="/gestione/ordini/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.orders.new}">Nuovo ordine</span></a>
+      </div>
+    </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
-    <p class="muted" th:if="${orders.isEmpty()}" th:text="#{backoffice.ordersPending.empty}">Nessun ordine da approvare</p>
-    <div class="table-wrap" th:if="${!orders.isEmpty()}">
-      <table class="table" data-table="orders-pending">
+    <div class="empty" th:if="${orders.isEmpty()}" data-empty>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-circle-check"/></svg>
+      <h2 th:text="#{backoffice.ordersPending.empty}">Nessun ordine da approvare</h2>
+      <p th:text="#{backoffice.ordersPending.emptyHint}">Quando un cliente invia una richiesta la trovi qui, e ricevi anche un'e-mail.</p>
+    </div>
+    <div class="data-table-wrap" th:if="${!orders.isEmpty()}">
+      <table class="data-table stacked" data-table="orders-pending">
         <thead><tr th:replace="~{backoffice/orders :: orderColumns}"></tr></thead>
         <tbody>
           <tr th:each="o : ${orders}" th:attr="data-order=${o.tempCode}">
             <th:block th:replace="~{backoffice/orders :: orderCells(${o})}"></th:block>
-            <td class="nowrap">
-              <a class="btn btn-primary btn-sm" th:href="@{/gestione/ordini/{id}/approva(id=${o.id})}" th:text="#{backoffice.orders.approve}">Approva ordine</a>
-              <a class="btn btn-secondary btn-sm" th:href="@{/gestione/ordini/{id}/rifiuta(id=${o.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
-              <a class="btn btn-ghost btn-sm" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a>
+            <td class="row-actions">
+              <span class="pill pill-soft" th:if="${o.editedByCustomer()}" th:title="#{backoffice.order.editedByCustomerAt(${fmt.dateTime(o.editedAt)})}" th:text="#{backoffice.order.editedByCustomerShort}" data-edited>Modificato dal cliente</span>
+              <a class="btn btn-xs" th:href="@{/gestione/ordini/{id}/approva(id=${o.id})}" th:text="#{backoffice.orders.approve}">Approva ordine</a>
+              <a class="btn btn-danger btn-xs" th:href="@{/gestione/ordini/{id}/rifiuta(id=${o.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
+              <a class="btn btn-light btn-xs" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a>
             </td>
           </tr>
         </tbody>

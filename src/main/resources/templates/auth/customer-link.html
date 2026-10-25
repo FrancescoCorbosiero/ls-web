@@ -11,13 +11,17 @@
 </head>
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
-<main id="main" class="section">
+<main id="main" class="app-main">
   <div class="container container-narrow">
-    <h1 th:text="#{auth.customer.link.title}">Accedi all'area clienti</h1>
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{auth.customer.link.title}">Accedi all'area clienti</h1>
+      </div>
+    </div>
     <p class="lede" th:text="#{auth.customer.link.lead}">Premi il pulsante per entrare nella tua area clienti.</p>
     <form method="post" th:action="@{/area-clienti/accesso}">
       <input type="hidden" name="t" th:value="${token}">
-      <div class="actions"><button type="submit" class="btn btn-primary btn-lg" th:text="#{auth.customer.link.submit}">Accedi</button></div>
+      <div class="form-actions"><button type="submit" class="btn btn-lg" th:text="#{auth.customer.link.submit}">Accedi</button></div>
     </form>
   </div>
 </main>
