@@ -16,6 +16,7 @@ import it.logisticasanchez.web.notifications.EmailOutboxRepository;
 import it.logisticasanchez.web.orders.OrderService;
 import it.logisticasanchez.web.orders.OrderView;
 import it.logisticasanchez.web.platform.config.BusinessProperties;
+import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.support.AbstractPostgresIT;
@@ -108,7 +109,7 @@ class ReportIT extends AbstractPostgresIT {
     }
 
     private ReportService.Request request(boolean onlyDelivered, boolean sendToCustomer, String extra) {
-        String today = LocalDate.now().toString();
+        String today = LocalDate.now(ItalianFormats.ROME).toString();
         return new ReportService.Request(a.customerId(), today, today, onlyDelivered, sendToCustomer, extra);
     }
 
@@ -172,8 +173,8 @@ class ReportIT extends AbstractPostgresIT {
                         operator.getId(),
                         new ReportService.Request(
                                 a.customerId(),
-                                LocalDate.now().toString(),
-                                LocalDate.now().plusDays(1).toString(),
+                                LocalDate.now(ItalianFormats.ROME).toString(),
+                                LocalDate.now(ItalianFormats.ROME).plusDays(1).toString(),
                                 false,
                                 false,
                                 "")))
@@ -250,7 +251,7 @@ class ReportIT extends AbstractPostgresIT {
     @Test
     void theReportPageSendsAndListsTheRuns() throws Exception {
         MockHttpSession staff = StaffTestData.session(operator);
-        String today = LocalDate.now().toString();
+        String today = LocalDate.now(ItalianFormats.ROME).toString();
         mvc.perform(post("/gestione/report/")
                         .session(staff)
                         .with(csrf())
