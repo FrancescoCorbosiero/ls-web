@@ -1,0 +1,16 @@
+{
+  "name": "ls-web-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "End-to-end smoke of the Logistica Sanchez web app (Playwright, Chromium)",
+  "license": "UNLICENSED",
+  "scripts": {
+    "test": "playwright test",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.56.1",
+    "@types/node": "22.19.3"
+  }
+}

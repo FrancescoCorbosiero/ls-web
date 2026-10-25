@@ -1421,3 +1421,151 @@ Staff (ADMIN or OPERATOR): `GET /gestione/clienti/`, `…/clienti/in-approvazion
 * `CLAUDE.md` Commands: the back-office URLs after `dev-seed`.
 * Still open from earlier stages: confidential-figure guard, local gitleaks, `/e2e` Dependabot
   entry, Q-55 wording trim, ADR 0015 EML-S1 line, `docs/plan.md` §4.1 items of steps 5, B1, B2.
+
+## Step C — Finish: E2E suite, CI, image, deploy folder, docs (2026-10-25)
+
+The working tree held an interrupted attempt at this step: `e2e/` with `package.json`
+(`@playwright/test` 1.56.1, `@axe-core/playwright` 4.14.0), `playwright.config.ts`,
+`support/browser.ts`, `support/mail.ts`, `tests/public.spec.ts`, `tests/journey.spec.ts` and an
+installed `node_modules`, but no runner script and never executed. Reviewed against the templates
+and kept; fixed: the office address was read from `config.js` with a double-quote regex while
+`ConfigJsController` writes single quotes, the EML-04 wait used a subject that does not exist
+(«Richiesta di spedizione ricevuta» is the real one), the axe tests sampled the pages during the
+reveal animation (`emulateMedia({ reducedMotion: 'reduce' })` now makes axe see the settled page,
+which surfaced one real inherited finding, below).
+
+### What was built
+
+* **`e2e/run.sh`** — the only entry point, also used by CI: finds or builds the jar, recreates
+  `ls_web_e2e` on the local instance (`scripts/local-db.sh psql postgres -c 'DROP DATABASE …'` +
+  `createdb`; in CI `E2E_DATABASE_URL` points at the `postgres:16` service instead), runs
+  `dev-seed` and captures the `admin.seed` password from its output, starts the jar with the
+  `local` profile on port 8089 (`--ls.notifications.directory.path=.local/mail/e2e`,
+  `--ls.notifications.worker.interval=2s`, `--ls.business.office-email=ufficio@logisticasanchez.example`
+  so the office notices stay synthetic, `--ls.business.site-url=http://localhost:8089` so the
+  mailed links point at the app under test), waits for `/actuator/health`, runs
+  `npx playwright test "$@"`, stops the app and prints the app log tail on failure.
+* **`tests/journey.spec.ts`** (serial, two browser contexts: customer and staff, each with the
+  console/CSP listener checked after every step): `[CUS-02]` new address → «Ti abbiamo inviato
+  un'email» → REGISTER link from the `.eml` → form → «Controlla i dati inseriti» → «Conferma» →
+  signed in `PENDING_APPROVAL`; `[EML-02]` registration mail to the customer and office notice;
+  `[ADM-02]` staff login, «In Approvazione» row with «SI», approve behind the confirmation page,
+  row gone, «Registrati» shows «Attivo»; `[EML-03]` «Conferma nuovo cliente» with «Benvenuto in»;
+  `[CUS-01]` sign-in link → «Accedi» → «I miei ordini» without the status callout; `[CUS-04]`
+  wizard (Epal 180×120×80, 450 kg × 2 → 900,00; DDT; recipient; «Conferma l'ordine» → `TEMP-`
+  code on the final page); `[CUS-05]` list and detail, EML-04 file; `[ADM-04]` «Approva ordine»
+  with code `E2E-…` and amount `120,50`, the order listed in «Ordini» with the amount and its
+  «Dettaglio» link; `[EML-05]` «Conferma ordine N. …»; `[TRK-01]` `POST /mono/api/order/trace/state`
+  → «Presa in carico», `/tracking/?code=` renders the code and the title, unknown code → «Non
+  gestito»; `[ADM-06]` tracking select → CONSEGNATO; `[TRK-02]` the API follows; `[EML-09]`
+  «Consegna effettuata per ordine N. …» file exists.
+* **`tests/public.spec.ts`**: `[PUB-01]` the 25 pages of `SitePages` answer 200 with the public
+  CSP, a title, a visible main, no horizontal scroll, no console error, no CSP violation
+  (`securitypolicyviolation` listener installed by `addInitScript`); `[NFR-02]` `/area-clienti/`
+  and `/gestione/login` with the nonce CSP (no `unsafe-`), `no-store`; `[PUB-04]` three 301
+  cases and a 404; `[PUB-09]` sitemap = the 24 indexable pages, robots points at it; `[PUB-10]`
+  axe (`wcag2a`, `wcag2aa`, `best-practice`; serious/critical fail) on the five budget pages;
+  `[NFR-01]` axe on the two private entry pages. Two projects: `desktop` (Desktop Chrome) and
+  `phone` (Pixel 7, public spec only). Every request to a host other than the app is answered
+  204 by a route (`support/browser.ts offline()`), so the run needs no network.
+* **Inherited finding allow-listed by name** (`KNOWN_LEGACY_VIOLATIONS` in `public.spec.ts`):
+  `color-contrast` on `span[data-zone="3"]` of `/servizi/spedizione-pallet/` — the «72 ore» pill
+  (`.eta-pill[data-zone="3"]`: white on the legacy zone-3 colour) of the verbatim ls-home CSS.
+  Anything else fails the run. Changing the colour is a PUB-01 allow-list change for the owner.
+* **CI** (`.github/workflows/ci.yml`): new `e2e` job (JDK 21 + `-DskipTests package`,
+  `actions/setup-node@v6` Node 22 with the npm cache on `e2e/package-lock.json`, `npm ci`,
+  `npx playwright install --with-deps chromium` — CI only —, `e2e/run.sh` against the
+  `ls_web_e2e` service database, report + traces + app log uploaded on failure); `guards` now
+  also runs `docker compose --env-file .env.example -f compose.yml config --quiet`; new `image`
+  job (`needs` the three others; Buildx, GHCR login with `GITHUB_TOKEN` on pushes only,
+  `docker/metadata-action` tags `sha-<short>`, `<branch>`, `latest` from `main`; built on pull
+  requests, pushed on `main` and `phase-*`; `packages: write` at job level).
+* **`Dockerfile`** multi-stage (`eclipse-temurin:21-jdk-noble` build with the wrapper and a
+  dependency pre-fetch layer; `eclipse-temurin:21-jre-noble` runtime, `fonts-dejavu-core` +
+  `curl`, user `app` uid 10001, `TZ=Europe/Rome`, `HEALTHCHECK` on `/actuator/health`,
+  `ENTRYPOINT java -jar /app/app.jar` so `create-staff-user` and `dev-seed` work as arguments);
+  `.dockerignore` keeps only `mvnw`, `.mvn`, `pom.xml`, `src`.
+* **`deploy/`**: `compose.yml` (`proxy` caddy:2 with ports 80/443(+udp) and the certificate
+  volumes, `app` from `ghcr.io/francescocorbosiero/ls-web:${LS_IMAGE_TAG}` with every setting
+  from `.env` and `${VAR:?}` for the required ones, `db` postgres:16 with `pg_data`; healthchecks
+  and `depends_on` conditions; no `container_name`); `caddy/Caddyfile` (the five hosts in one
+  block, automatic HTTPS, `encode`, `header -Server`, `reverse_proxy app:8080` with health
+  checks, JSON access log; host behaviour stays in `HostRoutingFilter`); `.env.example` (every
+  variable the app reads, grouped, required ones empty, optional ones commented with their
+  `ls.*` key); `backup.sh` (`pg_dump | gzip | age`, 7/4/12 rotation, `rclone` off-site copy,
+  `--check` age alert at 26 h, `--restore FILE`). `docker compose config` passes locally (no
+  daemon needed) and in CI.
+* **Docs**: ADR 0022 (deployment, CI image, backups) and its index row; `tools/parity-matrix.py`
+  (Status column + coverage block between `<!-- generated:start/end -->` from `@Tag`/`[ID]` and
+  the surefire/failsafe XML + Playwright `results.json`; `--check` mode; MIG-* blocked, NFR-05/06/07
+  capped at ready-for-owner while their deliverables exist) and the regenerated
+  `docs/parity-matrix.md` (header rewritten, PUB-10/NFR-01 notes); `CLAUDE.md` Commands filled;
+  README quickstart and E2E/deploy section; `docs/runbooks/local-setup.md` and
+  `docs/runbooks/deploy.md` in Italian (install, update, rollback, backup/restore, key rotation,
+  cut-over outline); `docs/plan.md` §Status.
+
+### How to run it
+
+```sh
+cd /home/user/ls-web && scripts/local-db.sh start && eval "$(scripts/local-db.sh env)" && ./mvnw -B -ntp verify
+(cd e2e && npm ci)                      # once; browsers are preinstalled under /opt/pw-browsers
+e2e/run.sh                              # whole suite (≈ 2 min); e2e/run.sh --project=desktop tests/journey.spec.ts for the journey only
+(cd e2e && npx playwright show-report)  # HTML report; traces of failures under e2e/test-results/
+tools/parity-matrix.py                  # regenerate docs/parity-matrix.md after the two runs above
+(cd deploy && LS_ACME_EMAIL=x@example.invalid POSTGRES_PASSWORD=x LS_SECURITY_IP_HASH_KEY=x LS_TOKEN_ENCRYPTION_KEY=x docker compose --env-file .env.example -f compose.yml config --quiet)
+```
+
+Results on 2026-10-25: `./mvnw -B -ntp verify` green — 177 unit and 376 integration tests, none
+skipped, Spotless clean; `e2e/run.sh` green — 85 titles (49 desktop, 36 phone) in 1.8 min;
+`tools/parity-matrix.py` — 47 of 50 deliverable M1 IDs green, 3 ready-for-owner (NFR-05/06/07),
+MIG-01…03 blocked (Q-55). `docker build` could not be run here (no Docker daemon): the
+`Dockerfile` is exercised by the CI `image` job on the first push.
+
+### Decisions taken
+
+* The E2E suite is a **smoke** of the M1 journey plus a page sweep, not a replica of every
+  planned E2E row of the parity matrix (owner's fast mode): the planned-but-not-written E2E
+  parts stay listed in the "Planned tests" column and the coverage block shows what runs.
+* axe runs with `prefers-reduced-motion: reduce` (the site's own rule turns the reveal animation
+  off), because the settled page is the one users read; the one legacy contrast finding is
+  allow-listed by rule and selector, never by page.
+* `tools/parity-matrix.py` marks an ID green when any tagged class or title passed in the **last
+  local run**; it is the generator the matrix header promised, run by hand for now (CI would
+  need the reports of both jobs as artifacts — noted as the next CI step).
+* The deploy to staging/production is a documented manual `docker compose pull && up -d`
+  (runbook §2); an SSH deploy job from CI waits for the owner's VPS and a secret (ADR 0022).
+* The office address in the E2E run is overridden with `ufficio@logisticasanchez.example`; in
+  the `local` profile the default stays the business mailbox because the directory sink never
+  sends anything (step B2 open point, unchanged).
+
+### Open points
+
+* **Lighthouse CI** (PUB-10 performance/SEO/best-practices ≥ 95) is not run: `@lhci/cli` 0.15.1
+  job to add to `e2e` (budget pages: `/`, `/servizi/spedizione-pallet/`, `/preventivo/`,
+  `/tracking/`, `/contatti/`). PUB-10 is green on the axe and console/CSP parts only (matrix note).
+* The inherited contrast finding («72 ore» pill) needs the owner's call: change `--zone-3` text
+  colour (PUB-01 allow-list) or accept it.
+* Not covered by E2E yet (server-side tests exist for all of them): CUS-03 status pages, CUS-06
+  profile and e-mail change, ADM-03/05/07/08/09 screens, PUB-06/07 wizard with JS, PUB-08 CAP
+  widget and map consent, TRK-01 six rendered states and 429 handling, API-03 old link, phone
+  width inside the signed-in areas.
+* CI first run on GitHub still to happen (Chromium install through `playwright install
+  --with-deps`, GHCR push permissions on the public repository, Buildx cache); fix-ups may be
+  needed in the PR.
+* `tools/parity-matrix.py --check` is not in CI (needs the surefire/failsafe/Playwright reports
+  of both jobs); `Dependabot` already watches `/e2e`.
+* Remaining retention jobs (audit rows 24 months, IP hashes 30 days, report runs 24 months) from
+  step B3 are still open; `ls.retention.*` seams declared.
+* NFR-05/06/07 become green only with dated rehearsal records (`docs/rehearsals/`): restore
+  drill, staging deploy, cut-over drill — all need the owner's VPS, DNS and SES credentials.
+* New Italian texts of this step for the owner's review: the two runbooks.
+
+### Proposed changes to shared files (for the integrator / the PR)
+
+* All shared files of this step were edited directly (step C is the finishing step): `CLAUDE.md`
+  Commands, `README.md`, `.github/workflows/ci.yml`, `docs/plan.md` §Status, `docs/parity-matrix.md`
+  header and notes, `docs/adr/README.md`. Still open from earlier steps and not done here:
+  `docs/plan.md` §4.1 module rows (config.js under platform, tracking_event under orders, privacy
+  row, reports/backoffice rows), the Q-55 wording trim of §4/§5/§8, ADR 0015 EML-S1 line, the
+  confidential-figure guard and a local gitleaks run, the §4.3 `docs/parity-plan.md` freeze
+  (dropped by the lighter process; the matrix header says so).

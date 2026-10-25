@@ -1,0 +1,82 @@
+# Logistica Sanchez web app on one VPS: Caddy (automatic HTTPS) -> app -> PostgreSQL 16.
+# Settings come from a .env file next to this file (copy deploy/.env.example, fill the values,
+# chmod 600). Check:  docker compose --env-file .env config
+# Run:                docker compose --env-file .env up -d
+# Update:             docker compose --env-file .env pull app && docker compose --env-file .env up -d app
+# Never run "docker compose down -v": it deletes the database volume.
+name: ls-web
+
+services:
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      LS_DOMAIN: ${LS_DOMAIN:-logisticasanchez.com}
+      LS_ACME_EMAIL: ${LS_ACME_EMAIL:?set the e-mail Let's Encrypt writes to}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+
+  app:
+    image: ghcr.io/francescocorbosiero/ls-web:${LS_IMAGE_TAG:-latest}
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      SERVER_PORT: "8080"
+      TZ: Europe/Rome
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-ls_web}
+      DATABASE_USER: ${POSTGRES_USER:-ls}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?set the database password}
+      LS_DB_POOL_SIZE: ${LS_DB_POOL_SIZE:-10}
+      LS_SECURITY_IP_HASH_KEY: ${LS_SECURITY_IP_HASH_KEY:?set the IP hash key}
+      LS_TOKEN_ENCRYPTION_KEY: ${LS_TOKEN_ENCRYPTION_KEY:?set the token encryption key}
+      LS_NOTIFICATIONS_SINK: ${LS_NOTIFICATIONS_SINK:-ses}
+      LS_NOTIFICATIONS_ALLOW_LIST: ${LS_NOTIFICATIONS_ALLOW_LIST:-}
+      LS_NOTIFICATIONS_FROMADDRESS: ${LS_NOTIFICATIONS_FROMADDRESS:-noreply@logisticasanchez.com}
+      LS_NOTIFICATIONS_SES_REGION: ${LS_NOTIFICATIONS_SES_REGION:-eu-north-1}
+      AWS_REGION: ${LS_NOTIFICATIONS_SES_REGION:-eu-north-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      LS_BUSINESS_OFFICEEMAIL: ${LS_BUSINESS_OFFICEEMAIL:-}
+      LS_BUSINESS_SITEURL: ${LS_BUSINESS_SITEURL:-https://logisticasanchez.com}
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ls_web}
+      POSTGRES_USER: ${POSTGRES_USER:-ls}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set the database password}
+      TZ: Europe/Rome
+      PGTZ: Europe/Rome
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ls} -d ${POSTGRES_DB:-ls_web}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  caddy_data:
+  caddy_config:
+  pg_data:
