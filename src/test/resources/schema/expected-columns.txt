@@ -128,6 +128,12 @@ login_token expires_at timestamptz NOT NULL
 login_token used_at timestamptz NULL
 login_token requested_ip_hash varchar NULL
 login_token created_at timestamptz NOT NULL
+remembered_sign_in id int8 NOT NULL
+remembered_sign_in customer_user_id int8 NOT NULL
+remembered_sign_in token_hash varchar NOT NULL
+remembered_sign_in expires_at timestamptz NOT NULL
+remembered_sign_in last_used_at timestamptz NULL
+remembered_sign_in created_at timestamptz NOT NULL
 order_internal_note order_id int8 NOT NULL
 order_internal_note body text NOT NULL
 order_internal_note updated_at timestamptz NOT NULL

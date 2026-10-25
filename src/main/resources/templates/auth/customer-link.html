@@ -2,6 +2,7 @@
 <!--
   The e-mailed link lands here (CUS-01, chapter 10 §2): one «Accedi» button in a CSRF-protected
   form that works without JavaScript. The GET never consumes the token; this form's POST does.
+  «Resta connesso» (ticked) remembers the device for the configured days (ADR 0031).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -21,6 +22,7 @@
     <p class="lede" th:text="#{auth.customer.link.lead}">Premi il pulsante per entrare nella tua area clienti.</p>
     <form method="post" th:action="@{/area-clienti/accesso}">
       <input type="hidden" name="t" th:value="${token}">
+      <th:block th:replace="~{auth/remember :: remember(${rememberDays})}"></th:block>
       <div class="form-actions"><button type="submit" class="btn btn-lg" th:text="#{auth.customer.link.submit}">Accedi</button></div>
     </form>
   </div>

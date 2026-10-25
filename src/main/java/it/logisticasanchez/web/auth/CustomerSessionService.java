@@ -21,10 +21,11 @@ import org.springframework.stereotype.Service;
 
 /**
  * Customer sessions (chapter 10 §2, ADR 0004): {@link #signIn} turns a consumed token into a
- * session with a rotated id and {@code ROLE_CUSTOMER}; {@link #endAllSessions} expires every
- * session of a customer user in the {@link SessionRegistry} — a decline (ADM-02) and an e-mail
- * change (CUS-06) call it from the Phase 2 {@code customers} module; the expired sessions are
- * invalidated at their next request and sent to the sign-in page.
+ * session with a rotated id and {@code ROLE_CUSTOMER}, and may remember the device for 60 days
+ * (ADR 0031); {@link #endAllSessions} expires every session of a customer user in the {@link
+ * SessionRegistry} and forgets its remembered devices — a decline (ADM-02), an e-mail change
+ * (CUS-06) and the anonymisation (NFR-03) call it; the expired sessions are invalidated at their
+ * next request and sent to the sign-in page.
  */
 @Service
 public class CustomerSessionService {
@@ -32,17 +33,37 @@ public class CustomerSessionService {
     private final SessionAuthenticationStrategy sessionStrategy;
     private final SecurityContextRepository contextRepository;
     private final SessionRegistry registry;
+    private final RememberedSignInService remembered;
     private final Clock clock;
 
     public CustomerSessionService(
             SessionAuthenticationStrategy sessionStrategy,
             SecurityContextRepository contextRepository,
             SessionRegistry registry,
+            RememberedSignInService remembered,
             Clock clock) {
         this.sessionStrategy = sessionStrategy;
         this.contextRepository = contextRepository;
         this.registry = registry;
+        this.remembered = remembered;
         this.clock = clock;
+    }
+
+    /**
+     * Opens the session after a sign-in link or the registration and remembers the device when
+     * asked (ADR 0031); otherwise the device forgets any earlier remembered sign-in.
+     */
+    public void signIn(
+            CustomerPrincipal principal,
+            boolean rememberDevice,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        signIn(principal, request, response);
+        if (rememberDevice) {
+            remembered.remember(principal.customerUserId(), request, response);
+        } else {
+            remembered.forgetDevice(request, response);
+        }
     }
 
     /** Opens the customer session: new session id, registry entry, security context saved, absolute-limit stamp. */
@@ -57,8 +78,9 @@ public class CustomerSessionService {
         request.getSession().setAttribute(SessionLimitsFilter.AUTHENTICATED_AT, clock.instant());
     }
 
-    /** Expires every live session of the customer user; returns how many were found. */
+    /** Expires every live session of the customer user and forgets its devices; returns how many sessions were found. */
     public int endAllSessions(long customerUserId) {
+        remembered.forgetAll(customerUserId);
         int ended = 0;
         for (Object principal : registry.getAllPrincipals()) {
             if (principal instanceof CustomerPrincipal customer && customer.customerUserId() == customerUserId) {
