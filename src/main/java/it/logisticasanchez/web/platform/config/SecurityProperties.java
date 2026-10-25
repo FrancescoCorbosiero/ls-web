@@ -39,10 +39,16 @@ public record SecurityProperties(
         Duration absolute();
     }
 
-    /** Customers: 60 minutes idle, 12 hours absolute (chapter 10 §2). */
+    /**
+     * Customers: 60 minutes idle, 12 hours absolute (chapter 10 §2); after a sign-in link the
+     * device stays signed in for {@code remember} (owner decision of 2026-10-25, PD-10, ADR 0031:
+     * 60 days; zero turns it off): a cookie restores the session once these limits end it.
+     */
     public record CustomerSession(
             @NotNull @DefaultValue("60m") Duration idle,
-            @NotNull @DefaultValue("12h") Duration absolute) implements Window {}
+            @NotNull @DefaultValue("12h") Duration absolute,
+            @NotNull @DefaultValue("60d") Duration remember)
+            implements Window {}
 
     /** Staff: 30 minutes idle, 10 hours absolute (chapter 10 §2). */
     public record StaffSession(

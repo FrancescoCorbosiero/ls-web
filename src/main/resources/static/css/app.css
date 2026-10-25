@@ -673,6 +673,13 @@ body {
   flex: none;
   accent-color: var(--navy-900);
 }
+/* «Resta connesso» under the sign-in button's form (ADR 0031) */
+.remember {
+  margin: 0 0 18px;
+}
+.remember .small {
+  margin: 4px 0 0 30px;
+}
 .filters {
   margin-bottom: 16px;
   padding: 16px;

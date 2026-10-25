@@ -36,6 +36,7 @@
       <input type="hidden" name="email" th:value="${values['email']}">
       <input type="hidden" th:each="f : ${values}" th:if="${f.key != 'email'}" th:name="${f.key}" th:value="${f.value}">
       <input type="hidden" name="website" value="">
+      <th:block th:if="${!reregister}"><th:block th:replace="~{auth/remember :: remember(${rememberDays})}"></th:block></th:block>
       <button type="submit" name="step" value="confirm" class="btn" th:text="#{customers.review.confirm}">Conferma</button>
       <button type="submit" name="step" value="edit" class="btn btn-light" th:text="#{customers.review.edit}">Modifica</button>
     </form>

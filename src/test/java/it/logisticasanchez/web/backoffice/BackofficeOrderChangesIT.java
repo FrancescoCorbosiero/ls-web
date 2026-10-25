@@ -320,8 +320,7 @@ class BackofficeOrderChangesIT extends AbstractPostgresIT {
         assertThat(tracking.lookup(newCode)).isEmpty();
         assertThat(orders.findApprovedByCode(newCode)).isEmpty();
         // the customer sees it cancelled, without the amount of a shipment that will not happen
-        assertThat(mvc.perform(get("/area-clienti/ordini/" + newCode + "/")
-                                .session(CustomerTestData.session(customer)))
+        assertThat(mvc.perform(get("/area-clienti/ordini/" + newCode + "/").session(CustomerTestData.session(customer)))
                         .andReturn()
                         .getResponse()
                         .getContentAsString())

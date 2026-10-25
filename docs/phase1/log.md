@@ -1701,3 +1701,54 @@ All shared files of this step were edited directly by the integrator: `CLAUDE.md
 line, motion convention, `CHROMIUM_PATH`), chapter 09 and 11, `messages.properties`,
 `layout/private.html`, `docs/plan.md` §Status and §8.1, `docs/parity-matrix.md`,
 `docs/adr/README.md`, `route-matrix.tsv`, the schema files.
+
+## Step E — Audit of `main` and the 60-day sign-in (2026-10-25)
+
+The owner's message of 2026-10-25: «Align with main and audit», then the M2 planning prompt,
+and «Also set the lifetime of magic link of 60 days so customers don't have to always check
+email inbox».
+
+### Audit findings (fixed)
+
+* **CI on `main` red since PR #20** (runs 45 and 46): the build job failed on two counts.
+  * Spotless: `BackofficeOrderChangesIT` was not formatted (`./mvnw spotless:apply`).
+  * `RouteMatrixIT` depended on the order the test classes run in: the matrix samples every
+    `{id}` as `1`, and when order 1 is closed (approved, for an OPERATOR; declined or
+    cancelled, for everyone) or customer 1 anonymised, the edit and cancel pages of ADR 0028
+    send staff back to the record with a message (302). Reproduced on a fresh database with
+    order 1 cancelled; the three rows now accept `404|200|302` for staff, with a comment.
+* **A second order-dependent test**, found by running the suite alphabetically on a fresh
+  database: `PhaseOneEntitiesIT.auditLogAndDetailRoundTrip` read the newest audit row of
+  `shipment_order` 42, which the order tests may have written after the fixed test time; it
+  now uses an entity id no test order reaches.
+* `docs/plan.md` §Status still described step D as unmerged; updated.
+* Open PR #14 «Dev script» (the owner's, an earlier version of the local scripts) is in conflict
+  with `main` and looks superseded by #13 and #15–#19: left to the owner.
+
+### The 60-day sign-in (ADR 0031; PD-10 decided)
+
+The e-mailed link stays single use and valid 15 minutes; after it, with «Resta connesso su
+questo dispositivo per 60 giorni» ticked (default), the device keeps a `__Secure-LS_REMEMBER`
+cookie that opens a new session whenever the 60-minute one has ended, for 60 days from the
+sign-in (not extended by use). Migration `V014__remembered_sign_in.sql`; `auth`
+`RememberedSignInService`, `RememberedSignInFilter` (after `SessionLimitsFilter`, before the
+CSRF filter), `ExpiredRememberedSignInRetentionJob`; «Esci», a decline, an e-mail change and
+the anonymisation forget the devices, and so does a sign-in with the box unticked (a shared
+computer must not reopen the previous customer's account); the registration summary offers the same choice; the
+cookie page lists the cookie; setting `ls.security.sessions.customer.remember` (0 = off).
+Tests: `RememberedSignInIT` (12), `RememberedSignInOffIT`, `RememberedSignInServiceTest`, the
+E2E step «[CUS-01] «Resta connesso» opens the area again once the session has ended».
+
+### New Italian texts for the owner's review
+
+«Resta connesso su questo dispositivo per 60 giorni», «Togli la spunta se usi un computer
+condiviso.», and on the cookie page the row `__Secure-LS_REMEMBER` «Ti mantiene connesso
+all'area clienti su questo dispositivo, se all'accesso lasci la spunta «Resta connesso»» —
+«60 giorni dall'accesso, o fino a quando premi «Esci»» (the intro now says «solo cookie
+tecnici»).
+
+### Open points
+
+* No staff action signs a customer out of every device (the e-mail change does it); add one
+  if the office needs it.
+* M2.1: the proposal is in the chat of 2026-10-25; the owner picks the scope.

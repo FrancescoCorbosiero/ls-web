@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<!--
+  «Resta connesso» (ADR 0031): ticked by default, it keeps the customer signed in on this device
+  for the configured days; hidden when the setting is zero. Used by the «Accedi» page and the
+  registration summary.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div class="remember" th:fragment="remember(days)" th:if="${days > 0}">
+  <label class="check-field"><input type="checkbox" name="ricordami" value="1" checked> <span th:text="#{auth.customer.remember(${days})}">Resta connesso su questo dispositivo per 60 giorni</span></label>
+  <p class="muted small" th:text="#{auth.customer.rememberHint}">Togli la spunta se usi un computer condiviso.</p>
+</div>
+</body>
+</html>

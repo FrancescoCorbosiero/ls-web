@@ -18,7 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * the e-mail form (legacy copy adapted); its {@code POST} always answers the same page and
  * status. {@code GET /area-clienti/accesso?t=…} only renders the «Accedi» button and never
  * consumes the token (a mail scanner or a link preview cannot burn it); its CSRF-protected
- * {@code POST} consumes it, opens the session and redirects without the token in the URL.
+ * {@code POST} consumes it, opens the session, remembers the device for 60 days unless the
+ * customer unticks «Resta connesso» (ADR 0031) and redirects without the token in the URL.
  * {@code /area-clienti/cambio-email?t=…} is the same two-step page for a {@code CHANGE_EMAIL}
  * link (CUS-06). The registration page belongs to the {@code customers} module and the home
  * ({@code /area-clienti/ordini/}) to the {@code orders} module.
@@ -31,16 +32,19 @@ public class CustomerSignInController {
     private final CustomerSignInService signIn;
     private final CustomerSessionService sessions;
     private final CustomerAccountService accounts;
+    private final RememberedSignInService remembered;
     private final ClientIpResolver clientIp;
 
     public CustomerSignInController(
             CustomerSignInService signIn,
             CustomerSessionService sessions,
             CustomerAccountService accounts,
+            RememberedSignInService remembered,
             ClientIpResolver clientIp) {
         this.signIn = signIn;
         this.sessions = sessions;
         this.accounts = accounts;
+        this.remembered = remembered;
         this.clientIp = clientIp;
     }
 
@@ -70,12 +74,14 @@ public class CustomerSignInController {
             return linkInvalid(model);
         }
         model.addAttribute("token", token);
+        model.addAttribute("rememberDays", remembered.offeredDays());
         return "auth/customer-link";
     }
 
     @PostMapping(AuthRoutes.CUSTOMER_LINK)
     public String useLink(
             @RequestParam(name = "t", required = false) String token,
+            @RequestParam(name = "ricordami", required = false) String rememberDevice,
             HttpServletRequest request,
             HttpServletResponse response,
             Model model) {
@@ -86,7 +92,7 @@ public class CustomerSignInController {
         } catch (LoginTokenService.InvalidTokenException e) {
             return linkInvalid(model);
         }
-        sessions.signIn(principal, request, response);
+        sessions.signIn(principal, rememberDevice != null, request, response);
         return "redirect:" + AuthRoutes.CUSTOMER_HOME;
     }
 

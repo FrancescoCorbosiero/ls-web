@@ -156,11 +156,20 @@ test('[CUS-01] the approved customer signs in from the mailed link', async () =>
   const mail = await waitForMail({ to: customer.email, subject: /link per accedere/ });
   await customerPage.goto(linkIn(mail, '/area-clienti/accesso'));
   await expect(customerPage.getByRole('heading', { name: "Accedi all'area clienti" })).toBeVisible();
+  await expect(customerPage.getByLabel('Resta connesso su questo dispositivo per 60 giorni')).toBeChecked();
   await customerPage.getByRole('button', { name: 'Accedi' }).click();
 
   await expect(customerPage).toHaveURL(/\/area-clienti\/ordini\/$/);
   await expect(customerPage.getByRole('heading', { name: 'I miei ordini' })).toBeVisible();
   await expect(customerPage.locator('[data-customer-status]')).toHaveCount(0);
+});
+
+test('[CUS-01] «Resta connesso» opens the area again once the session has ended', async () => {
+  // ADR 0031: only the remember cookie is left, as after the idle timeout or a restart
+  await customerContext.clearCookies({ name: 'LS_SESSION' });
+  await customerPage.goto('/area-clienti/');
+  await expect(customerPage).toHaveURL(/\/area-clienti\/ordini\/$/);
+  await expect(customerPage.getByRole('heading', { name: 'I miei ordini' })).toBeVisible();
 });
 
 test('[CUS-04] the customer places an order with the one-page form and the summary', async () => {

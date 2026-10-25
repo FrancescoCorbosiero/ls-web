@@ -4,6 +4,7 @@ import it.logisticasanchez.web.platform.ratelimit.RateLimiter;
 import it.logisticasanchez.web.platform.security.ClientIpResolver;
 import it.logisticasanchez.web.platform.security.RouteRegistry;
 import it.logisticasanchez.web.platform.security.SecurityChainContributor;
+import it.logisticasanchez.web.platform.security.SessionLimitsFilter;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.ErrorResponder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +33,8 @@ import org.springframework.stereotype.Component;
  * check, lock-out bookkeeping on failure), the two logouts ({@code POST} with CSRF; the session
  * is invalidated and the cookie deleted), the session registry with the concurrent-session
  * filter that invalidates a session expired by {@link CustomerSessionService#endAllSessions},
- * and the shared context repository and session strategy.
+ * the shared context repository and session strategy, and the remembered device that signs a
+ * customer back in after the session ended (ADR 0031).
  */
 @Component
 public class AuthChainContributor implements SecurityChainContributor {
@@ -47,6 +49,8 @@ public class AuthChainContributor implements SecurityChainContributor {
     private final RateLimiter rateLimiter;
     private final ClientIpResolver clientIp;
     private final ErrorResponder responder;
+    private final RememberedSignInService remembered;
+    private final CustomerSessionService customerSessions;
 
     public AuthChainContributor(
             StaffUserDetailsService staffUsers,
@@ -58,7 +62,9 @@ public class AuthChainContributor implements SecurityChainContributor {
             SecurityContextRepository contextRepository,
             RateLimiter rateLimiter,
             ClientIpResolver clientIp,
-            ErrorResponder responder) {
+            ErrorResponder responder,
+            RememberedSignInService remembered,
+            CustomerSessionService customerSessions) {
         this.staffUsers = staffUsers;
         this.encoder = encoder;
         this.successHandler = successHandler;
@@ -69,6 +75,8 @@ public class AuthChainContributor implements SecurityChainContributor {
         this.rateLimiter = rateLimiter;
         this.clientIp = clientIp;
         this.responder = responder;
+        this.remembered = remembered;
+        this.customerSessions = customerSessions;
     }
 
     @Override
@@ -88,6 +96,7 @@ public class AuthChainContributor implements SecurityChainContributor {
                 .addFilterBefore(
                         new StaffLoginRateLimitFilter(rateLimiter, clientIp, responder),
                         UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(new RememberedSignInFilter(remembered, customerSessions), SessionLimitsFilter.class)
                 .logout(logout -> logout.logoutRequestMatcher(new OrRequestMatcher(
                                 PathPatternRequestMatcher.withDefaults()
                                         .matcher(HttpMethod.POST, AuthRoutes.STAFF_LOGOUT),

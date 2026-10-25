@@ -3,6 +3,7 @@ package it.logisticasanchez.web.customers;
 import it.logisticasanchez.web.auth.AuthRoutes;
 import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
+import it.logisticasanchez.web.auth.RememberedSignInService;
 import it.logisticasanchez.web.platform.ratelimit.RateLimitKeys;
 import it.logisticasanchez.web.platform.ratelimit.RateLimiter;
 import it.logisticasanchez.web.platform.security.ClientIpResolver;
@@ -24,10 +25,10 @@ import org.springframework.web.bind.annotation.RequestParam;
  * The registration of the customer area (CUS-02; chapter 03 §5.3–§5.5 corrected by §10): the
  * form behind a {@code REGISTER} link («Inserisci i dati dell'azienda», e-mail typed again and
  * checked against the link), a summary page («Controlla i dati inseriti», OP-16) and the
- * confirmation that creates the customer and signs it in. The same form, without a token, lets
- * a signed-in DECLINED customer register again (Q-09). A honeypot field answers like a success;
- * registrations are rate-limited per IP; the page always answers the same way whether the
- * e-mail was new or already known (CUS-02).
+ * confirmation that creates the customer and signs it in («Resta connesso» remembers the device,
+ * ADR 0031). The same form, without a token, lets a signed-in DECLINED customer register again
+ * (Q-09). A honeypot field answers like a success; registrations are rate-limited per IP; the
+ * page always answers the same way whether the e-mail was new or already known (CUS-02).
  */
 @Controller
 public class RegistrationController {
@@ -39,6 +40,7 @@ public class RegistrationController {
     private final CustomerService customers;
     private final RegistrationValidator validator;
     private final CustomerSessionService sessions;
+    private final RememberedSignInService remembered;
     private final RateLimiter rateLimiter;
     private final ClientIpResolver clientIp;
 
@@ -46,11 +48,13 @@ public class RegistrationController {
             CustomerService customers,
             RegistrationValidator validator,
             CustomerSessionService sessions,
+            RememberedSignInService remembered,
             RateLimiter rateLimiter,
             ClientIpResolver clientIp) {
         this.customers = customers;
         this.validator = validator;
         this.sessions = sessions;
+        this.remembered = remembered;
         this.rateLimiter = rateLimiter;
         this.clientIp = clientIp;
     }
@@ -125,6 +129,7 @@ public class RegistrationController {
         }
         if (!"confirm".equals(form.get("step"))) {
             model.addAttribute("data", result.data());
+            model.addAttribute("rememberDays", remembered.offeredDays());
             return "customers/registration-review";
         }
         String ip = clientIp.resolve(request);
@@ -139,7 +144,7 @@ public class RegistrationController {
         CustomerService.Registration registration = customers.register(token, email, result.data(), ip);
         return switch (registration.outcome()) {
             case REGISTERED -> {
-                sessions.signIn(registration.principal(), request, response);
+                sessions.signIn(registration.principal(), form.get("ricordami") != null, request, response);
                 yield "redirect:" + AuthRoutes.CUSTOMER_HOME;
             }
             case SIGN_IN_LINK_SENT -> sent(model);
