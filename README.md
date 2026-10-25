@@ -6,13 +6,21 @@ It replaces the legacy public site, order portal, CMS and backend.
 
 ## Quickstart
 
-One command (JDK 21 and the PostgreSQL 16 binaries are the only prerequisites):
+With Docker only (nothing else to install):
+
+```sh
+docker compose up --build               # PostgreSQL 16 + the app on http://localhost:8080
+docker compose run --rm app dev-seed    # once: synthetic staff users (passwords printed), customers, orders
+docker compose down                     # stop (-v also drops the database)
+```
+
+Or with JDK 21 and the PostgreSQL 16 binaries, one command:
 
 ```sh
 scripts/dev.sh          # local database, build, synthetic data, app on http://localhost:8080
 ```
 
-It prints the staff passwords (`admin.seed`, `operatore.seed`) at every start; the customer
+Both print the staff passwords (`admin.seed`, `operatore.seed`) at every start; the customer
 area accepts `cliente.attivo@cliente.example` and writes the sign-in link to `.local/mail/`.
 
 Step by step:
@@ -37,9 +45,10 @@ Step-by-step guide in Italian: `docs/runbooks/local-setup.md`; deploy: `docs/run
   * the server binaries (`initdb`, `pg_ctl`, `psql`): macOS `brew install postgresql@16` and
     `export LS_PG_BIN=$(brew --prefix postgresql@16)/bin`; Debian/Ubuntu `sudo apt install postgresql-16`
     (binaries in `/usr/lib/postgresql/16/bin`, the default). Check with `$LS_PG_BIN/initdb --version`.
-  * or Docker: `docker compose -f deploy/compose.dev.yml up -d db` starts `postgres:16` on
-    `localhost:54329` with the same credentials and databases; `scripts/dev.sh` does it by itself
-    when the binaries are missing. `--profile app up --build` also runs the app image on :8080.
+  * or Docker: `docker compose up -d db` starts `postgres:16` on `localhost:54329` with the same
+    credentials and databases (`compose.yaml` includes `deploy/compose.dev.yml`); `scripts/dev.sh`
+    does it by itself when the binaries are missing. `docker compose up --build` also runs the app
+    image on :8080.
 * Node 22 (only for the Playwright end-to-end suite under `e2e/`)
 
 Maven is not needed: the wrapper downloads it.

@@ -1,0 +1,4 @@
+# Local development only: `docker compose up --build` starts PostgreSQL 16 and the app on
+# http://localhost:8080 (see deploy/compose.dev.yml). Production uses deploy/compose.yml.
+include:
+  - deploy/compose.dev.yml

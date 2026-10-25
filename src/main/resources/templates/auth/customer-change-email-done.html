@@ -9,7 +9,7 @@
 <body>
 <th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
 <main id="main" class="section">
-  <div class="container-narrow">
+  <div class="container container-narrow">
     <h1 th:text="#{auth.customer.changeEmailDone.title}">E-mail aggiornata</h1>
     <p class="lede" th:text="#{auth.customer.changeEmailDone.lead(${newEmail})}">Da ora accedi con il nuovo indirizzo.</p>
     <p><a class="btn btn-primary" th:href="@{/area-clienti/}" th:text="#{auth.customer.changeEmailDone.signIn}">Accedi</a></p>

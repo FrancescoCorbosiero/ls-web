@@ -7,7 +7,7 @@
     <head><title>…</title><th:block th:replace="~{layout/private :: htmlHead}"/></head>
     <body th:attr="hx-headers=${hxHeaders}">
       <th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"/>
-      <main id="main" class="section"><div class="container-narrow">…</div></main>
+      <main id="main" class="section"><div class="container container-narrow">…</div></main>
       <th:block th:replace="~{layout/private :: siteFooter}"/>
     </body>
   siteHeader(area, user, logoutUrl): area is 'customer' or 'staff'; user and logoutUrl may be null (sign-in pages).
