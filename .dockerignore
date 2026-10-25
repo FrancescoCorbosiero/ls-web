@@ -1,0 +1,6 @@
+# Only what the Dockerfile copies: mvnw, .mvn, pom.xml, src.
+*
+!mvnw
+!.mvn/
+!pom.xml
+!src/

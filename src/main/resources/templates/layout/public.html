@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<!--
+  Shared fragments of the public site, ported from legacy/ls-home/partials/{head,header,cta,footer}.html
+  (PUB-02). Business data come from ${business} (ls.business.*), texts from messages.properties.
+  Differences from the static site (chapter 06 §7.1): «Portale ordini» → «Area clienti» /area-clienti/.
+  Usage:  <head><title>…</title><th:block th:replace="~{layout/public :: htmlHead(true)}"/>…</head>
+          <body><th:block th:replace="~{layout/public :: siteHeader('servizi/groupage')}"/> … main …
+          <th:block th:replace="~{layout/public :: cta}"/><th:block th:replace="~{layout/public :: siteFooter}"/></body>
+  The header's nav parameter is the page key of tools/sync.mjs: the link with that data-nav gets
+  aria-current="page", a link whose key is an ancestor section gets aria-current="true" (Layout).
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:fragment="htmlHead(seo)">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="preload" href="/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/css/main.css">
+  <script type="module" src="/js/main.js"></script>
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#04233b">
+  <meta name="format-detection" content="telephone=no">
+  <meta property="og:site_name" th:content="${business.brandName}" content="Logistica Sanchez">
+  <meta property="og:locale" content="it_IT">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json" th:if="${seo}" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"LocalBusiness","@id":[(${layout.json(business.siteUrl + '/#business')})],"name":[(${layout.json(business.brandName)})],"sameAs":[[(${layout.json(business.social.instagram)})]],"legalName":[(${layout.json(business.legalName)})],"vatID":[(${layout.json(business.vatId())})],"alternateName":["Sanchez Logistica","Logistica Sanchez – Il pallet espresso"],"slogan":[(${layout.json(business.slogan)})],"description":"Spedizioni di pallet in tutta Italia in 24–72 ore dall'hub di Seregno (MB): pallet espresso, groupage, carichi completi, magazzino e cross-docking.","url":[(${layout.json(business.siteUrl + '/')})],"logo":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/brand/logo-square.png')})],"width":512,"height":512},"image":[(${layout.json(business.siteUrl + '/img/og/og-default.png')})],"telephone":[(${layout.json(business.phoneDigits())})],"email":[(${layout.json(business.officeEmail)})],"address":{"@type":"PostalAddress","streetAddress":[(${layout.json(business.address.line)})],"postalCode":[(${layout.json(business.address.postalCode)})],"addressLocality":[(${layout.json(business.address.city)})],"addressRegion":[(${layout.json(business.address.province)})],"addressCountry":[(${layout.json(business.address.country)})]},"hasMap":"https://www.google.com/maps/search/?api=1&query=Via%20dei%20Meiani%2090%2C%2020831%20Seregno%20MB","areaServed":{"@type":"Country","name":"Italia"},"openingHoursSpecification":[{"@type":"OpeningHoursSpecification","dayOfWeek":["Monday","Tuesday","Wednesday","Thursday","Friday"],"opens":"08:00","closes":"18:00"},{"@type":"OpeningHoursSpecification","dayOfWeek":"Saturday","opens":"08:00","closes":"12:00"}],"contactPoint":[{"@type":"ContactPoint","telephone":[(${layout.json(business.phoneDigits())})],"email":[(${layout.json(business.officeEmail)})],"contactType":"customer service","areaServed":"IT","availableLanguage":["Italian"]}],"knowsAbout":["Spedizione pallet","Trasporto pallet in Italia","Groupage","Collettame","Carico completo","Logistica di magazzino","Cross-docking"],"hasOfferCatalog":{"@type":"OfferCatalog","name":"Servizi di trasporto e logistica","itemListElement":[{"@type":"Offer","itemOffered":{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/servizi/spedizione-pallet/#service')})],"name":"Spedizione pallet espresso"}},{"@type":"Offer","itemOffered":{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/servizi/groupage/#service')})],"name":"Groupage e collettame"}},{"@type":"Offer","itemOffered":{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/servizi/carico-completo/#service')})],"name":"Carico completo e mezzi dedicati"}},{"@type":"Offer","itemOffered":{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/servizi/magazzino/#service')})],"name":"Magazzino e cross-docking"}}]}},{"@type":"WebSite","@id":[(${layout.json(business.siteUrl + '/#website')})],"url":[(${layout.json(business.siteUrl + '/')})],"name":[(${layout.json(business.brandName)})],"inLanguage":"it-IT","publisher":{"@id":[(${layout.json(business.siteUrl + '/#business')})]}}]}</script>
+  <!-- Allowed by 'inline-speculation-rules' in the public CSP only; omitted under the private nonce CSP. -->
+  <script type="speculationrules" th:if="${seo and cspNonce == null}">{"prerender":[{"where":{"and":[{"href_matches":"/*"},{"not":{"selector_matches":"[target=_blank], [download], [rel~=nofollow]"}}]},"eagerness":"moderate"}]}</script>
+</th:block>
+</head>
+<body>
+
+<th:block th:fragment="siteHeader(nav)">
+<a class="skip-link" href="#main" th:text="#{layout.skip}">Vai al contenuto</a>
+<div class="topbar">
+  <div class="container topbar-row">
+    <ul class="topbar-list" role="list">
+      <li><a th:href="'tel:' + ${business.phoneDigits()}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg><span class="nowrap" th:text="${business.phone}">+39 329 239 6962</span></a></li>
+      <li><a th:href="'mailto:' + ${business.officeEmail}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-mail"/></svg><span th:text="${business.officeEmail}">ufficio</span></a></li>
+      <li><a href="/contatti/#dove-siamo"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg><span th:text="${business.address.line + ', ' + business.address.city + ' (' + business.address.province + ')'}">Via dei Meiani 90, Seregno (MB)</span></a></li>
+    </ul>
+    <ul class="topbar-list" role="list">
+      <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clock"/></svg><span th:text="${business.hours.shortLabel}">Lun–Ven 8–18 · Sab 8–12</span></li>
+      <li><a href="/area-clienti/" data-nav="area-clienti" th:attr="aria-current=${layout.ariaCurrent(nav,'area-clienti')}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-box"/></svg><span th:text="#{layout.topbar.customerArea}">Area clienti</span></a></li>
+      <li><a href="/tracking/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg><span th:text="#{layout.topbar.track}">Traccia la spedizione</span></a></li>
+    </ul>
+  </div>
+</div>
+<header class="site-header" data-header>
+  <div class="container header-row">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/img/brand/mark.svg" width="46" height="46" alt="">
+      <span class="brand-text"><span class="brand-name" th:text="${business.brandName}">Logistica Sanchez</span><span class="brand-tag" th:text="${business.slogan}">Il pallet espresso</span></span>
+    </a>
+    <nav class="main-nav" th:aria-label="#{layout.nav.label}" aria-label="Principale">
+      <ul class="nav-list" role="list">
+        <li class="nav-item has-mega" data-mega>
+          <a class="nav-link" href="/servizi/" data-nav="servizi" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi')}" th:text="#{layout.nav.services}">Servizi</a>
+          <button class="nav-caret" type="button" aria-expanded="false" aria-controls="mega-servizi" th:aria-label="#{layout.nav.services.caret}" aria-label="Mostra i servizi"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-chevron-down"/></svg></button>
+          <div class="mega" id="mega-servizi">
+            <ul class="mega-links" role="list">
+              <li><a href="/servizi/spedizione-pallet/" data-nav="servizi/spedizione-pallet" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/spedizione-pallet')}"><span class="mega-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></span><span><strong th:text="#{layout.nav.services.pallet}">Spedizione pallet espresso</strong><small th:text="#{layout.nav.services.pallet.sub}">Da 1 pallet, in tutta Italia in 24–72 ore</small></span></a></li>
+              <li><a href="/servizi/groupage/" data-nav="servizi/groupage" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/groupage')}"><span class="mega-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-boxes"/></svg></span><span><strong th:text="#{layout.nav.services.groupage}">Groupage e collettame</strong><small th:text="#{layout.nav.services.groupage.sub}">Paghi solo lo spazio che occupi</small></span></a></li>
+              <li><a href="/servizi/carico-completo/" data-nav="servizi/carico-completo" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/carico-completo')}"><span class="mega-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></span><span><strong th:text="#{layout.nav.services.ftl}">Carico completo</strong><small th:text="#{layout.nav.services.ftl.sub}">Mezzo dedicato, viaggio diretto</small></span></a></li>
+              <li><a href="/servizi/magazzino/" data-nav="servizi/magazzino" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/magazzino')}"><span class="mega-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></span><span><strong th:text="#{layout.nav.services.warehouse}">Magazzino e cross-docking</strong><small th:text="#{layout.nav.services.warehouse.sub}">Stoccaggio e smistamento a Seregno</small></span></a></li>
+            </ul>
+            <div class="mega-side">
+              <p class="mega-title" th:text="#{layout.nav.services.extras}">Servizi accessori</p>
+              <ul class="mega-extras" role="list">
+                <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-down-to-line"/></svg><th:block th:text="#{layout.nav.services.extras.tailLift}">Sponda idraulica</th:block></li>
+                <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calendar-clock"/></svg><th:block th:text="#{layout.nav.services.extras.appointment}">Consegna su appuntamento</th:block></li>
+                <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-repeat"/></svg><th:block th:text="#{layout.nav.services.extras.scheduled}">Ritiri programmati</th:block></li>
+                <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-file-check"/></svg><th:block th:text="#{layout.nav.services.extras.pod}">Prova di consegna digitale</th:block></li>
+              </ul>
+              <a class="mega-all" href="/servizi/"><th:block th:text="#{layout.nav.services.all}">Tutti i servizi</th:block><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+            </div>
+          </div>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="/zone/" data-nav="zone" th:attr="aria-current=${layout.ariaCurrent(nav,'zone')}" th:text="#{layout.nav.zones}">Zone servite</a></li>
+        <li class="nav-item"><a class="nav-link" href="/chi-siamo/" data-nav="chi-siamo" th:attr="aria-current=${layout.ariaCurrent(nav,'chi-siamo')}" th:text="#{layout.nav.about}">Chi siamo</a></li>
+        <li class="nav-item"><a class="nav-link" href="/blog/" data-nav="blog" th:attr="aria-current=${layout.ariaCurrent(nav,'blog')}" th:text="#{layout.nav.blog}">Blog</a></li>
+        <li class="nav-item"><a class="nav-link" href="/contatti/" data-nav="contatti" th:attr="aria-current=${layout.ariaCurrent(nav,'contatti')}" th:text="#{layout.nav.contacts}">Contatti</a></li>
+      </ul>
+    </nav>
+    <div class="header-actions">
+      <a class="btn btn-secondary btn-sm header-track" href="/tracking/" data-nav="tracking" th:attr="aria-current=${layout.ariaCurrent(nav,'tracking')}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg><th:block th:text="#{layout.header.track}">Traccia</th:block></a>
+      <a class="btn btn-primary btn-sm header-cta" href="/preventivo/" data-nav="preventivo" th:attr="aria-current=${layout.ariaCurrent(nav,'preventivo')}"><span><th:block th:text="#{layout.header.quote}">Preventivo</th:block><span class="hide-xs" th:text="#{layout.header.quote.suffix}"> gratuito</span></span></a>
+      <button class="burger" type="button" th:aria-label="#{layout.header.menuOpen}" aria-label="Apri il menu" aria-controls="drawer" aria-expanded="false" data-drawer-open><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+<dialog class="drawer" id="drawer" th:aria-label="#{layout.drawer.label}" aria-label="Menu di navigazione">
+  <div class="drawer-head">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/img/brand/mark.svg" width="40" height="40" alt="">
+      <span class="brand-text"><span class="brand-name" th:text="${business.brandName}">Logistica Sanchez</span><span class="brand-tag" th:text="${business.slogan}">Il pallet espresso</span></span>
+    </a>
+    <button class="drawer-close" type="button" th:aria-label="#{layout.header.menuClose}" aria-label="Chiudi il menu" data-drawer-close><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-x"/></svg></button>
+  </div>
+  <nav class="drawer-nav" th:aria-label="#{layout.drawer.navLabel}" aria-label="Menu mobile">
+    <ul role="list">
+      <li><a href="/" data-nav="home" th:attr="aria-current=${layout.ariaCurrent(nav,'home')}" th:text="#{layout.nav.home}">Home</a></li>
+      <li>
+        <details class="drawer-group" data-drawer-group>
+          <summary><th:block th:text="#{layout.nav.services}">Servizi</th:block><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-chevron-down"/></svg></summary>
+          <ul role="list">
+            <li><a href="/servizi/spedizione-pallet/" data-nav="servizi/spedizione-pallet" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/spedizione-pallet')}" th:text="#{layout.nav.services.pallet}">Spedizione pallet espresso</a></li>
+            <li><a href="/servizi/groupage/" data-nav="servizi/groupage" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/groupage')}" th:text="#{layout.nav.services.groupage}">Groupage e collettame</a></li>
+            <li><a href="/servizi/carico-completo/" data-nav="servizi/carico-completo" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/carico-completo')}" th:text="#{layout.nav.services.ftl}">Carico completo</a></li>
+            <li><a href="/servizi/magazzino/" data-nav="servizi/magazzino" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi/magazzino')}" th:text="#{layout.nav.services.warehouse}">Magazzino e cross-docking</a></li>
+            <li><a href="/servizi/" data-nav="servizi" th:attr="aria-current=${layout.ariaCurrent(nav,'servizi')}" th:text="#{layout.nav.services.all}">Tutti i servizi</a></li>
+          </ul>
+        </details>
+      </li>
+      <li><a href="/zone/" data-nav="zone" th:attr="aria-current=${layout.ariaCurrent(nav,'zone')}" th:text="#{layout.nav.zones.long}">Zone servite e tempi</a></li>
+      <li><a href="/tracking/" data-nav="tracking" th:attr="aria-current=${layout.ariaCurrent(nav,'tracking')}" th:text="#{layout.topbar.track}">Traccia la spedizione</a></li>
+      <li><a href="/chi-siamo/" data-nav="chi-siamo" th:attr="aria-current=${layout.ariaCurrent(nav,'chi-siamo')}" th:text="#{layout.nav.about}">Chi siamo</a></li>
+      <li><a href="/blog/" data-nav="blog" th:attr="aria-current=${layout.ariaCurrent(nav,'blog')}" th:text="#{layout.nav.blog.long}">Blog e guide</a></li>
+      <li><a href="/faq/" data-nav="faq" th:attr="aria-current=${layout.ariaCurrent(nav,'faq')}" th:text="#{layout.nav.faq}">Domande frequenti</a></li>
+      <li><a href="/contatti/" data-nav="contatti" th:attr="aria-current=${layout.ariaCurrent(nav,'contatti')}" th:text="#{layout.nav.contacts}">Contatti</a></li>
+      <li><a href="/area-clienti/" data-nav="area-clienti" th:attr="aria-current=${layout.ariaCurrent(nav,'area-clienti')}" th:text="#{layout.topbar.customerArea}">Area clienti</a></li>
+    </ul>
+  </nav>
+  <div class="drawer-foot">
+    <a class="btn btn-primary btn-block" href="/preventivo/"><th:block th:text="#{layout.drawer.quote}">Richiedi un preventivo gratuito</th:block><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+    <div class="drawer-contacts">
+      <a th:href="${business.whatsappUrl() + '?text=' + #uris.escapeQueryParam(#messages.msg('layout.whatsapp.info'))}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg><th:block th:text="#{layout.drawer.whatsapp}">WhatsApp</th:block></a>
+      <a th:href="'tel:' + ${business.phoneDigits()}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg><th:block th:text="#{layout.drawer.call}">Chiama</th:block></a>
+      <a th:href="'mailto:' + ${business.officeEmail}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-mail"/></svg><th:block th:text="#{layout.drawer.email}">Email</th:block></a>
+    </div>
+    <p class="drawer-note" th:text="${business.hours.shortLabel + ' · ' + business.address.line + ', ' + business.address.city + ' (' + business.address.province + ')'}">Lun–Ven 8–18 · Sab 8–12 · Via dei Meiani 90, Seregno (MB)</p>
+  </div>
+</dialog>
+</th:block>
+
+<section class="cta-band" aria-labelledby="cta-band-title" th:fragment="cta">
+  <svg class="cta-route" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true"><path d="M-20 120 C 140 40, 260 40, 360 92 S 560 150, 700 86 S 940 10, 1220 54"/></svg>
+  <div class="container cta-inner">
+    <div class="cta-copy">
+      <p class="kicker" th:text="#{layout.cta.kicker}">Preventivo gratuito e senza impegno</p>
+      <h2 id="cta-band-title" th:text="#{layout.cta.title}">Hai un pallet da spedire? Parliamone oggi.</h2>
+      <p th:text="#{layout.cta.text}">Compila il modulo in due minuti o scrivici su WhatsApp: ricevi un prezzo chiaro, con tempi di ritiro e consegna già definiti.</p>
+    </div>
+    <div class="cta-actions">
+      <a class="btn btn-primary btn-lg" href="/preventivo/"><th:block th:text="#{layout.cta.quote}">Richiedi un preventivo</th:block><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      <a class="btn btn-secondary btn-lg" th:href="${business.whatsappUrl() + '?text=' + #uris.escapeQueryParam(#messages.msg('layout.whatsapp.quote'))}" target="_blank" rel="noopener"><svg class="icon icon-wa" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg><th:block th:text="#{layout.cta.whatsapp}">Scrivici su WhatsApp</th:block></a>
+    </div>
+  </div>
+</section>
+
+<th:block th:fragment="siteFooter">
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a class="footer-logo" href="/"><img src="/img/brand/logo-white.svg" width="214" height="100" th:alt="${business.brandName}" alt="Logistica Sanchez" loading="lazy"></a>
+      <p th:text="#{layout.footer.tagline}">Il tuo partner affidabile per spedizioni express in tutta Italia. Soluzioni logistiche flessibili e personalizzate.</p>
+      <address class="footer-nap">
+        <strong th:text="${business.legalName}">Logistica Sanchez S.r.l.</strong><br>
+        <th:block th:text="${business.address.line}">Via dei Meiani, 90</th:block><br>
+        <th:block th:text="${business.address.postalCode + ' ' + business.address.city + ' (' + business.address.province + ')'}">20831 Seregno (MB)</th:block>
+      </address>
+    </div>
+    <nav class="footer-col" th:aria-label="#{layout.footer.services}" aria-label="Servizi">
+      <p class="footer-title" th:text="#{layout.footer.services}">Servizi</p>
+      <ul role="list">
+        <li><a href="/servizi/spedizione-pallet/" th:text="#{layout.nav.services.pallet}">Spedizione pallet espresso</a></li>
+        <li><a href="/servizi/groupage/" th:text="#{layout.nav.services.groupage}">Groupage e collettame</a></li>
+        <li><a href="/servizi/carico-completo/" th:text="#{layout.nav.services.ftl}">Carico completo</a></li>
+        <li><a href="/servizi/magazzino/" th:text="#{layout.nav.services.warehouse}">Magazzino e cross-docking</a></li>
+        <li><a href="/preventivo/" th:text="#{layout.footer.quote}">Richiedi un preventivo</a></li>
+        <li><a href="/tracking/" th:text="#{layout.topbar.track}">Traccia la spedizione</a></li>
+        <li><a href="/area-clienti/" th:text="#{layout.topbar.customerArea}">Area clienti</a></li>
+      </ul>
+    </nav>
+    <nav class="footer-col" th:aria-label="#{layout.footer.zones}" aria-label="Zone servite">
+      <p class="footer-title" th:text="#{layout.footer.zones}">Zone servite</p>
+      <ul role="list">
+        <li><a href="/zone/monza-brianza/" th:text="#{layout.footer.zones.mb}">Monza e Brianza</a></li>
+        <li><a href="/zone/milano/" th:text="#{layout.footer.zones.mi}">Milano</a></li>
+        <li><a href="/zone/como/" th:text="#{layout.footer.zones.co}">Como</a></li>
+        <li><a href="/zone/lecco/" th:text="#{layout.footer.zones.lc}">Lecco</a></li>
+        <li><a href="/zone/bergamo/" th:text="#{layout.footer.zones.bg}">Bergamo</a></li>
+        <li><a href="/zone/" th:text="#{layout.footer.zones.all}">Tutta Italia: tempi di consegna</a></li>
+      </ul>
+    </nav>
+    <nav class="footer-col" th:aria-label="#{layout.footer.company}" aria-label="Azienda">
+      <p class="footer-title" th:text="#{layout.footer.company}">Azienda</p>
+      <ul role="list">
+        <li><a href="/chi-siamo/" th:text="#{layout.nav.about}">Chi siamo</a></li>
+        <li><a href="/blog/" th:text="#{layout.nav.blog.long}">Blog e guide</a></li>
+        <li><a href="/faq/" th:text="#{layout.nav.faq}">Domande frequenti</a></li>
+        <li><a href="/contatti/" th:text="#{layout.nav.contacts}">Contatti</a></li>
+      </ul>
+    </nav>
+    <div class="footer-col footer-contacts">
+      <p class="footer-title" th:text="#{layout.footer.contacts}">Contatti</p>
+      <ul role="list">
+        <li><a th:href="'tel:' + ${business.phoneDigits()}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg><span class="nowrap" th:text="${business.phone}">+39 329 239 6962</span></a></li>
+        <li><a th:href="${business.whatsappUrl()}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg><th:block th:text="#{layout.drawer.whatsapp}">WhatsApp</th:block></a></li>
+        <li><a th:href="'mailto:' + ${business.officeEmail}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-mail"/></svg><span th:text="${business.officeEmail}">ufficio</span></a></li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clock"/></svg><th:block th:text="${business.hours.shortLabel}">Lun–Ven 8–18 · Sab 8–12</th:block></li>
+        <li th:if="${business.social.instagram != null and !business.social.instagram.isBlank()}"><a th:href="${business.social.instagram}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-instagram"/></svg><th:block th:text="#{layout.footer.instagram}">Instagram</th:block></a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container footer-bottom-row">
+      <p th:text="#{layout.footer.copyright(${layout.year()}, ${business.legalName}, ${business.slogan}, ${business.vatNumber}, ${business.address.line + ', ' + business.address.postalCode + ' ' + business.address.city + ' (' + business.address.province + ')'})}">© 2025 Logistica Sanchez S.r.l. – Il pallet espresso · P.IVA 13113080967 · Via dei Meiani 90, 20831 Seregno (MB)</p>
+      <ul role="list">
+        <li><a href="/privacy/" th:text="#{layout.footer.privacy}">Privacy</a></li>
+        <li><a href="/cookie/" th:text="#{layout.footer.cookie}">Cookie</a></li>
+        <li><th:block th:text="#{layout.footer.madeBy}">Sito realizzato da</th:block> <a href="https://alpacode.it" target="_blank" rel="noopener">Alpacode</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+<nav class="action-bar" th:aria-label="#{layout.actionBar.label}" aria-label="Azioni rapide" data-action-bar>
+  <a th:href="'tel:' + ${business.phoneDigits()}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg><th:block th:text="#{layout.drawer.call}">Chiama</th:block></a>
+  <a th:href="${business.whatsappUrl() + '?text=' + #uris.escapeQueryParam(#messages.msg('layout.whatsapp.info'))}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg><th:block th:text="#{layout.drawer.whatsapp}">WhatsApp</th:block></a>
+  <a href="/tracking/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg><th:block th:text="#{layout.header.track}">Traccia</th:block></a>
+  <a class="is-primary" href="/preventivo/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calculator"/></svg><th:block th:text="#{layout.header.quote}">Preventivo</th:block></a>
+</nav>
+<a class="fab-wa" th:href="${business.whatsappUrl() + '?text=' + #uris.escapeQueryParam(#messages.msg('layout.whatsapp.info'))}" target="_blank" rel="noopener" th:aria-label="#{layout.fab.whatsapp}" aria-label="Scrivici su WhatsApp"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg></a>
+<button class="to-top" type="button" th:aria-label="#{layout.toTop}" aria-label="Torna su" data-to-top hidden><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-up"/></svg></button>
+</th:block>
+</body>
+</html>

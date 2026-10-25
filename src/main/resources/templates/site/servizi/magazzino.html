@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Magazzino e cross-docking a Seregno (MB) | Logistica Sanchez</title>
+<meta name="description" content="Stoccaggio di breve e medio periodo, cross-docking e consolidamento nel nostro hub di Seregno, in Brianza: la tua merce pronta a ripartire per tutta Italia.">
+<link rel="canonical" th:href="|${business.siteUrl}/servizi/magazzino/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Magazzino e cross-docking in Brianza">
+<meta property="og:description" content="Stoccaggio di breve e medio periodo, cross-docking e consolidamento nel nostro hub di Seregno, in Brianza: la tua merce pronta a ripartire per tutta Italia.">
+<meta property="og:url" th:content="|${business.siteUrl}/servizi/magazzino/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/servizi-magazzino.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Magazzino e cross-docking in Brianza">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/servizi/magazzino/#webpage')})],"url":[(${layout.json(business.siteUrl + '/servizi/magazzino/')})],"name":"Magazzino e cross-docking a Seregno (MB) | Logistica Sanchez","description":"Stoccaggio di breve e medio periodo, cross-docking e consolidamento nel nostro hub di Seregno, in Brianza: la tua merce pronta a ripartire per tutta Italia.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/servizi-magazzino.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/servizi/magazzino/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/servizi/magazzino/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Servizi","item":[(${layout.json(business.siteUrl + '/servizi/')})]},{"@type":"ListItem","position":3,"name":"Magazzino e cross-docking","item":[(${layout.json(business.siteUrl + '/servizi/magazzino/')})]}]},{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/servizi/magazzino/#service')})],"name":"Magazzino e cross-docking","serviceType":"Logistica di magazzino","description":"Stoccaggio di breve e medio periodo, cross-docking e consolidamento nel nostro hub di Seregno, in Brianza: la tua merce pronta a ripartire per tutta Italia.","url":[(${layout.json(business.siteUrl + '/servizi/magazzino/')})],"provider":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"areaServed":{"@type":"Country","name":"Italia"},"availableChannel":{"@type":"ServiceChannel","servicePhone":[(${layout.json(business.phoneDigits())})],"serviceUrl":[(${layout.json(business.siteUrl + '/preventivo/')})]}},{"@type":"FAQPage","@id":[(${layout.json(business.siteUrl + '/servizi/magazzino/#faq')})],"mainEntity":[{"@type":"Question","name":"Per quanto tempo potete tenere la mia merce?","acceptedAnswer":{"@type":"Answer","text":"Dipende dalle tue esigenze: da pochi giorni, per un transito o un consolidamento, fino a periodi più lunghi. Ti facciamo una proposta in base a volumi e durata."}},{"@type":"Question","name":"Cos'è il cross-docking?","acceptedAnswer":{"@type":"Answer","text":"È un passaggio rapido: la merce arriva nel nostro hub e riparte verso la destinazione finale senza essere stoccata, spesso unita ad altre spedizioni."}},{"@type":"Question","name":"Posso far consegnare la merce dei miei fornitori al vostro hub?","acceptedAnswer":{"@type":"Answer","text":"Sì: riceviamo le consegne per tuo conto, controlliamo i colli e ti avvisiamo dell'arrivo. Poi spediamo dove ci indichi."}}]}]}</script>
+</head>
+<body data-page="servizi/magazzino">
+<th:block th:replace="~{layout/public :: siteHeader('servizi/magazzino')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><a href="/servizi/">Servizi</a></li><li><span aria-current="page">Magazzino e cross-docking</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Servizi · Magazzino</p>
+          <h1>Magazzino e cross-docking in Brianza</h1>
+          <p class="lede">Il nostro hub di Seregno è il punto d'appoggio per la tua logistica: riceviamo, stocchiamo e rispediamo la merce quando serve, senza che tu debba gestire spazi e personale.</p>
+          <div class="page-hero-actions">
+            <a class="btn btn-accent btn-lg" href="/preventivo/">Richiedi un preventivo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+            <a class="btn btn-outline-light btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20informazioni%20sul%20servizio%20di%20magazzino.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Scrivici su WhatsApp</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside" aria-labelledby="aside-title">
+          <h2 id="aside-title">In breve</h2>
+          <ul class="ticks"><li>Hub in Via dei Meiani 90, Seregno (MB)</li><li>Stoccaggio di breve e medio periodo</li><li>Cross-docking e consolidamento</li><li>Ripartenza in tutta Italia in 24–72 ore</li><li>Proposta su misura per volumi e durata</li></ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="hub-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Il nostro hub</p>
+        <h2 id="hub-title">Cosa facciamo per te a Seregno</h2>
+        <p class="lede">Ci occupiamo della merce tra un viaggio e l'altro, così tu non devi gestire spazi, attrezzature e personale.</p>
+      </div>
+      <div class="features features-3" data-stagger>
+        <div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clipboard-list"/></svg></span><h3>Ricevimento merce</h3><p>Riceviamo le consegne dei tuoi fornitori e controlliamo numero e integrità dei colli.</p></div>
+        <div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></span><h3>Stoccaggio</h3><p>Conserviamo la tua merce per il tempo che serve, a breve o medio termine.</p></div>
+        <div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-refresh-cw"/></svg></span><h3>Cross-docking</h3><p>La merce entra e riparte verso la destinazione finale senza fermarsi a magazzino.</p></div>
+        <div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-boxes"/></svg></span><h3>Consolidamento</h3><p>Riuniamo merce di provenienze diverse in un'unica spedizione, risparmiando viaggi.</p></div>
+        <div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></span><h3>Ripartenza in tutta Italia</h3><p>Dal magazzino alla consegna con i nostri servizi di trasporto, senza altri intermediari.</p></div>
+        <div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-headset"/></svg></span><h3>Un solo referente</h3><p>Stoccaggio e trasporto gestiti dalla stessa persona: meno telefonate, meno errori.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="dove-title">
+    <div class="container split is-center">
+      <div data-reveal>
+        <p class="kicker">Posizione</p>
+        <h2 id="dove-title">Nel cuore della Brianza, a un passo da Milano</h2>
+        <p>Il nostro hub è in <strong>Via dei Meiani 90 a Seregno</strong>, a pochi minuti dalla <strong>SS36 Valassina</strong> e dalla <strong>Milano–Meda</strong>, a una ventina di chilometri da Milano e vicino a Monza, Como e Lecco.</p>
+        <p>Una posizione comoda per ricevere merce dai fornitori del Nord Italia e farla ripartire velocemente verso il resto del Paese.</p>
+        <a class="link-arrow" href="/contatti/#dove-siamo">Come raggiungerci<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+      <div class="panel" data-reveal>
+        <h3>Per chi è pensato</h3>
+        <ul class="ticks">
+          <li>Aziende senza un magazzino proprio in Lombardia</li>
+          <li>Picchi stagionali e promozioni, quando lo spazio non basta</li>
+          <li>Importatori e distributori che devono smistare in tutta Italia</li>
+          <li>Merce in arrivo da più fornitori da riunire in un'unica spedizione</li>
+        </ul>
+        <a class="btn btn-primary btn-sm" href="/preventivo/?servizio=magazzino">Chiedi una proposta<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="faq-title">
+    <div class="container container-narrow">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Domande frequenti</p>
+        <h2 id="faq-title">Domande su magazzino e cross-docking</h2>
+      </div>
+      <div class="faq"><details name="faq-magazzino"><summary><h3 class="faq-q">Per quanto tempo potete tenere la mia merce?</h3></summary><div class="faq-a"><p>Dipende dalle tue esigenze: da pochi giorni, per un transito o un consolidamento, fino a periodi più lunghi. Ti facciamo una proposta in base a volumi e durata.</p></div></details>
+<details name="faq-magazzino"><summary><h3 class="faq-q">Cos'è il cross-docking?</h3></summary><div class="faq-a"><p>È un passaggio rapido: la merce arriva nel nostro hub e riparte verso la destinazione finale senza essere stoccata, spesso unita ad altre spedizioni.</p></div></details>
+<details name="faq-magazzino"><summary><h3 class="faq-q">Posso far consegnare la merce dei miei fornitori al vostro hub?</h3></summary><div class="faq-a"><p>Sì: riceviamo le consegne per tuo conto, controlliamo i colli e ti avvisiamo dell'arrivo. Poi spediamo dove ci indichi.</p></div></details></div>
+      <p class="text-center mt-m"><a class="link-arrow" href="/faq/">Tutte le domande frequenti<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a></p>
+    </div>
+  </section>
+<section class="section section-alt" aria-labelledby="related-title">
+    <div class="container">
+      <div class="section-head-row">
+        <div class="section-head"><p class="kicker">Servizi</p><h2 id="related-title">Altri servizi</h2></div>
+        <a class="link-arrow" href="/servizi/">Tutti i servizi<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+      <div class="services-grid cols-3" data-stagger><article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></div>
+          <h3><a href="/servizi/spedizione-pallet/">Spedizione pallet espresso</a></h3>
+          <p>Uno o più pallet in tutta Italia in 24–72 ore, con tracking.</p>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article><article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-boxes"/></svg></div>
+          <h3><a href="/servizi/groupage/">Groupage e collettame</a></h3>
+          <p>Pochi colli o qualche pallet: paghi solo lo spazio che occupi.</p>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article><article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></div>
+          <h3><a href="/servizi/carico-completo/">Carico completo</a></h3>
+          <p>Un mezzo dedicato, viaggio diretto senza trasbordi.</p>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article></div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

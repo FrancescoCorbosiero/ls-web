@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Blog: guide per spedire pallet | Logistica Sanchez</title>
+<meta name="description" content="Guide pratiche per spedire pallet in Italia: come preparare la merce, misure dei pallet, costi di spedizione, groupage o carico completo.">
+<link rel="canonical" th:href="|${business.siteUrl}/blog/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Blog: guide per spedire pallet | Logistica Sanchez">
+<meta property="og:description" content="Guide pratiche per spedire pallet in Italia: come preparare la merce, misure dei pallet, costi di spedizione, groupage o carico completo.">
+<meta property="og:url" th:content="|${business.siteUrl}/blog/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/blog.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Blog: guide per spedire pallet | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"CollectionPage","@id":[(${layout.json(business.siteUrl + '/blog/#webpage')})],"url":[(${layout.json(business.siteUrl + '/blog/')})],"name":"Blog: guide per spedire pallet | Logistica Sanchez","description":"Guide pratiche per spedire pallet in Italia: come preparare la merce, misure dei pallet, costi di spedizione, groupage o carico completo.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/blog.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/blog/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/blog/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Blog","item":[(${layout.json(business.siteUrl + '/blog/')})]}]},{"@type":"Blog","@id":[(${layout.json(business.siteUrl + '/blog/#blog')})],"name":"Blog di Logistica Sanchez","url":[(${layout.json(business.siteUrl + '/blog/')})],"inLanguage":"it-IT","publisher":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"blogPost":[{"@id":[(${layout.json(business.siteUrl + '/blog/come-preparare-un-pallet-per-la-spedizione/#article')})]},{"@id":[(${layout.json(business.siteUrl + '/blog/misure-pallet-epal-industriale/#article')})]},{"@id":[(${layout.json(business.siteUrl + '/blog/quanto-costa-spedire-un-pallet/#article')})]},{"@id":[(${layout.json(business.siteUrl + '/blog/groupage-o-carico-completo/#article')})]}]}]}</script>
+</head>
+<body data-page="blog">
+<th:block th:replace="~{layout/public :: siteHeader('blog')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Blog</span></li></ol></nav>
+      <p class="kicker">Blog e guide</p>
+      <h1>Spedire meglio, spendere meno</h1>
+      <p class="lede">Guide pratiche per preparare la merce, scegliere il servizio giusto e capire cosa fa il prezzo di una spedizione. Scritte da chi i pallet li spedisce ogni giorno.</p>
+    </div>
+  </section>
+
+  <section class="section" aria-label="Articoli">
+    <div class="container">
+      <div class="posts">
+        <article class="card card-link post-card post-card-featured">
+          <div class="post-cover is-light"><img src="/img/pallets/eur.svg" width="405" height="447" alt="" loading="lazy"></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Guide</span><time datetime="2026-10-06">6 ottobre 2026</time><span>4 min</span></p>
+            <h2><a href="/blog/come-preparare-un-pallet-per-la-spedizione/">Come preparare un pallet per la spedizione: la guida pratica</a></h2>
+            <p>Bancale, disposizione dei colli, film estensibile, angolari, etichette e documenti: la guida passo passo per preparare un pallet che arriva integro.</p>
+            <span class="card-more">Leggi l'articolo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article>
+        <article class="card card-link post-card">
+          <div class="post-cover"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-ruler"/></svg></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Guide</span><time datetime="2026-09-29">29 settembre 2026</time><span>4 min</span></p>
+            <h2><a href="/blog/misure-pallet-epal-industriale/">Misure dei pallet: EPAL, industriale, mezzo e quarto a confronto</a></h2>
+            <p>Quanto misura un pallet EUR? E un pallet industriale? Dimensioni, superfici e quanti pallet stanno su un bilico: la tabella per scegliere il formato giusto.</p>
+            <span class="card-more">Leggi l'articolo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article><article class="card card-link post-card">
+          <div class="post-cover is-teal"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calculator"/></svg></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Costi</span><time datetime="2026-09-22">22 settembre 2026</time><span>3 min</span></p>
+            <h2><a href="/blog/quanto-costa-spedire-un-pallet/">Quanto costa spedire un pallet? I fattori che fanno il prezzo</a></h2>
+            <p>Peso, ingombro, destinazione, servizi extra e tempi: cosa incide sul costo di una spedizione di pallet e come ottenere un preventivo preciso, senza sorprese.</p>
+            <span class="card-more">Leggi l'articolo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article><article class="card card-link post-card">
+          <div class="post-cover is-lime"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></div>
+          <div class="post-body">
+            <p class="post-meta"><span class="badge badge-soft">Logistica</span><time datetime="2026-09-08">8 settembre 2026</time><span>3 min</span></p>
+            <h2><a href="/blog/groupage-o-carico-completo/">Groupage o carico completo: come scegliere</a></h2>
+            <p>Groupage, pallet espresso o mezzo dedicato? Differenze, vantaggi e soglie indicative per scegliere il servizio giusto in base a quantità, tempi e tipo di merce.</p>
+            <span class="card-more">Leggi l'articolo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

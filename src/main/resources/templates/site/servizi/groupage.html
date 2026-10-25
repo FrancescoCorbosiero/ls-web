@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Groupage e collettame in tutta Italia | Logistica Sanchez</title>
+<meta name="description" content="Spedizioni in groupage dalla Brianza a tutta Italia: la tua merce viaggia con altri carichi sulla stessa tratta e paghi solo lo spazio che occupi.">
+<link rel="canonical" th:href="|${business.siteUrl}/servizi/groupage/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Groupage e collettame: paghi solo lo spazio che occupi">
+<meta property="og:description" content="Spedizioni in groupage dalla Brianza a tutta Italia: la tua merce viaggia con altri carichi sulla stessa tratta e paghi solo lo spazio che occupi.">
+<meta property="og:url" th:content="|${business.siteUrl}/servizi/groupage/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/servizi-groupage.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Groupage e collettame: paghi solo lo spazio che occupi">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/servizi/groupage/#webpage')})],"url":[(${layout.json(business.siteUrl + '/servizi/groupage/')})],"name":"Groupage e collettame in tutta Italia | Logistica Sanchez","description":"Spedizioni in groupage dalla Brianza a tutta Italia: la tua merce viaggia con altri carichi sulla stessa tratta e paghi solo lo spazio che occupi.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/servizi-groupage.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/servizi/groupage/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/servizi/groupage/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Servizi","item":[(${layout.json(business.siteUrl + '/servizi/')})]},{"@type":"ListItem","position":3,"name":"Groupage e collettame","item":[(${layout.json(business.siteUrl + '/servizi/groupage/')})]}]},{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/servizi/groupage/#service')})],"name":"Groupage e collettame","serviceType":"Groupage","description":"Spedizioni in groupage dalla Brianza a tutta Italia: la tua merce viaggia con altri carichi sulla stessa tratta e paghi solo lo spazio che occupi.","url":[(${layout.json(business.siteUrl + '/servizi/groupage/')})],"provider":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"areaServed":{"@type":"Country","name":"Italia"},"availableChannel":{"@type":"ServiceChannel","servicePhone":[(${layout.json(business.phoneDigits())})],"serviceUrl":[(${layout.json(business.siteUrl + '/preventivo/')})]}},{"@type":"FAQPage","@id":[(${layout.json(business.siteUrl + '/servizi/groupage/#faq')})],"mainEntity":[{"@type":"Question","name":"Che differenza c'è tra groupage e collettame?","acceptedAnswer":{"@type":"Answer","text":"Nella pratica indicano la stessa cosa: spedizioni di piccole dimensioni che viaggiano insieme ad altre sullo stesso mezzo, dividendo i costi del trasporto."}},{"@type":"Question","name":"Il groupage è più lento?","acceptedAnswer":{"@type":"Answer","text":"Può richiedere qualche passaggio in più, perché la merce viene consolidata e poi distribuita. Se i tempi sono stretti valutiamo insieme il pallet espresso o un mezzo dedicato."}},{"@type":"Question","name":"Posso spedire colli sfusi, senza pallet?","acceptedAnswer":{"@type":"Answer","text":"Sì, se ben imballati, etichettati e facili da movimentare. Per più colli conviene spesso raggrupparli su un pallet: viaggiano più protetti e si contano più facilmente."}},{"@type":"Question","name":"Come viene calcolato il prezzo?","acceptedAnswer":{"@type":"Answer","text":"Su peso e ingombro: si paga il valore più alto tra peso reale e peso tassabile (il volume convertito in peso). Nel preventivo ti mostriamo sempre il calcolo."}}]}]}</script>
+</head>
+<body data-page="servizi/groupage">
+<th:block th:replace="~{layout/public :: siteHeader('servizi/groupage')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><a href="/servizi/">Servizi</a></li><li><span aria-current="page">Groupage e collettame</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Servizi · Groupage</p>
+          <h1>Groupage e collettame: paghi solo lo spazio che occupi</h1>
+          <p class="lede">Quando la merce non riempie un camion, la facciamo viaggiare insieme ad altre spedizioni dirette nella stessa zona. Costi condivisi, stessa cura, tracking incluso.</p>
+          <div class="page-hero-actions">
+            <a class="btn btn-accent btn-lg" href="/preventivo/">Richiedi un preventivo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+            <a class="btn btn-outline-light btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20un%20preventivo%20per%20una%20spedizione%20in%20groupage.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Scrivici su WhatsApp</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside" aria-labelledby="aside-title">
+          <h2 id="aside-title">In breve</h2>
+          <ul class="ticks"><li>Per colli, mezzi pallet e pochi pallet</li><li>Prezzo su peso e ingombro effettivi</li><li>Consolidamento nel nostro hub di Seregno</li><li>Tracking e prova di consegna</li><li>Ideale per chi spedisce spesso</li></ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="come-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Come funziona</p>
+        <h2 id="come-title">Più spedizioni, un solo viaggio</h2>
+        <p class="lede">Il groupage (o collettame) è il modo più efficiente di spedire quantità ridotte: ogni carico condivide il mezzo con altri diretti nella stessa zona.</p>
+      </div>
+      <ol class="steps" data-stagger><li class="step"><span class="step-num">1</span><h3>Ritiro</h3><p>Passiamo a prendere i tuoi colli o pallet alla tua sede.</p></li><li class="step"><span class="step-num">2</span><h3>Consolidamento</h3><p>Nel nostro hub di Seregno la tua merce viene unita ad altre spedizioni sulla stessa direttrice.</p></li><li class="step"><span class="step-num">3</span><h3>Viaggio condiviso</h3><p>Il mezzo parte pieno: i costi del viaggio si dividono tra più clienti.</p></li><li class="step"><span class="step-num">4</span><h3>Distribuzione</h3><p>A destinazione ogni spedizione viene consegnata al proprio destinatario, con POD.</p></li></ol>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="quando-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Quando conviene</p>
+        <h2 id="quando-title">Groupage: vantaggi e limiti</h2>
+      </div>
+      <div class="pros-cons" data-stagger>
+        <div class="panel is-pro">
+          <h3><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-thumbs-up"/></svg>Conviene quando</h3>
+          <ul class="ticks">
+            <li>Spedisci pochi colli o da 1 a qualche pallet</li>
+            <li>Spedisci spesso, anche piccole quantità</li>
+            <li>Vuoi ottimizzare il costo più che i tempi</li>
+            <li>La merce è ben imballata e sovrapponibile</li>
+          </ul>
+        </div>
+        <div class="panel is-con">
+          <h3><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-triangle-alert"/></svg>Meglio valutare altro se</h3>
+          <ul class="ticks">
+            <li>La consegna è urgente e a orario preciso</li>
+            <li>La merce è molto fragile o non sovrapponibile</li>
+            <li>Il volume si avvicina a mezzo camion: il carico completo può costare meno di quanto pensi</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="prezzo-title">
+    <div class="container container-narrow">
+      <div data-reveal>
+        <p class="kicker">Il prezzo</p>
+        <h2 id="prezzo-title">Peso reale o peso tassabile?</h2>
+        <p class="lede">Nel groupage non conta solo quanto pesa la merce, ma anche quanto spazio occupa sul mezzo.</p>
+        <p>Per questo molti listini applicano un <strong>rapporto peso/volume</strong>: il volume della spedizione viene convertito in un «peso tassabile» e si paga il valore più alto tra peso reale e peso tassabile. Così una spedizione leggera ma ingombrante paga lo spazio che occupa davvero.</p>
+        <div class="example">
+          <p><strong>Esempio.</strong> Un pallet 120 × 80 cm alto 150 cm occupa 1,44 m³ e pesa 200 kg. Con un rapporto di 1 m³ = 250 kg, il peso tassabile è 1,44 × 250 = <strong>360 kg</strong>: il prezzo si calcola su 360 kg, non su 200.</p>
+        </div>
+        <p>Il rapporto peso/volume cambia da listino a listino: nel nostro preventivo trovi sempre come è stato calcolato il prezzo. Vuoi capire cos'altro incide? Leggi <a href="/blog/quanto-costa-spedire-un-pallet/">quanto costa spedire un pallet</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="faq-title">
+    <div class="container container-narrow">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Domande frequenti</p>
+        <h2 id="faq-title">Domande su groupage e collettame</h2>
+      </div>
+      <div class="faq"><details name="faq-groupage"><summary><h3 class="faq-q">Che differenza c'è tra groupage e collettame?</h3></summary><div class="faq-a"><p>Nella pratica indicano la stessa cosa: spedizioni di piccole dimensioni che viaggiano insieme ad altre sullo stesso mezzo, dividendo i costi del trasporto.</p></div></details>
+<details name="faq-groupage"><summary><h3 class="faq-q">Il groupage è più lento?</h3></summary><div class="faq-a"><p>Può richiedere qualche passaggio in più, perché la merce viene consolidata e poi distribuita. Se i tempi sono stretti valutiamo insieme il <a href="/servizi/spedizione-pallet/">pallet espresso</a> o un <a href="/servizi/carico-completo/">mezzo dedicato</a>.</p></div></details>
+<details name="faq-groupage"><summary><h3 class="faq-q">Posso spedire colli sfusi, senza pallet?</h3></summary><div class="faq-a"><p>Sì, se ben imballati, etichettati e facili da movimentare. Per più colli conviene spesso raggrupparli su un pallet: viaggiano più protetti e si contano più facilmente.</p></div></details>
+<details name="faq-groupage"><summary><h3 class="faq-q">Come viene calcolato il prezzo?</h3></summary><div class="faq-a"><p>Su peso e ingombro: si paga il valore più alto tra peso reale e peso tassabile (il volume convertito in peso). Nel preventivo ti mostriamo sempre il calcolo.</p></div></details></div>
+      <p class="text-center mt-m"><a class="link-arrow" href="/faq/">Tutte le domande frequenti<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a></p>
+    </div>
+  </section>
+<section class="section section-alt" aria-labelledby="related-title">
+    <div class="container">
+      <div class="section-head-row">
+        <div class="section-head"><p class="kicker">Servizi</p><h2 id="related-title">Altri servizi</h2></div>
+        <a class="link-arrow" href="/servizi/">Tutti i servizi<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+      </div>
+      <div class="services-grid cols-3" data-stagger><article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></div>
+          <h3><a href="/servizi/spedizione-pallet/">Spedizione pallet espresso</a></h3>
+          <p>Uno o più pallet in tutta Italia in 24–72 ore, con tracking.</p>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article><article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></div>
+          <h3><a href="/servizi/carico-completo/">Carico completo</a></h3>
+          <p>Un mezzo dedicato, viaggio diretto senza trasbordi.</p>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article><article class="card card-link">
+          <div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></div>
+          <h3><a href="/servizi/magazzino/">Magazzino e cross-docking</a></h3>
+          <p>Stoccaggio e smistamento nel nostro hub di Seregno.</p>
+          <span class="card-more">Scopri il servizio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></span>
+        </article></div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

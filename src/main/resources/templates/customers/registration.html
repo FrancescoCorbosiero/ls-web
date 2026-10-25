@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<!--
+  Registration form (CUS-02; chapter 03 §5.3 copy «Inserisci i dati dell'azienda», fields of OP-R3,
+  fixes OP-08…OP-11, OP-21, OP-23): real labels, every error shown at once, the e-mail typed again
+  and checked against the REGISTER link. Without a token (reregister) a signed-in DECLINED customer
+  sends new data (Q-09). The hidden «website» field is the honeypot.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{customers.registration.title} + ' · ' + ${business.brandName}">Registrazione · Logistica Sanchez</title>
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${reregister} ? ${values['email']} : null, ${reregister} ? '/area-clienti/logout' : null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <h1 th:text="#{customers.registration.heading}">Inserisci i dati dell'azienda</h1>
+    <p class="lede" th:if="${!reregister}" th:text="#{customers.registration.lead}">Compila i dati con cui vuoi essere registrato: l'ufficio li verifica e ti conferma via e-mail.</p>
+    <p class="callout callout-info" th:if="${reregister}" th:text="#{customers.registration.reregisterLead}">La tua registrazione precedente non è stata accettata. Controlla e correggi i dati, poi inviali di nuovo.</p>
+    <p class="callout" role="alert" th:if="${!errors.isEmpty()}" th:text="#{customers.error.summary}">Controlla i campi evidenziati.</p>
+    <form method="post" th:action="@{/area-clienti/registrazione/}" class="form-grid" novalidate>
+      <input type="hidden" name="t" th:value="${token}" th:if="${token != null}">
+      <input type="hidden" name="step" value="review">
+      <div class="hp-field" aria-hidden="true"><label for="website">Sito web</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+
+      <div class="field" th:classappend="${errors['email'] != null} ? 'has-error'" th:if="${!reregister}">
+        <label class="label" for="email" th:text="#{customers.field.email}">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required th:value="${values['email']}" th:attr="aria-invalid=${errors['email'] != null}">
+        <p class="field-hint" th:text="#{customers.registration.emailHint}">Assicurati di aver inserito la mail corretta: deve essere quella a cui hai ricevuto il link. Se sei già registrato NON è necessario ripetere la registrazione.</p>
+        <p class="field-error" th:if="${errors['email'] != null}" th:text="#{${errors['email']}}">Errore</p>
+      </div>
+
+      <th:block th:each="f : ${ {'companyName','addressLine','province','city','postalCode','phone','vatNumber','taxCode'} }">
+        <div class="field" th:classappend="${errors.get(f) != null} ? 'has-error'">
+          <label class="label" th:for="${f}" th:text="#{'customers.field.' + ${f}}">Campo</label>
+          <input class="input" th:id="${f}" th:name="${f}" type="text" th:value="${values.get(f)}"
+                 th:maxlength="${f == 'postalCode'} ? 5 : (${f == 'phone'} ? 30 : (${f == 'vatNumber' or f == 'taxCode'} ? 16 : (${f == 'province'} ? 60 : (${f == 'city'} ? 100 : 200))))"
+                 th:inputmode="${f == 'postalCode' or f == 'phone'} ? 'numeric' : null"
+                 th:autocomplete="${f == 'companyName'} ? 'organization' : (${f == 'addressLine'} ? 'street-address' : (${f == 'city'} ? 'address-level2' : (${f == 'province'} ? 'address-level1' : (${f == 'postalCode'} ? 'postal-code' : (${f == 'phone'} ? 'tel' : 'off')))))"
+                 th:required="${f != 'vatNumber' and f != 'taxCode'}"
+                 th:attr="aria-invalid=${errors.get(f) != null}">
+          <p class="field-hint" th:if="${f == 'postalCode'}" th:text="#{customers.hint.cap}">Cinque cifre, per esempio 20831.</p>
+          <p class="field-hint" th:if="${f == 'phone'}" th:text="#{customers.hint.phone}">Con il prefisso, per esempio 0362 123456 o +39 329 1234567.</p>
+          <p class="field-error" th:if="${errors.get(f) != null}" th:text="#{${errors.get(f)}}">Errore</p>
+        </div>
+      </th:block>
+
+      <p class="muted" th:utext="#{customers.registration.privacy}">Inviando i dati accetti l'<a href="/privacy/">informativa privacy</a>.</p>
+      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{customers.registration.next}">Avanti</button></div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

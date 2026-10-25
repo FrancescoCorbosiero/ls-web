@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Privacy policy | Logistica Sanchez</title>
+<meta name="description" content="Informativa sul trattamento dei dati personali di Logistica Sanchez: quali dati trattiamo, perché, per quanto tempo e come esercitare i tuoi diritti.">
+<link rel="canonical" th:href="|${business.siteUrl}/privacy/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Privacy policy | Logistica Sanchez">
+<meta property="og:description" content="Informativa sul trattamento dei dati personali di Logistica Sanchez: quali dati trattiamo, perché, per quanto tempo e come esercitare i tuoi diritti.">
+<meta property="og:url" th:content="|${business.siteUrl}/privacy/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/privacy.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Privacy policy | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/privacy/#webpage')})],"url":[(${layout.json(business.siteUrl + '/privacy/')})],"name":"Privacy policy | Logistica Sanchez","description":"Informativa sul trattamento dei dati personali di Logistica Sanchez: quali dati trattiamo, perché, per quanto tempo e come esercitare i tuoi diritti.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/privacy.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/privacy/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/privacy/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Privacy policy","item":[(${layout.json(business.siteUrl + '/privacy/')})]}]}]}</script>
+</head>
+<body data-page="privacy">
+<th:block th:replace="~{layout/public :: siteHeader('privacy')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Privacy policy</span></li></ol></nav>
+      <p class="kicker">Informazioni legali</p>
+      <h1>Privacy policy</h1>
+      <p class="lede">Come trattiamo i dati che ci affidi quando visiti il sito, ci scrivi o chiedi un preventivo.</p>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container container-narrow">
+      <div class="prose legal">
+        <p class="legal-meta">Ultimo aggiornamento: 16 ottobre 2026</p>
+        
+<h2 id="titolare">1. Titolare del trattamento</h2>
+<p>Il titolare del trattamento è <strong>Logistica Sanchez S.r.l.</strong> (P.IVA 13113080967), con sede in Via dei Meiani 90, 20831 Seregno (MB). Per qualsiasi richiesta relativa ai tuoi dati puoi scrivere a <a th:href="|mailto:${business.officeEmail}|">[[${business.officeEmail}]]</a>.</p>
+
+<h2 id="dati">2. Quali dati trattiamo</h2>
+<ul>
+<li><strong>Dati che ci fornisci tu</strong>, compilando i moduli di contatto e di preventivo o scrivendoci via email, telefono o WhatsApp: nome e cognome, azienda, email, telefono, dettagli della spedizione (località, merce, pesi e misure) e il contenuto dei tuoi messaggi.</li>
+<!-- ls-web:addition --><li><strong>Dati dell'area clienti</strong>, se ti registri per inviare ordini: ragione sociale o nominativo, indirizzo, telefono, email, partita IVA o codice fiscale, i dati delle spedizioni che inserisci (destinatari, merce, pesi e misure, documenti di trasporto, note) e i registri degli accessi (data, ora e indirizzo IP in forma cifrata). L'accesso avviene con un link inviato alla tua email, senza password.</li>
+<!-- /ls-web:addition --><li><strong>Dati di navigazione</strong>: i sistemi del fornitore di hosting registrano, per ragioni tecniche e di sicurezza, informazioni come indirizzo IP, data e ora della richiesta, pagina visitata e tipo di browser.</li>
+<li><strong>Dati salvati sul tuo dispositivo</strong>: alcune preferenze (gli ultimi codici di tracking cercati e la scelta di caricare la mappa) restano nella memoria locale del tuo browser e non vengono inviate a noi. I dettagli sono nella <a href="/cookie/">cookie policy</a>.</li>
+</ul>
+
+<h2 id="finalita">3. Perché li trattiamo e su quale base giuridica</h2>
+<ul>
+<li><strong>Rispondere alle tue richieste e preparare preventivi</strong>: misure precontrattuali adottate su tua richiesta (art. 6.1.b GDPR).</li>
+<li><strong>Gestire le spedizioni e il rapporto commerciale</strong>: esecuzione del contratto (art. 6.1.b) e adempimento di obblighi di legge, per esempio fiscali (art. 6.1.c).</li>
+<li><strong>Garantire la sicurezza e il funzionamento del sito</strong>: nostro legittimo interesse (art. 6.1.f).</li>
+<li><strong>Mostrare la mappa interattiva di Google Maps</strong>: tuo consenso, espresso con il clic sul pulsante dedicato e revocabile in ogni momento (art. 6.1.a).</li>
+</ul>
+<p>Il conferimento dei dati è facoltativo, ma senza i dati richiesti nei moduli non possiamo risponderti né preparare un preventivo. Non utilizziamo i tuoi dati per profilazione né per invii pubblicitari.</p>
+
+<h2 id="destinatari">4. A chi possono essere comunicati</h2>
+<ul>
+<!-- ls-web:addition --><li><strong>Il fornitore che ospita l'applicazione e il database</strong> (sito, area clienti e gestione), in qualità di responsabile del trattamento.</li>
+<!-- /ls-web:addition --><li><strong>Netlify, Inc.</strong>, che ospita il sito ed elabora l'invio dei moduli, in qualità di responsabile del trattamento. Netlify ha sede negli Stati Uniti: il trasferimento avviene sulla base delle garanzie previste dagli artt. 45 e 46 GDPR (decisione di adeguatezza UE-USA o clausole contrattuali standard).</li>
+<li><strong>Amazon Web Services EMEA SARL</strong> (Lussemburgo), che con il servizio Amazon SES recapita alla nostra casella email le richieste inviate tramite i moduli, in qualità di responsabile del trattamento.</li>
+<li><strong>Fornitori di servizi di posta elettronica e comunicazione</strong> che utilizziamo per risponderti.</li>
+<li><strong>Google</strong>, solo se scegli di caricare la mappa interattiva: in quel caso Google tratta i dati come titolare autonomo, secondo la propria informativa.</li>
+<li><strong>WhatsApp (Meta)</strong>, se scegli di contattarci tramite WhatsApp: il servizio tratta i dati come titolare autonomo, secondo la propria informativa.</li>
+<li>Consulenti, partner logistici coinvolti nella spedizione e autorità, nei limiti di quanto necessario o richiesto dalla legge.</li>
+</ul>
+
+<h2 id="conservazione">5. Per quanto tempo li conserviamo</h2>
+<ul>
+<li>Richieste di contatto e preventivi che non diventano un incarico: fino a 24 mesi dall'ultimo contatto.</li>
+<li>Dati relativi a spedizioni e documenti contabili: per il tempo previsto dalla legge, di norma 10 anni.</li>
+<!-- ls-web:addition --><li>Dati dell'area clienti: account e dati di registrazione per la durata del rapporto; ordini e spedizioni per il tempo previsto dalla legge (di norma 10 anni); link di accesso al massimo 24 ore; copia delle email inviate 30 giorni; registri di sicurezza 30 giorni.</li>
+<!-- /ls-web:addition --><li>Dati di navigazione: per il periodo di conservazione dei log del fornitore di hosting.</li>
+</ul>
+
+<h2 id="diritti">6. I tuoi diritti</h2>
+<p>Puoi chiedere in ogni momento l'accesso ai tuoi dati, la rettifica, la cancellazione, la limitazione del trattamento, la portabilità e opporti al trattamento basato sul legittimo interesse (artt. 15–22 GDPR). Puoi revocare il consenso eventualmente prestato, senza conseguenze sulla liceità del trattamento precedente. Per esercitare i tuoi diritti scrivi a <a th:href="|mailto:${business.officeEmail}|">[[${business.officeEmail}]]</a>.</p>
+<!-- ls-web:addition --><p>Per i dati dell'area clienti puoi chiedere all'ufficio una copia completa dei tuoi dati o la loro cancellazione: la cancellazione avviene anonimizzando i dati che ti riguardano, salvo quelli degli ordini che dobbiamo conservare per legge.</p>
+<!-- /ls-web:addition --><p>Se ritieni che il trattamento violi la normativa, puoi presentare reclamo al <a href="https://www.garanteprivacy.it" target="_blank" rel="noopener">Garante per la protezione dei dati personali</a>.</p>
+
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

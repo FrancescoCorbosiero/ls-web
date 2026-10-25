@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!--
+  Error page fragments shared by every status (ADR 0002): the public layout with the «notfound»
+  block of the static site's 404. No inline script or style (htmlHead(false): no JSON-LD, no
+  speculation rules): the public CSP applies to these pages and the private nonce CSP where the
+  error happened inside an area; main.js (same origin) drives the menu as on every page. Variables set by
+  ErrorResponder: status, code, reason, detail, requestId, business, layout, cspNonce.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="pageHead(title)">
+  <title th:text="${title} + ' · ' + ${business.brandName}">Errore · Logistica Sanchez</title>
+  <meta name="robots" content="noindex">
+  <th:block th:replace="~{layout/public :: htmlHead(false)}"></th:block>
+</head>
+<body th:fragment="pageBody(title, lead)">
+<th:block th:replace="~{layout/public :: siteHeader(null)}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <div class="notfound">
+        <p class="notfound-code" aria-hidden="true" th:text="${status}">404</p>
+        <h1 th:text="${title}">Pagina non trovata</h1>
+        <p class="lede" th:text="${lead}">La pagina che cerchi non esiste o è stata spostata.</p>
+        <p class="lede" th:if="${detail != null}" th:text="${detail}"></p>
+        <div class="page-hero-actions">
+          <a class="btn btn-accent btn-lg" href="/"><th:block th:text="#{error.home}">Torna alla home</th:block><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          <a class="btn btn-outline-light btn-lg" href="/contatti/" th:text="#{error.contacts}">Contattaci</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <p class="muted">
+        <th:block th:text="#{error.support(${business.officeEmail}, ${business.phone})}">Se il problema continua, scrivici o chiamaci.</th:block>
+        <span th:if="${requestId != null}"><th:block th:text="#{error.requestId}">Codice richiesta</th:block>: <code th:text="${requestId}"></code></span>
+      </p>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

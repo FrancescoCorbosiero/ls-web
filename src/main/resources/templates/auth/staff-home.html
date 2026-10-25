@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<!-- Home of the back office (chapter 10 §2): the sections of the legacy CMS as cards (ADR 0017); «Impostazioni» for ADMIN only. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{auth.staff.home.title} + ' · ' + ${business.brandName}">Gestione · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <h1 th:text="#{auth.staff.home.title}">Gestione</h1>
+    <p class="muted" th:text="#{auth.staff.home.welcome(${displayName})}">Ciao</p>
+    <p class="lede" th:text="#{auth.staff.home.lead}">Clienti, ordini, tracking e report.</p>
+    <nav class="quick-grid" th:aria-label="#{backoffice.nav.label}" data-home-nav>
+      <a class="card card-link" href="/gestione/clienti/in-approvazione/"><h2 th:text="#{backoffice.nav.customersPending}">In Approvazione</h2><p class="muted" th:text="#{backoffice.home.customersPending}">Clienti registrati in attesa della tua approvazione.</p></a>
+      <a class="card card-link" href="/gestione/clienti/"><h2 th:text="#{backoffice.nav.customers}">Registrati</h2><p class="muted" th:text="#{backoffice.home.customers}">Tutti i clienti, con ricerca e la pagina di ciascuno.</p></a>
+      <a class="card card-link" href="/gestione/ordini/in-approvazione/"><h2 th:text="#{backoffice.nav.ordersPending}">Ordini da approvare</h2><p class="muted" th:text="#{backoffice.home.ordersPending}">Richieste di spedizione da confermare con codice e importo.</p></a>
+      <a class="card card-link" href="/gestione/ordini/"><h2 th:text="#{backoffice.nav.orders}">Ordini</h2><p class="muted" th:text="#{backoffice.home.orders}">Gli ordini registrati, con filtri, ricerca per codice e dettaglio.</p></a>
+      <a class="card card-link" href="/gestione/tracking/"><h2 th:text="#{backoffice.nav.tracking}">Tracking</h2><p class="muted" th:text="#{backoffice.home.tracking}">Imposta lo stato di una spedizione dal suo codice.</p></a>
+      <a class="card card-link" href="/gestione/report/"><h2 th:text="#{backoffice.nav.reports}">Report</h2><p class="muted" th:text="#{backoffice.home.reports}">Il PDF degli ordini di un cliente in un periodo, inviato per e-mail.</p></a>
+      <a class="card card-link" href="/gestione/impostazioni/" th:if="${isAdmin}"><h2 th:text="#{backoffice.nav.settings}">Impostazioni</h2><p class="muted" th:text="#{backoffice.home.settings}">Utenti della gestione, destinatari dei report, funzionalità in prova, privacy.</p></a>
+    </nav>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

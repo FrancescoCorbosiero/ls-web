@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!-- A used, expired or unknown link (CUS-01): «Il link non è più valido» with the request form. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{auth.customer.linkInvalid.title} + ' · ' + ${business.brandName}">Il link non è più valido · Logistica Sanchez</title>
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <h1 th:text="#{auth.customer.linkInvalid.title}">Il link non è più valido</h1>
+    <p class="lede" th:text="#{auth.customer.linkInvalid.lead}">Inserisci di nuovo la tua e-mail per riceverne uno nuovo.</p>
+    <form method="post" th:action="@{/area-clienti/}" class="form-grid">
+      <div class="field">
+        <label class="label" for="email" th:text="#{auth.customer.request.email}">Email</label>
+        <input class="input" id="email" name="email" type="email" autocomplete="email" inputmode="email" maxlength="254" required>
+      </div>
+      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{auth.customer.request.submit}">Avanti</button></div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

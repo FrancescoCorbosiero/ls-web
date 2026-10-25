@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!-- «Report» (ADM-09; chapter 04 §4.9 as a page; ADR 0016): customer, inclusive dates, filters, recipients, «Invia Report»; the last runs. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.reports.title} + ' · ' + #{layout.private.backoffice}">Report · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{backoffice/layout :: nav('reports')}"></th:block>
+    <h1 th:text="#{backoffice.reports.title}">Report ordini</h1>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <p th:if="${reportId != null}"><a class="btn btn-secondary btn-sm" th:href="@{/gestione/report/{id}/download(id=${reportId})}" data-download th:text="#{backoffice.reports.download}">Scarica il PDF</a></p>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <form method="post" th:action="@{/gestione/report/}" class="form-grid cols-2 card">
+      <div class="field span-2">
+        <label class="label" for="cliente" th:text="#{backoffice.reports.customer}">Cliente</label>
+        <select class="select" id="cliente" name="cliente" required>
+          <option value="" th:selected="${values['cliente'] == ''}" th:text="#{backoffice.reports.customerChoose}">Seleziona il cliente</option>
+          <option th:each="c : ${customers}" th:value="${c.id}" th:selected="${values['cliente'] == #strings.toString(c.id)}" th:text="${c.companyName} + ' – ' + ${c.email}">Ditta</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="da" th:text="#{backoffice.reports.from}">Dal</label>
+        <input class="input" id="da" name="da" type="date" required th:value="${values['da']}">
+      </div>
+      <div class="field">
+        <label class="label" for="a" th:text="#{backoffice.reports.to}">Al (incluso)</label>
+        <input class="input" id="a" name="a" type="date" required th:value="${values['a']}">
+      </div>
+      <div class="field">
+        <label class="check"><input type="checkbox" name="soloConsegnati" value="1" th:checked="${soloConsegnati}"> <span th:text="#{backoffice.reports.onlyDelivered}">Solo ordini consegnati</span></label>
+      </div>
+      <div class="field">
+        <label class="check"><input type="checkbox" name="inviaAlCliente" value="1" th:checked="${inviaAlCliente}"> <span th:text="#{backoffice.reports.sendToCustomer}">Invia anche al cliente</span></label>
+      </div>
+      <div class="field span-2">
+        <label class="label" for="destinatari" th:text="#{backoffice.reports.recipients}">Altri destinatari (facoltativo)</label>
+        <input class="input" id="destinatari" name="destinatari" type="text" maxlength="1000" th:value="${values['destinatari']}">
+        <p class="field-hint" th:text="#{backoffice.reports.recipientsHint}">Indirizzi separati da virgola; devono essere tra i destinatari autorizzati nelle impostazioni. L'ufficio riceve sempre il report.</p>
+      </div>
+      <p class="actions span-2"><button type="submit" class="btn btn-primary" th:text="#{backoffice.reports.send}">Invia Report</button></p>
+    </form>
+
+    <h2 class="mt-m" th:text="#{backoffice.reports.recent}">Ultimi report</h2>
+    <p class="muted" th:if="${recent.isEmpty()}" th:text="#{backoffice.reports.none}">Nessun report inviato finora.</p>
+    <div class="table-wrap" th:if="${!recent.isEmpty()}">
+      <table class="table" data-table="reports">
+        <thead><tr>
+          <th scope="col" th:text="#{backoffice.reports.col.date}">Inviato il</th>
+          <th scope="col" th:text="#{backoffice.reports.col.customer}">Cliente</th>
+          <th scope="col" th:text="#{backoffice.reports.col.period}">Periodo</th>
+          <th scope="col" th:text="#{backoffice.reports.col.filter}">Filtro</th>
+          <th scope="col" th:text="#{backoffice.reports.col.rows}">Ordini</th>
+          <th scope="col" th:text="#{backoffice.reports.col.recipients}">Destinatari</th>
+          <th scope="col" th:text="#{backoffice.col.actions}">Azioni</th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="r : ${recent}" th:attr="data-report=${r.id}">
+            <td th:text="${fmt.dateTime(r.createdAt)}">data</td>
+            <td><a th:href="@{/gestione/clienti/{id}/(id=${r.customerId})}" th:text="#{backoffice.reports.customerRef(${r.customerId})}">cliente</a></td>
+            <td th:text="${r.periodText()}">periodo</td>
+            <td th:text="${r.onlyDelivered} ? #{backoffice.reports.onlyDeliveredShort} : #{backoffice.reports.allApproved}">tutti</td>
+            <td th:text="${r.rowCount}">0</td>
+            <td th:text="${#strings.listJoin(r.recipients, ', ')}">dest</td>
+            <td><a class="btn btn-secondary btn-sm" th:href="@{/gestione/report/{id}/download(id=${r.id})}" th:text="#{backoffice.reports.download}">Scarica il PDF</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

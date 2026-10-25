@@ -35,11 +35,24 @@ phase.
 
 ## Commands
 
-<!-- Fill in during Phase 1 and keep current: build, run locally, unit / integration /
-     E2E tests, lint and format, database migrations, legacy importer (dry-run and real
-     run), Lighthouse and axe checks, dev-seed, create-staff-user. List both variants:
-     with Docker (Compose, Testcontainers) and without (local PostgreSQL via
-     TEST_DATABASE_URL). -->
+```sh
+scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"   # PostgreSQL 16 in .local/pg (port 54329), TEST_DATABASE_* exports
+./mvnw -B -ntp verify                 # Spotless check, unit tests (*Test), integration tests (*IT), jar
+./mvnw spotless:apply                 # format Java sources and pom.xml
+./mvnw -B -ntp -DskipTests package    # jar only: target/ls-web-0.1.0-SNAPSHOT.jar
+JAR=target/ls-web-0.1.0-SNAPSHOT.jar; DB="--spring.profiles.active=local --DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web --DATABASE_USER=ls --DATABASE_PASSWORD=ls"
+java -jar $JAR dev-seed $DB           # local/test only: admin.seed + operatore.seed (passwords printed once), 4 customers, 4 orders
+java -jar $JAR create-staff-user --username=admin --role=ADMIN --name="Nome Cognome" $DB   # one-time set-password link
+SERVER_PORT=8080 java -jar $JAR $DB   # http://localhost:8080/  /area-clienti/  /gestione/  (mail sink: .local/mail/*.eml)
+e2e/run.sh [playwright args]          # E2E: fresh ls_web_e2e, dev-seed, app on :8089, Playwright (cd e2e && npm ci once)
+tools/parity-matrix.py [--check]      # regenerate docs/parity-matrix.md Status from the tags and the last reports
+python3 tools/port-ls-home-pages.py --check   # public templates still equal a fresh port of legacy/ls-home (needs the checkout)
+tools/ci/guard-tracked-files.sh       # files that must never be tracked
+docker build -t ls-web:dev . && (cd deploy && docker compose --env-file .env.example config --quiet)   # image and Compose (needs a daemon)
+```
+
+Never run `npx playwright install` in this environment (browsers are in `/opt/pw-browsers`);
+CI installs Chromium itself. Runbooks (Italian): `docs/runbooks/local-setup.md`, `docs/runbooks/deploy.md`.
 
 ## Conventions
 

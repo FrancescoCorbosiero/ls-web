@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Richiedi un preventivo gratuito | Logistica Sanchez</title>
+<meta name="description" content="Preventivo gratuito per spedire pallet in tutta Italia: compila il modulo in 2 minuti o scrivici su WhatsApp. Ti rispondiamo con prezzo e tempi di consegna.">
+<link rel="canonical" th:href="|${business.siteUrl}/preventivo/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Richiedi un preventivo gratuito | Logistica Sanchez">
+<meta property="og:description" content="Preventivo gratuito per spedire pallet in tutta Italia: compila il modulo in 2 minuti o scrivici su WhatsApp. Ti rispondiamo con prezzo e tempi di consegna.">
+<meta property="og:url" th:content="|${business.siteUrl}/preventivo/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/preventivo.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Richiedi un preventivo gratuito | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/preventivo/#webpage')})],"url":[(${layout.json(business.siteUrl + '/preventivo/')})],"name":"Richiedi un preventivo gratuito | Logistica Sanchez","description":"Preventivo gratuito per spedire pallet in tutta Italia: compila il modulo in 2 minuti o scrivici su WhatsApp. Ti rispondiamo con prezzo e tempi di consegna.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/preventivo.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/preventivo/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/preventivo/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Preventivo","item":[(${layout.json(business.siteUrl + '/preventivo/')})]}]}]}</script>
+</head>
+<body data-page="preventivo">
+<th:block th:replace="~{layout/public :: siteHeader('preventivo')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Preventivo</span></li></ol></nav>
+      <p class="kicker">Preventivo gratuito</p>
+      <h1>Richiedi un preventivo per la tua spedizione</h1>
+      <p class="lede">Quattro passaggi, circa due minuti. Più dettagli ci dai, più preciso sarà il prezzo che ti proponiamo.</p>
+    </div>
+  </section>
+
+  <section class="section section-tight" aria-label="Modulo di richiesta preventivo">
+    <div class="container layout-aside">
+      <form class="wizard" id="modulo" data-quote name="preventivo" method="POST" action="/api/form">
+        <input type="hidden" name="form-name" value="preventivo">
+        <p class="hp-field" aria-hidden="true"><label>Non compilare questo campo: <input name="bot-field" type="text" tabindex="-1" autocomplete="off"></label></p>
+        <ol class="wizard-progress" aria-hidden="true">
+          <li class="is-current"><span>1. Servizio</span></li>
+          <li><span>2. Percorso</span></li>
+          <li><span>3. Merce</span></li>
+          <li><span>4. Contatti</span></li>
+        </ol>
+
+        <fieldset class="wizard-step is-active" data-step>
+          <legend tabindex="-1">Di cosa hai bisogno?</legend>
+          <p class="step-intro">Scegli il servizio. Se non sei sicuro lascia «Spedizione pallet»: ti consigliamo noi la soluzione migliore.</p>
+          <div class="wizard-block" data-group>
+            <p class="label" id="servizio-label">Servizio</p>
+            <div class="choice-grid" role="radiogroup" aria-labelledby="servizio-label">
+              <label class="choice"><input type="radio" name="servizio" value="pallet" checked required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></span><span><strong>Spedizione pallet</strong><small>Da 1 pallet, consegna in 24–72 ore</small></span></label>
+              <label class="choice"><input type="radio" name="servizio" value="groupage" required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-boxes"/></svg></span><span><strong>Groupage / collettame</strong><small>Pochi colli, costi condivisi</small></span></label>
+              <label class="choice"><input type="radio" name="servizio" value="completo" required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></span><span><strong>Carico completo</strong><small>Mezzo dedicato, viaggio diretto</small></span></label>
+              <label class="choice"><input type="radio" name="servizio" value="magazzino" required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></span><span><strong>Magazzino</strong><small>Stoccaggio e cross-docking</small></span></label>
+            </div>
+            <p class="field-error"></p>
+          </div>
+          <div class="wizard-block form-grid cols-2">
+            <div class="field">
+          <label for="q-data">Data di ritiro desiderata <span class="opt">(facoltativo)</span></label>
+          <input class="input" id="q-data" name="data_ritiro" type="date" aria-describedby="q-data-err q-data-hint" >
+          <p class="field-hint" id="q-data-hint">Se è flessibile lascia vuoto: ti proponiamo la prima data utile.</p><p class="field-error" id="q-data-err"></p>
+        </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="wizard-step" data-step>
+          <legend tabindex="-1">Da dove a dove?</legend>
+          <p class="step-intro">Ci bastano CAP e località: l'indirizzo completo lo concordiamo dopo.</p>
+          <div class="form-grid cols-2">
+            <div class="field">
+          <label for="q-rcap">CAP di ritiro</label>
+          <input class="input" id="q-rcap" name="ritiro_cap" type="text" required aria-describedby="q-rcap-err" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" data-msg="Inserisci un CAP di 5 cifre." placeholder="Es. 20831" autocomplete="off">
+          <p class="field-error" id="q-rcap-err"></p>
+        </div>
+            <div class="field">
+          <label for="q-rloc">Località di ritiro</label>
+          <input class="input" id="q-rloc" name="ritiro_localita" type="text" required aria-describedby="q-rloc-err" placeholder="Es. Seregno" autocomplete="off">
+          <p class="field-error" id="q-rloc-err"></p>
+        </div>
+            <div class="field">
+              <label for="q-ccap">CAP di consegna</label>
+              <input class="input" id="q-ccap" name="consegna_cap" type="text" required aria-describedby="q-ccap-err q-ccap-eta" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" data-msg="Inserisci un CAP di 5 cifre." placeholder="Es. 40121" autocomplete="off">
+              <p class="field-hint" id="q-ccap-eta" data-eta-hint aria-live="polite"></p><p class="field-error" id="q-ccap-err"></p>
+            </div>
+            <div class="field">
+          <label for="q-cloc">Località di consegna</label>
+          <input class="input" id="q-cloc" name="consegna_localita" type="text" required aria-describedby="q-cloc-err" placeholder="Es. Bologna" autocomplete="off">
+          <p class="field-error" id="q-cloc-err"></p>
+        </div>
+          </div>
+          <div class="wizard-block" data-group>
+            <p class="label" id="dest-label">Il destinatario è</p>
+            <div class="choice-grid" role="radiogroup" aria-labelledby="dest-label">
+              <label class="choice choice-sm"><input type="radio" name="destinatario" value="azienda" checked required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-building-2"/></svg></span><span><strong>Un'azienda</strong><small>Con o senza banchina di carico</small></span></label>
+              <label class="choice choice-sm"><input type="radio" name="destinatario" value="privato" required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-user"/></svg></span><span><strong>Un privato</strong><small>Consigliata la consegna su appuntamento</small></span></label>
+            </div>
+            <p class="field-error"></p>
+          </div>
+        </fieldset>
+
+        <fieldset class="wizard-step" data-step>
+          <legend tabindex="-1">Cosa spedisci?</legend>
+          <p class="step-intro">Peso e misure servono a scegliere il mezzo e a calcolare un prezzo corretto. Vanno bene anche valori indicativi.</p>
+          <div class="wizard-block" data-group>
+            <p class="label" id="tipo-label">Formato</p>
+            <div class="choice-grid choice-grid-3" role="radiogroup" aria-labelledby="tipo-label">
+              <label class="choice choice-sm"><input type="radio" name="tipo_pallet" value="eur" checked required><span><strong>EPAL / EUR</strong><small>120 × 80 cm</small></span></label>
+              <label class="choice choice-sm"><input type="radio" name="tipo_pallet" value="industriale" required><span><strong>Industriale</strong><small>120 × 100 cm</small></span></label>
+              <label class="choice choice-sm"><input type="radio" name="tipo_pallet" value="mezzo" required><span><strong>Mezzo pallet</strong><small>80 × 60 cm</small></span></label>
+              <label class="choice choice-sm"><input type="radio" name="tipo_pallet" value="quarto" required><span><strong>Quarto di pallet</strong><small>60 × 40 cm</small></span></label>
+              <label class="choice choice-sm"><input type="radio" name="tipo_pallet" value="altro" required><span><strong>Altro</strong><small>Colli sfusi o fuori misura</small></span></label>
+            </div>
+            <p class="field-error"></p>
+          </div>
+          <div class="wizard-block form-grid cols-3">
+            <div class="field">
+              <label for="q-num">Quantità</label>
+              <div class="qty" data-qty>
+                <button type="button" data-qty-dec aria-label="Diminuisci la quantità"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-minus"/></svg></button>
+                <input id="q-num" name="numero" type="number" min="1" max="99" value="1" inputmode="numeric" required aria-describedby="q-num-err">
+                <button type="button" data-qty-inc aria-label="Aumenta la quantità"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-plus"/></svg></button>
+              </div>
+              <p class="field-error" id="q-num-err"></p>
+            </div>
+            <div class="field">
+          <label for="q-peso">Peso totale (kg)</label>
+          <input class="input" id="q-peso" name="peso" type="number" required aria-describedby="q-peso-err" min="1" max="40000" inputmode="numeric" placeholder="Es. 450">
+          <p class="field-error" id="q-peso-err"></p>
+        </div>
+            <div class="field">
+          <label for="q-alt">Altezza massima (cm) <span class="opt">(facoltativo)</span></label>
+          <input class="input" id="q-alt" name="altezza" type="number" aria-describedby="q-alt-err" min="10" max="300" inputmode="numeric" placeholder="Es. 150">
+          <p class="field-error" id="q-alt-err"></p>
+        </div>
+          </div>
+          <div class="wizard-block form-grid">
+            <div class="field">
+          <label for="q-merce">Che merce spedisci? <span class="opt">(facoltativo)</span></label>
+          <input class="input" id="q-merce" name="descrizione_merce" type="text" aria-describedby="q-merce-err" placeholder="Es. bevande, arredi, ricambi, materiale edile">
+          <p class="field-error" id="q-merce-err"></p>
+        </div>
+          </div>
+          <div class="wizard-block">
+            <p class="label">Servizi accessori <span class="opt">(facoltativi)</span></p>
+            <div class="choice-grid">
+              <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Sponda idraulica"><span>Sponda idraulica<small>A destinazione non c'è un muletto</small></span></label>
+              <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Consegna su appuntamento"><span>Consegna su appuntamento<small>Giorno e fascia oraria concordati</small></span></label>
+              <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Preavviso al destinatario"><span>Preavviso al destinatario<small>Telefonata prima della consegna</small></span></label>
+              <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Merce fragile o non sovrapponibile"><span>Merce fragile o non sovrapponibile<small>Viaggia senza altri carichi sopra</small></span></label>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset class="wizard-step" data-step>
+          <legend tabindex="-1">A chi inviamo il preventivo?</legend>
+          <p class="step-intro">Controlla il riepilogo e lasciaci i tuoi contatti: ti rispondiamo al più presto, negli orari d'ufficio.</p>
+          <p class="visually-hidden">Riepilogo della richiesta:</p>
+          <dl class="summary" data-summary></dl>
+          <div class="form-grid cols-2">
+            <div class="field">
+          <label for="q-nome">Nome e cognome</label>
+          <input class="input" id="q-nome" name="nome" type="text" required aria-describedby="q-nome-err" autocomplete="name">
+          <p class="field-error" id="q-nome-err"></p>
+        </div>
+            <div class="field">
+          <label for="q-azienda">Azienda <span class="opt">(facoltativo)</span></label>
+          <input class="input" id="q-azienda" name="azienda" type="text" aria-describedby="q-azienda-err" autocomplete="organization">
+          <p class="field-error" id="q-azienda-err"></p>
+        </div>
+            <div class="field">
+          <label for="q-email">Email</label>
+          <input class="input" id="q-email" name="email" type="email" required aria-describedby="q-email-err" autocomplete="email" placeholder="nome@azienda.it">
+          <p class="field-error" id="q-email-err"></p>
+        </div>
+            <div class="field">
+          <label for="q-tel">Telefono</label>
+          <input class="input" id="q-tel" name="telefono" type="tel" required aria-describedby="q-tel-err" autocomplete="tel" pattern="[0-9+\s\(\)\.\/\-]{6,20}" data-msg="Inserisci un numero di telefono valido." placeholder="Es. 333 123 4567">
+          <p class="field-error" id="q-tel-err"></p>
+        </div>
+            <div class="field span-2" data-group>
+              <p class="label" id="contatto-label">Come preferisci essere ricontattato?</p>
+              <div class="choice-grid choice-grid-3" role="radiogroup" aria-labelledby="contatto-label">
+                <label class="choice choice-sm"><input type="radio" name="contatto_preferito" value="email" checked required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-mail"/></svg></span><span><strong>Email</strong></span></label>
+                <label class="choice choice-sm"><input type="radio" name="contatto_preferito" value="telefono" required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg></span><span><strong>Telefono</strong></span></label>
+                <label class="choice choice-sm"><input type="radio" name="contatto_preferito" value="whatsapp" required><span class="choice-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg></span><span><strong>WhatsApp</strong></span></label>
+              </div>
+              <p class="field-error"></p>
+            </div>
+            <div class="field span-2">
+              <label for="q-note">Note <span class="opt">(facoltative)</span></label>
+              <textarea class="textarea" id="q-note" name="note" rows="4" placeholder="Orari di ritiro, accessi, urgenze o qualsiasi dettaglio utile"></textarea>
+            </div>
+            <div class="field span-2">
+          <label class="check"><input id="q-privacy" name="privacy" type="checkbox" value="accettata" required aria-describedby="q-privacy-err"> <span>Ho letto l'<a href="/privacy/" target="_blank" rel="noopener">informativa privacy</a> e acconsento al trattamento dei dati per ricevere una risposta.</span></label>
+          <p class="field-error" id="q-privacy-err"></p>
+        </div>
+          </div>
+          <p class="wa-alt">Preferisci WhatsApp? <a class="link-arrow" data-wa th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20un%20preventivo.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Invia il riepilogo su WhatsApp</a></p>
+          <div class="form-status" data-form-status role="status" tabindex="-1"></div>
+        </fieldset>
+
+        <div class="wizard-nav">
+          <button class="btn btn-ghost" type="button" data-prev><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-left"/></svg>Indietro</button>
+          <p class="wizard-count" data-count aria-live="polite">Passo 1 di 4</p>
+          <button class="btn btn-primary" type="button" data-next>Continua<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></button>
+          <button class="btn btn-primary" type="submit" data-submit hidden>Invia la richiesta<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-send"/></svg></button>
+        </div>
+        <div class="wizard-submit-nojs">
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Invia la richiesta</button>
+        </div>
+      </form>
+      <aside class="aside-stack">
+        <div class="panel panel-dark">
+          <h2 class="h4">Cosa succede dopo</h2>
+          <ol class="mini-steps">
+            <li>Leggiamo la richiesta e verifichiamo la disponibilità</li>
+            <li>Ti inviamo prezzo e tempi di ritiro e consegna</li>
+            <li>Confermi e organizziamo il ritiro alla tua sede</li>
+          </ol>
+        </div>
+        <div class="panel">
+          <h2 class="h4">Preferisci parlarne?</h2>
+          <p class="muted">Per carichi particolari o richieste urgenti, scrivici o chiamaci.</p>
+          <div class="actions">
+            <a class="btn btn-wa btn-sm" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20un%20preventivo%20per%20una%20spedizione.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>WhatsApp</a>
+            <a class="btn btn-secondary btn-sm" th:href="|tel:${business.phoneDigits()}|"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg>Chiama</a>
+          </div>
+          <p class="note mt-s mb-0">Lun–Ven 8:00–18:00</p>
+        </div>
+        <div class="panel panel-alt">
+          <ul class="ticks mb-0">
+            <li>Preventivo gratuito e senza impegno</li>
+            <li>Prezzo chiaro, nessun costo nascosto</li>
+            <li>I tuoi dati servono solo a risponderti</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

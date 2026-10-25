@@ -167,6 +167,8 @@ indirizzi né servire report).
 
 ## 6. Cosa succede dopo
 
+**Aggiornamento 2026-10-17 (Q-55).** Hai deciso che non si migra nessun dato vecchio: la nuova app parte con il database vuoto. MIG-01…MIG-03 sono eliminati, niente importatore né tabelle di appoggio; Q-02 è chiusa. Non ti viene chiesto nulla per la costruzione.
+
 Ci hai chiesto di procedere in autonomia («puoi procedere in autonomia», 2026-10-17): quindi
 **non ci fermiamo qui**. L'indicazione è registrata in `docs/plan.md` §Status e nell'ADR 0001
 e va anche nel capitolo 11, accanto a Q-01 e Q-52, come nota («nessuna risposta; solo il via

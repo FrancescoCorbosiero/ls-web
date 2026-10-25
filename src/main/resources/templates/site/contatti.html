@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Contatti e dove siamo | Logistica Sanchez</title>
+<meta name="description" th:content="${'Contatta Logistica Sanchez: WhatsApp e telefono ' + business.phone + ', email ' + business.officeEmail + '. Hub in Via dei Meiani 90, Seregno (MB).'}">
+<link rel="canonical" th:href="|${business.siteUrl}/contatti/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Contatti e dove siamo | Logistica Sanchez">
+<meta property="og:description" th:content="${'Contatta Logistica Sanchez: WhatsApp e telefono ' + business.phone + ', email ' + business.officeEmail + '. Hub in Via dei Meiani 90, Seregno (MB).'}">
+<meta property="og:url" th:content="|${business.siteUrl}/contatti/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/contatti.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Contatti e dove siamo | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"ContactPage","@id":[(${layout.json(business.siteUrl + '/contatti/#webpage')})],"url":[(${layout.json(business.siteUrl + '/contatti/')})],"name":"Contatti e dove siamo | Logistica Sanchez","description":[(${layout.json('Contatta Logistica Sanchez: WhatsApp e telefono ' + business.phone + ', email ' + business.officeEmail + '. Hub in Via dei Meiani 90, Seregno (MB).')})],"inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/contatti.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/contatti/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/contatti/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Contatti","item":[(${layout.json(business.siteUrl + '/contatti/')})]}]}]}</script>
+</head>
+<body data-page="contatti">
+<th:block th:replace="~{layout/public :: siteHeader('contatti')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Contatti</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Contatti</p>
+          <h1>Parliamo della tua spedizione</h1>
+          <p class="lede">Scrivici su WhatsApp, chiamaci o compila il modulo: ti rispondiamo il prima possibile, negli orari d'ufficio.</p>
+          <div class="page-hero-actions">
+            <a class="btn btn-accent btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20informazioni%20per%20una%20spedizione.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Scrivici su WhatsApp</a>
+            <a class="btn btn-outline-light btn-lg" th:href="|tel:${business.phoneDigits()}|"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg>[[${business.phoneDisplay()}]]</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside" aria-labelledby="orari-title">
+          <h2 id="orari-title">Orari d'ufficio</h2>
+          <dl class="hours hours-dark">
+            <div><dt>Lunedì – Venerdì</dt><dd>8:00 – 18:00</dd></div>
+            <div><dt>Sabato</dt><dd>8:00 – 12:00</dd></div>
+            <div><dt>Domenica</dt><dd>Chiuso</dd></div>
+          </dl>
+          <p class="note mt-s mb-0">Fuori orario scrivici su WhatsApp o via email: ti rispondiamo al rientro.</p>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="scrivici-title">
+    <div class="container split">
+      <div data-reveal>
+        <p class="kicker">I nostri recapiti</p>
+        <h2 id="scrivici-title">Scegli il canale che preferisci</h2>
+        <div class="contact-cards mt-m">
+          <div class="card contact-card"><span class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg></span><div><h3>WhatsApp</h3><p><a th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20informazioni%20per%20una%20spedizione.|" target="_blank" rel="noopener">[[${business.phone}]]</a></p><p class="muted">Il modo più rapido</p></div></div>
+          <div class="card contact-card"><span class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg></span><div><h3>Telefono</h3><p><a th:href="|tel:${business.phoneDigits()}|">[[${business.phoneDisplay()}]]</a></p><p class="muted">Lun–Ven 8:00–18:00</p></div></div>
+          <div class="card contact-card"><span class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-mail"/></svg></span><div><h3>Email</h3><p><a th:href="|mailto:${business.officeEmail}|">[[${business.officeEmail}]]</a></p><p class="muted">Per preventivi e documenti</p></div></div>
+          <div class="card contact-card"><span class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg></span><div><h3>Hub di Seregno</h3><p><a href="#dove-siamo">Via dei Meiani, 90<br>20831 Seregno (MB)</a></p><p class="muted">Su appuntamento</p></div></div>
+        </div>
+      </div>
+      <form class="panel contact-form" name="contatti" method="POST" action="/api/form" data-ajax-form data-success="Grazie! Abbiamo ricevuto il tuo messaggio: ti rispondiamo al più presto." data-reveal>
+        <input type="hidden" name="form-name" value="contatti">
+        <p class="hp-field" aria-hidden="true"><label>Non compilare questo campo: <input name="bot-field" type="text" tabindex="-1" autocomplete="off"></label></p>
+        <h2>Scrivici un messaggio</h2>
+        <div class="form-grid cols-2">
+          <div class="field">
+          <label for="c-nome">Nome e cognome</label>
+          <input class="input" id="c-nome" name="nome" type="text" required aria-describedby="c-nome-err" autocomplete="name">
+          <p class="field-error" id="c-nome-err"></p>
+        </div>
+          <div class="field">
+          <label for="c-email">Email</label>
+          <input class="input" id="c-email" name="email" type="email" required aria-describedby="c-email-err" autocomplete="email" placeholder="nome@azienda.it">
+          <p class="field-error" id="c-email-err"></p>
+        </div>
+          <div class="field">
+          <label for="c-tel">Telefono <span class="opt">(facoltativo)</span></label>
+          <input class="input" id="c-tel" name="telefono" type="tel" aria-describedby="c-tel-err" autocomplete="tel" pattern="[0-9+\s\(\)\.\/\-]{6,20}" data-msg="Inserisci un numero di telefono valido.">
+          <p class="field-error" id="c-tel-err"></p>
+        </div>
+          <div class="field">
+            <label for="c-oggetto">Argomento</label>
+            <select class="select" id="c-oggetto" name="oggetto">
+              <option>Richiesta di preventivo</option>
+              <option>Informazioni su una spedizione</option>
+              <option>Magazzino e logistica</option>
+              <option>Collaborazioni</option>
+              <option>Altro</option>
+            </select>
+          </div>
+          <div class="field span-2">
+            <label for="c-msg">Messaggio</label>
+            <textarea class="textarea" id="c-msg" name="messaggio" rows="5" required minlength="10" aria-describedby="c-msg-err" placeholder="Come possiamo aiutarti?"></textarea>
+            <p class="field-error" id="c-msg-err"></p>
+          </div>
+          <div class="field span-2">
+          <label class="check"><input id="c-privacy" name="privacy" type="checkbox" value="accettata" required aria-describedby="c-privacy-err"> <span>Ho letto l'<a href="/privacy/" target="_blank" rel="noopener">informativa privacy</a> e acconsento al trattamento dei dati per ricevere una risposta.</span></label>
+          <p class="field-error" id="c-privacy-err"></p>
+        </div>
+        </div>
+        <button class="btn btn-primary btn-lg" type="submit">Invia il messaggio<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-send"/></svg></button>
+        <div class="form-status" data-form-status role="status" tabindex="-1"></div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section section-alt" id="dove-siamo" aria-labelledby="dove-title">
+    <div class="container split is-center">
+      <div data-reveal>
+        <p class="kicker">Dove siamo</p>
+        <h2 id="dove-title">Il nostro hub di Seregno</h2>
+        <p class="lede">Siamo in <strong>Via dei Meiani, 90</strong>, a pochi minuti dalla SS36 Valassina e dalla Milano–Meda.</p>
+        <ul class="ticks">
+          <li>A una ventina di chilometri da Milano</li>
+          <li>Comodo per Monza, Como, Lecco e Bergamo</li>
+          <li>Per consegnare o ritirare merce in hub concordiamo prima giorno e orario</li>
+        </ul>
+      </div>
+      <div data-reveal><div class="map-facade" data-map="Via dei Meiani 90, 20831 Seregno MB">
+        <div class="map-facade-inner">
+          <span class="map-pin"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg></span>
+          <address><strong>Logistica Sanchez</strong><br>Via dei Meiani, 90 – 20831 Seregno (MB)</address>
+          <button class="btn btn-accent" type="button" data-map-load><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map"/></svg>Mostra la mappa interattiva</button>
+          <label class="check check-light"><input type="checkbox" data-map-remember> Ricorda la scelta su questo dispositivo</label>
+          <p class="note">La mappa è fornita da Google Maps: caricandola accetti i suoi cookie. <a href="/cookie/">Cookie policy</a></p>
+        </div>
+      </div>
+      <div class="map-links">
+        <a class="btn btn-secondary btn-sm" href="https://www.google.com/maps/dir/?api=1&amp;destination=Via%20dei%20Meiani%2090%2C%2020831%20Seregno%20MB" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-navigation"/></svg>Google Maps</a>
+        <a class="btn btn-secondary btn-sm" href="https://maps.apple.com/?daddr=Via%20dei%20Meiani%2090%2C%2020831%20Seregno%20MB" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Apple Mappe</a>
+        <a class="btn btn-secondary btn-sm" href="https://waze.com/ul?q=Via%20dei%20Meiani%2090%2C%2020831%20Seregno%20MB&amp;navigate=yes" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-car"/></svg>Waze</a>
+      </div></div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

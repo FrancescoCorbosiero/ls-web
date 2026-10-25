@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(false)}"></th:block>
+<title>Pagina non trovata | Logistica Sanchez</title>
+<meta name="description" content="La pagina che cerchi non esiste o è stata spostata. Torna alla home di Logistica Sanchez o traccia la tua spedizione.">
+<meta name="robots" content="noindex, follow">
+</head>
+<body data-page="404">
+<th:block th:replace="~{layout/public :: siteHeader('404')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <div class="notfound">
+        <p class="notfound-code" aria-hidden="true">404</p>
+        <h1>Questo pallet si è perso per strada.</h1>
+        <p class="lede">La pagina che cerchi non esiste o è stata spostata. Nessun problema: ecco qualche strada per tornare in carreggiata.</p>
+        <div class="page-hero-actions">
+          <a class="btn btn-accent btn-lg" href="/">Torna alla home<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          <a class="btn btn-outline-light btn-lg" href="/contatti/">Contattaci</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <div class="services-grid">
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg></div><h2 class="h4"><a href="/tracking/">Traccia la spedizione</a></h2><p>Inserisci il codice e scopri dov'è il tuo pallet.</p></article>
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calculator"/></svg></div><h2 class="h4"><a href="/preventivo/">Richiedi un preventivo</a></h2><p>Due minuti per ricevere prezzo e tempi.</p></article>
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-pallet"/></svg></div><h2 class="h4"><a href="/servizi/">I nostri servizi</a></h2><p>Pallet espresso, groupage, carichi completi, magazzino.</p></article>
+        <article class="card card-link"><div class="card-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-book-open"/></svg></div><h2 class="h4"><a href="/blog/">Blog e guide</a></h2><p>Consigli pratici per spedire meglio.</p></article>
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

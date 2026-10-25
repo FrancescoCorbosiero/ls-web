@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!-- Order detail (CUS-05): lines grouped (not per unit), the recomputed totals, recipient, state, tracking; changes via the office (Q-12). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{orders.detail.title(${order.displayCode()})} + ' · ' + ${business.brandName}">Ordine · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<main id="main" class="section">
+  <div class="container">
+    <th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
+    <h1 th:text="#{orders.detail.title(${order.displayCode()})}">Ordine</h1>
+    <p><span class="badge" th:text="#{'orders.status.' + ${order.status.name()}}">In attesa</span>
+      <span class="muted" th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span></p>
+    <p class="callout callout-info" th:if="${order.status.name() == 'PENDING'}" th:text="#{orders.detail.pendingHint}">L'ordine è in attesa di conferma dal nostro centro logistico: riceverai un'e-mail con il codice definitivo e l'importo.</p>
+    <p class="callout" th:if="${order.status.name() == 'DECLINED'}" th:text="#{orders.detail.declinedHint}">L'ordine non è stato accettato. Per chiarimenti contatta il centro logistico.</p>
+
+    <div class="grid-2">
+      <section class="card">
+        <h2 th:text="#{orders.detail.shipment}">Dettaglio spedizione</h2>
+        <dl>
+          <dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.displayCode()}">-</dd>
+          <dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd>
+          <dt th:text="#{orders.field.packageCount}">Numero colli</dt><dd th:text="${order.packageCount ?: '-'}">-</dd>
+          <dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd>
+          <dt th:text="#{orders.field.notes}">Note</dt><dd th:text="${order.customerNotes ?: '-'}">-</dd>
+          <dt th:text="#{orders.col.tracking}">Tracking</dt><dd th:text="${order.status.name() == 'APPROVED'} ? ${order.trackingLabel} : '-'">-</dd>
+          <dt th:text="#{orders.col.amount}">Importo</dt><dd th:text="${order.amountText()}">-</dd>
+        </dl>
+      </section>
+      <section class="card">
+        <h2 th:text="#{orders.detail.recipient}">Destinatario</h2>
+        <dl>
+          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.recipient.name}">-</dd>
+          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.recipient.addressOneLine()}">-</dd>
+          <dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${order.recipient.phone ?: '-'}">-</dd>
+          <dt th:text="#{orders.field.email}">Email</dt><dd th:text="${order.recipient.email ?: '-'}">-</dd>
+        </dl>
+        <h2 th:text="#{orders.detail.sender}">Mittente</h2>
+        <dl>
+          <dt th:text="#{orders.field.name}">Ragione Sociale/Nominativo</dt><dd th:text="${order.sender.name}">-</dd>
+          <dt th:text="#{orders.field.address}">Indirizzo</dt><dd th:text="${order.sender.addressOneLine()}">-</dd>
+        </dl>
+      </section>
+    </div>
+
+    <h2 th:text="#{orders.detail.lines}">Pallet e colli</h2>
+    <div class="table-wrap">
+      <table class="table">
+        <thead><tr>
+          <th scope="col" th:text="#{orders.line.kind}">Tipo</th>
+          <th scope="col" th:text="#{orders.line.heightCm}">Altezza (cm)</th>
+          <th scope="col" th:text="#{orders.line.lengthCm}">Lunghezza (cm)</th>
+          <th scope="col" th:text="#{orders.line.widthCm}">Larghezza (cm)</th>
+          <th scope="col" th:text="#{orders.line.weightKg}">Peso (kg)</th>
+          <th scope="col" th:text="#{orders.line.quantity}">Quantità</th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="l : ${order.lines}">
+            <td th:text="${l.kind.label()}">Epal</td>
+            <td th:text="${l.heightCm}">0</td><td th:text="${l.lengthCm}">0</td><td th:text="${l.widthCm}">0</td>
+            <td th:text="${fmt.number(l.weightKg, 0)}">0</td><td th:text="${l.quantity}">0</td>
+          </tr>
+        </tbody>
+        <tfoot><tr><th scope="row" colspan="4" th:text="#{orders.totals}">Totale</th><td colspan="2" th:text="${order.weightText()} + ' · ' + ${order.volumeText()}">0 kg · 0 m³</td></tr></tfoot>
+      </table>
+    </div>
+    <p class="muted" th:text="#{orders.detail.changes(${business.officeEmail}, ${business.phoneDisplay()})}">Per modificare o annullare un ordine in attesa scrivi all'ufficio.</p>
+    <p><a href="/area-clienti/ordini/" th:text="#{orders.detail.back}">Torna ai tuoi ordini</a></p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

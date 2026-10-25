@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<!--
+  The page behind the GET links of e-mails the legacy backend already sent (/mono/email-confirm,
+  /mono/report, /mono/download-report, the old success pages; API-03, ADR 0011): status 410, the same
+  text whatever the parameters, nothing confirmed, nothing served. Variables: customerArea.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<title th:text="#{compat.gone.title} + ' · ' + ${business.brandName}">Link non più valido · Logistica Sanchez</title>
+<meta name="robots" content="noindex, nofollow">
+<th:block th:replace="~{layout/public :: htmlHead(false)}"></th:block>
+</head>
+<body data-page="link-scaduto">
+<th:block th:replace="~{layout/public :: siteHeader(null)}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <div class="notfound">
+        <p class="notfound-code" aria-hidden="true">410</p>
+        <h1 th:text="#{compat.gone.title}">Link non più valido</h1>
+        <p class="lede" th:text="#{compat.gone.lead}">Questo link apparteneva al vecchio sistema e non funziona più. Accedi all'area clienti: trovi lì i tuoi ordini, le tue spedizioni e i tuoi dati.</p>
+        <div class="page-hero-actions">
+          <a class="btn btn-accent btn-lg" th:href="${customerArea}"><th:block th:text="#{compat.gone.customerArea}">Vai all'area clienti</th:block><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+          <a class="btn btn-outline-light btn-lg" href="/" th:text="#{error.home}">Torna alla home</a>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container">
+      <p class="muted" th:text="#{error.support(${business.officeEmail}, ${business.phone})}">Se il problema continua, scrivici o chiamaci.</p>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

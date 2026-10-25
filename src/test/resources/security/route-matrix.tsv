@@ -1,0 +1,105 @@
+# Route × role expectation table (NFR-02, ADR 0002). One line per mapped route of the app:
+# METHOD  PATTERN  anonymous  CUSTOMER  OPERATOR  ADMIN  — expected status, "|" for alternatives.
+# ANY means the mapping accepts every method (tested with GET). Path variables are replaced by
+# "1" and "/**" by "/x". A mapped route missing here, or a line without a mapping, fails the test.
+GET	/actuator/health	200	200	200	200
+GET	/actuator/health/**	404	404	404	404
+ANY	/error	404	404	404	404
+# auth module (ADR 0003, ADR 0004): sign-in entries, link pages and the Phase 1 stub homes.
+GET	/area-clienti/	200	302	200	200
+POST	/area-clienti/	403	403	403	403
+GET	/area-clienti/accesso	200	200	200	200
+POST	/area-clienti/accesso	403	403	403	403
+GET	/area-clienti/cambio-email	200	200	200	200
+POST	/area-clienti/cambio-email	403	403	403	403
+# customers module (CUS-02, CUS-06): registration behind a REGISTER link (the controller checks the token or the session), profile.
+GET	/area-clienti/registrazione/	200	302	200	200
+POST	/area-clienti/registrazione/	403	403	403	403
+GET	/area-clienti/profilo/	302	200	403	403
+POST	/area-clienti/profilo/email	403	403	403	403
+# orders module (CUS-04, CUS-05): list, detail and wizard behind a customer session.
+GET	/area-clienti/ordini/	302	200	403	403
+GET	/area-clienti/ordini/{codice}/	302	404	403	403
+GET	/area-clienti/ordini/nuovo/	302	200	403	403
+POST	/area-clienti/ordini/nuovo/	403	403	403	403
+GET	/area-clienti/ordini/nuovo/destinatario/	302	302	403	403
+POST	/area-clienti/ordini/nuovo/destinatario/	403	403	403	403
+GET	/area-clienti/ordini/nuovo/riepilogo/	302	302	403	403
+POST	/area-clienti/ordini/nuovo/riepilogo/	403	403	403	403
+GET	/area-clienti/ordini/nuovo/inviato/	302	302	403	403
+GET	/gestione/	200	200	200	200
+# backoffice module (ADM-02…ADM-09, NFR-03; ADR 0017): staff screens; settings, staff users and privacy tools for ADMIN only.
+GET	/gestione/clienti/	302	403	200	200
+GET	/gestione/clienti/in-approvazione/	302	403	200	200
+GET	/gestione/clienti/{id}/	302	403	404|200	404|200
+GET	/gestione/clienti/{id}/approva	302	403	404|200	404|200
+POST	/gestione/clienti/{id}/approva	403	403	403	403
+GET	/gestione/clienti/{id}/rifiuta	302	403	404|200	404|200
+POST	/gestione/clienti/{id}/rifiuta	403	403	403	403
+GET	/gestione/ordini/	302	403	200	200
+GET	/gestione/ordini/in-approvazione/	302	403	200	200
+GET	/gestione/ordini/{id}/	302	403	404|200	404|200
+GET	/gestione/ordini/{id}/approva	302	403	404|200	404|200
+POST	/gestione/ordini/{id}/approva	403	403	403	403
+GET	/gestione/ordini/{id}/rifiuta	302	403	404|200	404|200
+POST	/gestione/ordini/{id}/rifiuta	403	403	403	403
+POST	/gestione/ordini/{id}/tracking	403	403	403	403
+POST	/gestione/ordini/{id}/note	403	403	403	403
+GET	/gestione/tracking/	302	403	200	200
+POST	/gestione/tracking/	403	403	403	403
+GET	/gestione/report/	302	403	200	200
+POST	/gestione/report/	403	403	403	403
+GET	/gestione/impostazioni/	302	403	403	200
+POST	/gestione/impostazioni/flag	403	403	403	403
+POST	/gestione/impostazioni/destinatari	403	403	403	403
+POST	/gestione/impostazioni/destinatari/{id}/rimuovi	403	403	403	403
+GET	/gestione/impostazioni/utenti/	302	403	403	200
+POST	/gestione/impostazioni/utenti/	403	403	403	403
+GET	/gestione/impostazioni/privacy/	302	403	403	200
+POST	/gestione/impostazioni/privacy/cerca	403	403	403	403
+POST	/gestione/impostazioni/privacy/esporta	403	403	403	403
+POST	/gestione/impostazioni/privacy/anonimizza	403	403	403	403
+# reports module (ADM-09, ADR 0016): the two authenticated downloads (sample id 1 may or may not be a run: 404, or the PDF for staff and 403 for a customer it is not about)
+GET	/gestione/report/{id}/download	302	403	404|200	404|200
+GET	/area-clienti/report/{id}/download	302	404|403	403	403
+GET	/gestione/imposta-password	200	200	200	200
+POST	/gestione/imposta-password	403	403	403	403
+GET	/js/config.js	200	200	200	200
+GET	/site.webmanifest	200	200	200	200
+# site module (ADR 0012, 0013, 0014): the public pages of chapter 06 §3.1, the generated files, the form endpoint.
+GET	/	200	200	200	200
+GET	/servizi/	200	200	200	200
+GET	/servizi/spedizione-pallet/	200	200	200	200
+GET	/servizi/groupage/	200	200	200	200
+GET	/servizi/carico-completo/	200	200	200	200
+GET	/servizi/magazzino/	200	200	200	200
+GET	/zone/	200	200	200	200
+GET	/zone/monza-brianza/	200	200	200	200
+GET	/zone/milano/	200	200	200	200
+GET	/zone/como/	200	200	200	200
+GET	/zone/lecco/	200	200	200	200
+GET	/zone/bergamo/	200	200	200	200
+GET	/tracking/	200	200	200	200
+GET	/preventivo/	200	200	200	200
+GET	/contatti/	200	200	200	200
+GET	/chi-siamo/	200	200	200	200
+GET	/faq/	200	200	200	200
+GET	/blog/	200	200	200	200
+GET	/blog/come-preparare-un-pallet-per-la-spedizione/	200	200	200	200
+GET	/blog/misure-pallet-epal-industriale/	200	200	200	200
+GET	/blog/quanto-costa-spedire-un-pallet/	200	200	200	200
+GET	/blog/groupage-o-carico-completo/	200	200	200	200
+GET	/privacy/	200	200	200	200
+GET	/cookie/	200	200	200	200
+GET	/grazie/	200	200	200	200
+GET	/sitemap.xml	200	200	200	200
+GET	/robots.txt	200	200	200	200
+GET	/.well-known/security.txt	200	200	200	200
+GET	/security.txt	200	200	200	200
+# POST /api/form without Origin or Referer is refused by the controller's own check (ADR 0014)
+POST	/api/form	403	403	403	403
+# tracking module (ADR 0010, 0011): the kept legacy endpoints and the 410 catch-all
+POST	/mono/api/order/trace/state	400	400	400	400
+GET	/mono/api/enumeration/statoTracking	200	200	200	200
+GET	/mono/api/enumeration/servizioAccessorio	200	200	200	200
+ANY	/mono/**	410	410	410	410

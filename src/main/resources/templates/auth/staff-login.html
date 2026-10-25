@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- Staff login (ADM-01; copy of the legacy CMS login dialog of chapter 04 §2: title, fields and the single error sentence). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{auth.staff.login.title} + ' · ' + ${business.brandName}">Login · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('staff', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <h1 th:text="#{auth.staff.login.title}">Login</h1>
+    <p class="callout callout-info" th:if="${passwordSet}" th:text="#{auth.staff.login.passwordSet}">Password impostata. Ora puoi accedere.</p>
+    <p class="callout callout-info" th:if="${loggedOut}" th:text="#{auth.staff.login.loggedOut}">Sei uscito dalla gestione.</p>
+    <p class="callout field-error" role="alert" th:if="${loginError}" th:text="#{auth.staff.login.error}">Username o password errate.</p>
+    <form method="post" th:action="@{/gestione/login}" class="form-grid">
+      <div class="field">
+        <label class="label" for="username" th:text="#{auth.staff.login.username}">Username</label>
+        <input class="input" id="username" name="username" type="text" autocomplete="username" required autofocus>
+      </div>
+      <div class="field">
+        <label class="label" for="password" th:text="#{auth.staff.login.password}">Password</label>
+        <input class="input" id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <div class="actions"><button type="submit" class="btn btn-primary" th:text="#{auth.staff.login.submit}">Accedi</button></div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

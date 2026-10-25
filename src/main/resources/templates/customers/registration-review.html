@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!-- Summary before the confirmation (CUS-02, OP-16 fix: the data are shown, the buttons are labelled). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{customers.review.title} + ' · ' + ${business.brandName}">Controlla i dati · Logistica Sanchez</title>
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${reregister} ? ${values['email']} : null, ${reregister} ? '/area-clienti/logout' : null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <h1 th:text="#{customers.review.heading}">Controlla i dati inseriti</h1>
+    <p class="lede" th:text="#{customers.review.lead}">Se è tutto corretto premi «Conferma»: la richiesta passa all'ufficio per l'approvazione.</p>
+    <div class="table-wrap">
+      <table class="table summary">
+        <tbody>
+          <tr><th scope="row" th:text="#{customers.field.email}">Email</th><td th:text="${values['email']}">email</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.companyName}">Ragione Sociale/Nominativo</th><td th:text="${data.companyName}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.addressLine}">Via</th><td th:text="${data.addressLine}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.province}">Provincia</th><td th:text="${data.province}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.city}">Città</th><td th:text="${data.city}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.postalCode}">CAP</th><td th:text="${data.postalCode}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.phone}">Telefono</th><td th:text="${data.phone}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.vatNumber}">Partita IVA</th><td th:text="${data.vatNumber ?: '-'}">-</td></tr>
+          <tr><th scope="row" th:text="#{customers.field.taxCode}">Codice fiscale</th><td th:text="${data.taxCode ?: '-'}">-</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <form method="post" th:action="@{/area-clienti/registrazione/}" class="actions">
+      <input type="hidden" name="t" th:value="${token}" th:if="${token != null}">
+      <input type="hidden" name="email" th:value="${values['email']}">
+      <input type="hidden" th:each="f : ${values}" th:if="${f.key != 'email'}" th:name="${f.key}" th:value="${f.value}">
+      <input type="hidden" name="website" value="">
+      <button type="submit" name="step" value="confirm" class="btn btn-primary" th:text="#{customers.review.confirm}">Conferma</button>
+      <button type="submit" name="step" value="edit" class="btn btn-secondary" th:text="#{customers.review.edit}">Modifica</button>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

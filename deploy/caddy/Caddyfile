@@ -1,0 +1,30 @@
+# Caddy 2 in front of the app: automatic HTTPS (Let's Encrypt) for the five hosts of chapter 10 §1.
+# LS_DOMAIN and LS_ACME_EMAIL come from the environment of the proxy service (compose.yml).
+# Host-based behaviour (www -> apex, ordini. -> /area-clienti/, dashboard. -> /gestione/, app. served
+# as the apex for the kept /mono/api paths) is decided by the app (HostRoutingFilter), so every
+# host is proxied the same way and Caddy adds only transport: TLS, HTTP/2 and the forwarded
+# headers the app trusts for one hop (ls.security.proxy.trust-forwarded-headers=true).
+{
+	email {$LS_ACME_EMAIL}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$LS_DOMAIN:logisticasanchez.com},
+www.{$LS_DOMAIN:logisticasanchez.com},
+app.{$LS_DOMAIN:logisticasanchez.com},
+ordini.{$LS_DOMAIN:logisticasanchez.com},
+dashboard.{$LS_DOMAIN:logisticasanchez.com} {
+	encode zstd gzip
+	header -Server
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-Host {host}
+		health_uri /actuator/health
+		health_interval 30s
+	}
+	log {
+		output stdout
+		format json
+	}
+}

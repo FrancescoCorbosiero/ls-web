@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Spedizione pallet Como e provincia | Logistica Sanchez</title>
+<meta name="description" content="Ritiro e spedizione di pallet a Como e provincia, dal Canturino al lago: consegne in tutta Italia in 24–72 ore con tracking. Preventivo gratuito.">
+<link rel="canonical" th:href="|${business.siteUrl}/zone/como/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Spedizione pallet Como e provincia | Logistica Sanchez">
+<meta property="og:description" content="Ritiro e spedizione di pallet a Como e provincia, dal Canturino al lago: consegne in tutta Italia in 24–72 ore con tracking. Preventivo gratuito.">
+<meta property="og:url" th:content="|${business.siteUrl}/zone/como/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/zone-como.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Spedizione pallet Como e provincia | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/zone/como/#webpage')})],"url":[(${layout.json(business.siteUrl + '/zone/como/')})],"name":"Spedizione pallet Como e provincia | Logistica Sanchez","description":"Ritiro e spedizione di pallet a Como e provincia, dal Canturino al lago: consegne in tutta Italia in 24–72 ore con tracking. Preventivo gratuito.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/zone-como.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/zone/como/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/zone/como/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Zone servite","item":[(${layout.json(business.siteUrl + '/zone/')})]},{"@type":"ListItem","position":3,"name":"Como","item":[(${layout.json(business.siteUrl + '/zone/como/')})]}]},{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/zone/como/#service')})],"name":"Spedizione pallet Como","serviceType":"Spedizione pallet","description":"Ritiro e spedizione di pallet a Como e provincia, dal Canturino al lago: consegne in tutta Italia in 24–72 ore con tracking. Preventivo gratuito.","url":[(${layout.json(business.siteUrl + '/zone/como/')})],"provider":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"areaServed":[{"@type":"AdministrativeArea","name":"Provincia di Como"},{"@type":"AdministrativeArea","name":"Lombardia"}],"availableChannel":{"@type":"ServiceChannel","servicePhone":[(${layout.json(business.phoneDigits())})],"serviceUrl":[(${layout.json(business.siteUrl + '/preventivo/')})]}},{"@type":"FAQPage","@id":[(${layout.json(business.siteUrl + '/zone/como/#faq')})],"mainEntity":[{"@type":"Question","name":"Ritirate anche nei paesi sul lago di Como?","acceptedAnswer":{"@type":"Answer","text":"Sì. Per le località sul lago e nelle valli valutiamo il mezzo più adatto a strade e accessi: indicaci l'indirizzo esatto nel preventivo."}},{"@type":"Question","name":"Spedite tessuti e rotoli?","acceptedAnswer":{"@type":"Answer","text":"Sì, imballati e fissati su pallet in modo che non si muovano durante il viaggio. Se la merce teme umidità o sporco, segnalalo: la proteggiamo di conseguenza."}},{"@type":"Question","name":"Effettuate spedizioni verso la Svizzera?","acceptedAnswer":{"@type":"Answer","text":"Il nostro servizio standard copre tutta Italia. Per destinazioni all'estero contattaci: ti diciamo se e come possiamo aiutarti."}}]}]}</script>
+</head>
+<body data-page="zone/como">
+<th:block th:replace="~{layout/public :: siteHeader('zone/como')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><a href="/zone/">Zone servite</a></li><li><span aria-current="page">Como</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Zone servite · Como</p>
+          <h1>Spedizione pallet a Como e provincia</h1>
+          <p class="lede">Dalla città della seta ai mobilifici del Canturino, fino ai paesi del lago: ritiriamo la tua merce in provincia di Como e la consegniamo in tutta Italia.</p>
+          <div class="page-hero-actions">
+            <a class="btn btn-accent btn-lg" href="/preventivo/">Richiedi un preventivo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+            <a class="btn btn-outline-light btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20spedire%20dei%20pallet%20dalla%20zona%20di%20Como.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Scrivici su WhatsApp</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside" aria-labelledby="aside-title">
+          <h2 id="aside-title">In breve</h2>
+          <ul class="ticks"><li>Ritiri in tutta la provincia di Como</li><li>Collegamento rapido con il nostro hub di Seregno</li><li>Mezzi adatti a lago e valli</li><li>Pallet espresso, groupage e carichi completi</li></ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="intro-title">
+    <div class="container split">
+      <div data-reveal>
+        <p class="kicker">Il territorio</p>
+        <h2 id="intro-title">Spedire da Como in tutta Italia</h2>
+        <p>La provincia di Como unisce due anime produttive: il tessile, con la tradizione della seta, e il legno-arredo del Canturino, tra Cantù, Mariano Comense e Cabiate. A questi si aggiungono meccanica, alimentare e tante piccole imprese che spediscono in tutta Italia.</p><p>Il nostro hub di Seregno è a pochi chilometri dal confine provinciale: organizziamo ritiri con regolarità e facciamo partire la merce verso il resto del Paese. Per le località del lago e delle valli, dove strade e accessi sono più stretti, scegliamo il mezzo adatto.</p>
+      </div>
+      <div data-reveal>
+        <div class="panel panel-alt">
+          <h3>Quanto ci mette ad arrivare?</h3>
+          <p class="muted">Inserisci il CAP di destinazione: ti diciamo i tempi indicativi dal ritiro.</p>
+          <form class="eta-box eta-box-light" data-eta-form action="/zone/" method="get">
+          <label class="label" for="como-cap">CAP di destinazione</label>
+          <div class="input-group">
+            <input class="input" id="como-cap" name="cap" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Es. 40121" autocomplete="postal-code" required>
+            <button class="btn btn-accent" type="submit">Verifica</button>
+          </div>
+          <p class="eta-result" data-eta-result aria-live="polite"></p>
+        </form>
+          <div class="table-wrap"><table class="table">
+      <caption class="visually-hidden">Tempi di consegna indicativi dal ritiro</caption>
+      <thead><tr><th scope="col">Tempi</th><th scope="col">Regioni di destinazione</th></tr></thead>
+      <tbody><tr><th scope="row"><span class="eta-pill" data-zone="1">24 ore</span></th><td>Lombardia, Piemonte, Valle d'Aosta, Liguria, Veneto, Trentino-Alto Adige, Friuli-Venezia Giulia, Emilia-Romagna</td></tr><tr><th scope="row"><span class="eta-pill" data-zone="2">48 ore</span></th><td>Toscana, Umbria, Marche, Lazio, Abruzzo, Molise, Campania, Puglia</td></tr><tr><th scope="row"><span class="eta-pill" data-zone="3">72 ore</span></th><td>Basilicata, Calabria, Sicilia, Sardegna</td></tr></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="punti-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Il nostro servizio a Como</p>
+        <h2 id="punti-title">Cosa possiamo fare per le aziende della zona</h2>
+      </div>
+      <div class="features features-3" data-stagger><div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-shirt"/></svg></span><h3>Tessile e moda</h3><p>Rotoli, tessuti e capi confezionati viaggiano puliti e protetti, ben fissati sul pallet.</p></div><div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-sofa"/></svg></span><h3>Legno e arredo</h3><p>Dal Canturino in tutta Italia: mobili e semilavorati movimentati con cura, anche con sponda idraulica.</p></div><div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-route"/></svg></span><h3>Lago e valli</h3><p>Strade strette e accessi difficili? Ti proponiamo il mezzo giusto per ritirare e consegnare senza problemi.</p></div></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="comuni-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Comuni serviti</p>
+        <h2 id="comuni-title">Ritiriamo in tutta la provincia</h2>
+        <p class="lede">Alcuni dei comuni in cui organizziamo ritiri. Non trovi il tuo? Scrivici: con ogni probabilità passiamo anche da te.</p>
+      </div>
+      <ul class="towns" role="list" data-reveal><li>Como</li><li>Cantù</li><li>Mariano Comense</li><li>Erba</li><li>Olgiate Comasco</li><li>Lomazzo</li><li>Appiano Gentile</li><li>Fino Mornasco</li><li>Cermenate</li><li>Cabiate</li><li>Lurate Caccivio</li><li>Turate</li><li>Lipomo</li><li>Albavilla</li><li>Inverigo</li><li>Carugo</li><li>Figino Serenza</li><li>Novedrate</li><li>Villa Guardia</li><li>Menaggio</li></ul>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="faq-title">
+    <div class="container container-narrow">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Domande frequenti</p>
+        <h2 id="faq-title">Spedizioni da Como: le domande più comuni</h2>
+      </div>
+      <div class="faq"><details name="faq-como"><summary><h3 class="faq-q">Ritirate anche nei paesi sul lago di Como?</h3></summary><div class="faq-a"><p>Sì. Per le località sul lago e nelle valli valutiamo il mezzo più adatto a strade e accessi: indicaci l'indirizzo esatto nel preventivo.</p></div></details>
+<details name="faq-como"><summary><h3 class="faq-q">Spedite tessuti e rotoli?</h3></summary><div class="faq-a"><p>Sì, imballati e fissati su pallet in modo che non si muovano durante il viaggio. Se la merce teme umidità o sporco, segnalalo: la proteggiamo di conseguenza.</p></div></details>
+<details name="faq-como"><summary><h3 class="faq-q">Effettuate spedizioni verso la Svizzera?</h3></summary><div class="faq-a"><p>Il nostro servizio standard copre tutta Italia. Per destinazioni all'estero <a href="/contatti/">contattaci</a>: ti diciamo se e come possiamo aiutarti.</p></div></details></div>
+      <div class="mt-l text-center">
+        <p class="label">Altre zone servite</p>
+        <ul class="chips actions center" role="list"><li><a class="chip" href="/zone/monza-brianza/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Monza e Brianza</a></li><li><a class="chip" href="/zone/milano/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Milano</a></li><li><a class="chip" href="/zone/lecco/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Lecco</a></li><li><a class="chip" href="/zone/bergamo/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Bergamo</a></li><li><a class="chip" href="/zone/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-globe"/></svg>Tutta Italia</a></li></ul>
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

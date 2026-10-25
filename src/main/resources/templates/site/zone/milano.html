@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Spedizione pallet Milano e provincia | Logistica Sanchez</title>
+<meta name="description" content="Ritiro e spedizione di pallet a Milano e nell&#x27;hinterland: consegne in tutta Italia in 24–72 ore, tracking e consegna su appuntamento quando serve.">
+<link rel="canonical" th:href="|${business.siteUrl}/zone/milano/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Spedizione pallet Milano e provincia | Logistica Sanchez">
+<meta property="og:description" content="Ritiro e spedizione di pallet a Milano e nell&#x27;hinterland: consegne in tutta Italia in 24–72 ore, tracking e consegna su appuntamento quando serve.">
+<meta property="og:url" th:content="|${business.siteUrl}/zone/milano/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/zone-milano.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Spedizione pallet Milano e provincia | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/zone/milano/#webpage')})],"url":[(${layout.json(business.siteUrl + '/zone/milano/')})],"name":"Spedizione pallet Milano e provincia | Logistica Sanchez","description":"Ritiro e spedizione di pallet a Milano e nell'hinterland: consegne in tutta Italia in 24–72 ore, tracking e consegna su appuntamento quando serve.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/zone-milano.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/zone/milano/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/zone/milano/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Zone servite","item":[(${layout.json(business.siteUrl + '/zone/')})]},{"@type":"ListItem","position":3,"name":"Milano","item":[(${layout.json(business.siteUrl + '/zone/milano/')})]}]},{"@type":"Service","@id":[(${layout.json(business.siteUrl + '/zone/milano/#service')})],"name":"Spedizione pallet Milano","serviceType":"Spedizione pallet","description":"Ritiro e spedizione di pallet a Milano e nell'hinterland: consegne in tutta Italia in 24–72 ore, tracking e consegna su appuntamento quando serve.","url":[(${layout.json(business.siteUrl + '/zone/milano/')})],"provider":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"areaServed":[{"@type":"AdministrativeArea","name":"Città metropolitana di Milano"},{"@type":"AdministrativeArea","name":"Lombardia"}],"availableChannel":{"@type":"ServiceChannel","servicePhone":[(${layout.json(business.phoneDigits())})],"serviceUrl":[(${layout.json(business.siteUrl + '/preventivo/')})]}},{"@type":"FAQPage","@id":[(${layout.json(business.siteUrl + '/zone/milano/#faq')})],"mainEntity":[{"@type":"Question","name":"Consegnate nel centro di Milano?","acceptedAnswer":{"@type":"Answer","text":"Sì. Per centro storico, Area C e zone con accessi limitati pianifichiamo la consegna su appuntamento e con il mezzo adatto: indicalo nel preventivo."}},{"@type":"Question","name":"Quanto ci mettete a ritirare a Milano?","acceptedAnswer":{"@type":"Answer","text":"Di norma organizziamo il ritiro nel giorno lavorativo concordato. Per le urgenze scrivici su WhatsApp: verifichiamo subito la disponibilità."}},{"@type":"Question","name":"Fate consegne a privati a Milano?","acceptedAnswer":{"@type":"Answer","text":"Sì, su appuntamento e, se serve, con sponda idraulica. Per consegne al piano o in spazi particolari chiedici prima, così organizziamo tutto nel modo giusto."}}]}]}</script>
+</head>
+<body data-page="zone/milano">
+<th:block th:replace="~{layout/public :: siteHeader('zone/milano')}"></th:block>
+<main id="main">
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><a href="/zone/">Zone servite</a></li><li><span aria-current="page">Milano</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Zone servite · Milano</p>
+          <h1>Spedizione pallet a Milano e provincia</h1>
+          <p class="lede">Dal centro città ai poli produttivi dell'hinterland: ritiriamo i tuoi pallet a Milano e li consegniamo in tutta Italia, con tempi chiari e spedizione tracciata.</p>
+          <div class="page-hero-actions">
+            <a class="btn btn-accent btn-lg" href="/preventivo/">Richiedi un preventivo<svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-right"/></svg></a>
+            <a class="btn btn-outline-light btn-lg" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20spedire%20dei%20pallet%20dalla%20zona%20di%20Milano.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Scrivici su WhatsApp</a>
+          </div>
+        </div>
+        <aside class="page-hero-aside" aria-labelledby="aside-title">
+          <h2 id="aside-title">In breve</h2>
+          <ul class="ticks"><li>Ritiri in città e in tutta la provincia</li><li>A una ventina di chilometri dal nostro hub</li><li>Consegne su appuntamento in centro</li><li>Pallet espresso, groupage e carichi completi</li></ul>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="intro-title">
+    <div class="container split">
+      <div data-reveal>
+        <p class="kicker">Il territorio</p>
+        <h2 id="intro-title">Spedire da Milano in tutta Italia</h2>
+        <p>Milano è il cuore logistico del Paese: aziende, showroom, magazzini e negozi che ogni giorno ricevono e spediscono merce. Il nostro hub di Seregno è a una ventina di chilometri dalla città, una distanza che ci permette di servire Milano e l'hinterland con ritiri puntuali.</p><p>Muoversi in città richiede organizzazione: Area B e Area C, centri storici, cortili e zone di carico con orari ridotti. Per questo pianifichiamo ritiri e consegne con fasce orarie concordate e, quando serve, con mezzi adatti agli spazi urbani.</p>
+      </div>
+      <div data-reveal>
+        <div class="panel panel-alt">
+          <h3>Quanto ci mette ad arrivare?</h3>
+          <p class="muted">Inserisci il CAP di destinazione: ti diciamo i tempi indicativi dal ritiro.</p>
+          <form class="eta-box eta-box-light" data-eta-form action="/zone/" method="get">
+          <label class="label" for="milano-cap">CAP di destinazione</label>
+          <div class="input-group">
+            <input class="input" id="milano-cap" name="cap" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="Es. 40121" autocomplete="postal-code" required>
+            <button class="btn btn-accent" type="submit">Verifica</button>
+          </div>
+          <p class="eta-result" data-eta-result aria-live="polite"></p>
+        </form>
+          <div class="table-wrap"><table class="table">
+      <caption class="visually-hidden">Tempi di consegna indicativi dal ritiro</caption>
+      <thead><tr><th scope="col">Tempi</th><th scope="col">Regioni di destinazione</th></tr></thead>
+      <tbody><tr><th scope="row"><span class="eta-pill" data-zone="1">24 ore</span></th><td>Lombardia, Piemonte, Valle d'Aosta, Liguria, Veneto, Trentino-Alto Adige, Friuli-Venezia Giulia, Emilia-Romagna</td></tr><tr><th scope="row"><span class="eta-pill" data-zone="2">48 ore</span></th><td>Toscana, Umbria, Marche, Lazio, Abruzzo, Molise, Campania, Puglia</td></tr><tr><th scope="row"><span class="eta-pill" data-zone="3">72 ore</span></th><td>Basilicata, Calabria, Sicilia, Sardegna</td></tr></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="punti-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Il nostro servizio a Milano</p>
+        <h2 id="punti-title">Cosa possiamo fare per le aziende della zona</h2>
+      </div>
+      <div class="features features-3" data-stagger><div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-calendar-clock"/></svg></span><h3>Consegne su appuntamento</h3><p>Negozi, uffici e cantieri hanno orari precisi: concordiamo la finestra di consegna con il destinatario.</p></div><div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-factory"/></svg></span><h3>Hinterland e poli produttivi</h3><p>Da Sesto San Giovanni a Rho, da Segrate a Rozzano: ritiriamo dove si produce e si stocca.</p></div><div class="feature"><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-arrow-down-to-line"/></svg></span><h3>Scarico senza muletto</h3><p>In città la banchina spesso non c'è: con la sponda idraulica il pallet arriva a terra in sicurezza.</p></div></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="comuni-title">
+    <div class="container">
+      <div class="section-head" data-reveal>
+        <p class="kicker">Comuni serviti</p>
+        <h2 id="comuni-title">Ritiriamo in tutta la provincia</h2>
+        <p class="lede">Alcuni dei comuni in cui organizziamo ritiri. Non trovi il tuo? Scrivici: con ogni probabilità passiamo anche da te.</p>
+      </div>
+      <ul class="towns" role="list" data-reveal><li>Milano</li><li>Sesto San Giovanni</li><li>Cinisello Balsamo</li><li>Cologno Monzese</li><li>Rho</li><li>Pero</li><li>Segrate</li><li>Pioltello</li><li>Peschiera Borromeo</li><li>San Giuliano Milanese</li><li>San Donato Milanese</li><li>Rozzano</li><li>Assago</li><li>Corsico</li><li>Buccinasco</li><li>Trezzano sul Naviglio</li><li>Cernusco sul Naviglio</li><li>Paderno Dugnano</li><li>Bollate</li><li>Garbagnate Milanese</li><li>Legnano</li><li>Melzo</li><li>Opera</li><li>Settimo Milanese</li></ul>
+    </div>
+  </section>
+
+  <section class="section section-alt" aria-labelledby="faq-title">
+    <div class="container container-narrow">
+      <div class="section-head center" data-reveal>
+        <p class="kicker">Domande frequenti</p>
+        <h2 id="faq-title">Spedizioni da Milano: le domande più comuni</h2>
+      </div>
+      <div class="faq"><details name="faq-milano"><summary><h3 class="faq-q">Consegnate nel centro di Milano?</h3></summary><div class="faq-a"><p>Sì. Per centro storico, Area C e zone con accessi limitati pianifichiamo la consegna su appuntamento e con il mezzo adatto: indicalo nel preventivo.</p></div></details>
+<details name="faq-milano"><summary><h3 class="faq-q">Quanto ci mettete a ritirare a Milano?</h3></summary><div class="faq-a"><p>Di norma organizziamo il ritiro nel giorno lavorativo concordato. Per le urgenze scrivici su WhatsApp: verifichiamo subito la disponibilità.</p></div></details>
+<details name="faq-milano"><summary><h3 class="faq-q">Fate consegne a privati a Milano?</h3></summary><div class="faq-a"><p>Sì, su appuntamento e, se serve, con sponda idraulica. Per consegne al piano o in spazi particolari chiedici prima, così organizziamo tutto nel modo giusto.</p></div></details></div>
+      <div class="mt-l text-center">
+        <p class="label">Altre zone servite</p>
+        <ul class="chips actions center" role="list"><li><a class="chip" href="/zone/monza-brianza/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Monza e Brianza</a></li><li><a class="chip" href="/zone/como/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Como</a></li><li><a class="chip" href="/zone/lecco/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Lecco</a></li><li><a class="chip" href="/zone/bergamo/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg>Bergamo</a></li><li><a class="chip" href="/zone/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-globe"/></svg>Tutta Italia</a></li></ul>
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

@@ -1,0 +1,234 @@
+# Expected columns of the M1 schema (chapter 08 §2.3 amended by 12b §5.4, plan §4.4, Q-55; ADR 0020).
+# One line per column: <table> <column> <udt type> <NULL|NOT NULL>. Read by SchemaConformanceIT.
+accessory_service id int4 NOT NULL
+accessory_service name varchar NOT NULL
+accessory_service label varchar NOT NULL
+accessory_service is_none bool NOT NULL
+accessory_service active bool NOT NULL
+accessory_service sort_order int4 NOT NULL
+audit_log id int8 NOT NULL
+audit_log occurred_at timestamptz NOT NULL
+audit_log actor_type varchar NOT NULL
+audit_log actor_id int8 NULL
+audit_log action varchar NOT NULL
+audit_log entity_type varchar NULL
+audit_log entity_id int8 NULL
+audit_log entity_ref varchar NULL
+audit_log before jsonb NULL
+audit_log after jsonb NULL
+audit_log ip_hash varchar NULL
+audit_log user_agent varchar NULL
+audit_log request_id varchar NULL
+audit_log_detail audit_log_id int8 NOT NULL
+audit_log_detail before jsonb NULL
+audit_log_detail after jsonb NULL
+customer id int8 NOT NULL
+customer email varchar NOT NULL
+customer anonymised_at timestamptz NULL
+customer company_name varchar NOT NULL
+customer address_line varchar NOT NULL
+customer city varchar NOT NULL
+customer province varchar NOT NULL
+customer province_code bpchar NULL
+customer postal_code varchar NOT NULL
+customer phone varchar NOT NULL
+customer vat_number varchar NULL
+customer tax_code varchar NULL
+customer status varchar NOT NULL
+customer email_verified_at timestamptz NULL
+customer registered_at timestamptz NOT NULL
+customer approved_at timestamptz NULL
+customer approved_by int8 NULL
+customer declined_at timestamptz NULL
+customer declined_by int8 NULL
+customer decline_reason text NULL
+customer source varchar NOT NULL
+customer created_at timestamptz NOT NULL
+customer updated_at timestamptz NOT NULL
+customer version int4 NOT NULL
+customer_pending_registration customer_id int8 NOT NULL
+customer_pending_registration company_name varchar NOT NULL
+customer_pending_registration address_line varchar NOT NULL
+customer_pending_registration city varchar NOT NULL
+customer_pending_registration province varchar NOT NULL
+customer_pending_registration province_code bpchar NULL
+customer_pending_registration postal_code varchar NOT NULL
+customer_pending_registration phone varchar NOT NULL
+customer_pending_registration vat_number varchar NULL
+customer_pending_registration tax_code varchar NULL
+customer_pending_registration created_at timestamptz NOT NULL
+customer_user id int8 NOT NULL
+customer_user customer_id int8 NOT NULL
+customer_user email varchar NOT NULL
+customer_user role varchar NOT NULL
+customer_user last_login_at timestamptz NULL
+customer_user disabled_at timestamptz NULL
+customer_user pending_email varchar NULL
+customer_user created_at timestamptz NOT NULL
+email_outbox id int8 NOT NULL
+email_outbox kind varchar NOT NULL
+email_outbox recipient varchar NOT NULL
+email_outbox reply_to varchar NULL
+email_outbox subject varchar NOT NULL
+email_outbox body_text text NULL
+email_outbox body_html text NULL
+email_outbox login_token_id int8 NULL
+email_outbox token_ciphertext bytea NULL
+email_outbox status varchar NOT NULL
+email_outbox attempts int4 NOT NULL
+email_outbox next_attempt_at timestamptz NOT NULL
+email_outbox last_error varchar NULL
+email_outbox sent_at timestamptz NULL
+email_outbox provider_message_id varchar NULL
+email_outbox bodies_purged_at timestamptz NULL
+email_outbox created_at timestamptz NOT NULL
+email_outbox updated_at timestamptz NOT NULL
+feature_flag key varchar NOT NULL
+feature_flag enabled bool NOT NULL
+feature_flag requirement_id varchar NOT NULL
+feature_flag updated_by int8 NULL
+feature_flag updated_at timestamptz NOT NULL
+lead id int8 NOT NULL
+lead form varchar NOT NULL
+lead status varchar NOT NULL
+lead name varchar NOT NULL
+lead company varchar NULL
+lead email varchar NOT NULL
+lead phone varchar NULL
+lead preferred_contact varchar NULL
+lead subject varchar NULL
+lead message text NULL
+lead service varchar NULL
+lead pickup_date date NULL
+lead pickup_postal_code varchar NULL
+lead pickup_city varchar NULL
+lead delivery_postal_code varchar NULL
+lead delivery_city varchar NULL
+lead recipient_type varchar NULL
+lead pallet_format varchar NULL
+lead quantity numeric NULL
+lead total_weight_kg numeric NULL
+lead max_height_cm numeric NULL
+lead goods_description varchar NULL
+lead extras _text NOT NULL
+lead payload jsonb NOT NULL
+lead privacy_accepted_at timestamptz NOT NULL
+lead customer_id int8 NULL
+lead converted_order_id int8 NULL
+lead ip_hash varchar NULL
+lead user_agent varchar NULL
+lead created_at timestamptz NOT NULL
+lead retain_until date NOT NULL
+login_token id int8 NOT NULL
+login_token customer_user_id int8 NULL
+login_token email_hash varchar NULL
+login_token purpose varchar NOT NULL
+login_token token_hash varchar NOT NULL
+login_token expires_at timestamptz NOT NULL
+login_token used_at timestamptz NULL
+login_token requested_ip_hash varchar NULL
+login_token created_at timestamptz NOT NULL
+order_internal_note order_id int8 NOT NULL
+order_internal_note body text NOT NULL
+order_internal_note updated_at timestamptz NOT NULL
+order_internal_note updated_by int8 NOT NULL
+order_line id int8 NOT NULL
+order_line order_id int8 NOT NULL
+order_line line_no int2 NOT NULL
+order_line kind varchar NOT NULL
+order_line height_cm int4 NOT NULL
+order_line length_cm int4 NOT NULL
+order_line width_cm int4 NOT NULL
+order_line weight_kg numeric NOT NULL
+order_line quantity int4 NOT NULL
+order_line line_weight_kg numeric NOT NULL
+order_line line_volume_m3 numeric NOT NULL
+report_run id int8 NOT NULL
+report_run customer_id int8 NOT NULL
+report_run requested_by int8 NOT NULL
+report_run date_from date NOT NULL
+report_run date_to date NOT NULL
+report_run only_delivered bool NOT NULL
+report_run send_to_customer bool NOT NULL
+report_run recipients _text NOT NULL
+report_run row_count int4 NOT NULL
+report_run created_at timestamptz NOT NULL
+shipment_order id int8 NOT NULL
+shipment_order customer_id int8 NOT NULL
+shipment_order status varchar NOT NULL
+shipment_order temp_code varchar NOT NULL
+shipment_order code varchar NULL
+shipment_order transport_document_code varchar NOT NULL
+shipment_order package_count int4 NULL
+shipment_order accessory_service_id int4 NULL
+shipment_order customer_notes text NULL
+shipment_order amount numeric NULL
+shipment_order amount_vat_included bool NULL
+shipment_order total_weight_kg numeric NOT NULL
+shipment_order total_volume_m3 numeric NOT NULL
+shipment_order tracking_state_id int2 NOT NULL
+shipment_order tracking_updated_at timestamptz NULL
+shipment_order sender_name varchar NOT NULL
+shipment_order sender_address_line varchar NOT NULL
+shipment_order sender_city varchar NOT NULL
+shipment_order sender_province varchar NOT NULL
+shipment_order sender_postal_code varchar NOT NULL
+shipment_order sender_email varchar NOT NULL
+shipment_order sender_phone varchar NULL
+shipment_order recipient_name varchar NOT NULL
+shipment_order recipient_address_line varchar NOT NULL
+shipment_order recipient_city varchar NOT NULL
+shipment_order recipient_province varchar NOT NULL
+shipment_order recipient_postal_code varchar NOT NULL
+shipment_order recipient_phone varchar NULL
+shipment_order recipient_email varchar NULL
+shipment_order submitted_at timestamptz NOT NULL
+shipment_order approved_at timestamptz NULL
+shipment_order approved_by int8 NULL
+shipment_order declined_at timestamptz NULL
+shipment_order declined_by int8 NULL
+shipment_order decline_reason text NULL
+shipment_order idempotency_key uuid NULL
+shipment_order source varchar NOT NULL
+shipment_order created_at timestamptz NOT NULL
+shipment_order updated_at timestamptz NOT NULL
+shipment_order version int4 NOT NULL
+staff_user id int8 NOT NULL
+staff_user username varchar NOT NULL
+staff_user email varchar NULL
+staff_user display_name varchar NOT NULL
+staff_user password_hash varchar NULL
+staff_user role varchar NOT NULL
+staff_user active bool NOT NULL
+staff_user failed_logins int4 NOT NULL
+staff_user locked_until timestamptz NULL
+staff_user last_login_at timestamptz NULL
+staff_user totp_secret bytea NULL
+staff_user created_at timestamptz NOT NULL
+staff_user updated_at timestamptz NOT NULL
+tracking_event id int8 NOT NULL
+tracking_event order_id int8 NOT NULL
+tracking_event state_id int2 NOT NULL
+tracking_event occurred_at timestamptz NOT NULL
+tracking_event recorded_at timestamptz NOT NULL
+tracking_event source varchar NOT NULL
+tracking_event staff_user_id int8 NULL
+tracking_event location varchar NULL
+tracking_event public_note varchar NULL
+tracking_state id int2 NOT NULL
+tracking_state name varchar NOT NULL
+tracking_state label varchar NOT NULL
+tracking_state public_title varchar NOT NULL
+tracking_state step_label varchar NULL
+tracking_state sort_order int2 NOT NULL
+staff_setup_token id int8 NOT NULL
+staff_setup_token staff_user_id int8 NOT NULL
+staff_setup_token token_hash varchar NOT NULL
+staff_setup_token expires_at timestamptz NOT NULL
+staff_setup_token used_at timestamptz NULL
+staff_setup_token created_at timestamptz NOT NULL
+report_recipient id int8 NOT NULL
+report_recipient email varchar NOT NULL
+report_recipient label varchar NULL
+report_recipient added_by int8 NOT NULL
+report_recipient created_at timestamptz NOT NULL

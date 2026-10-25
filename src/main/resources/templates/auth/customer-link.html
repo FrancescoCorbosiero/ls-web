@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<!--
+  The e-mailed link lands here (CUS-01, chapter 10 §2): one «Accedi» button in a CSRF-protected
+  form that works without JavaScript. The GET never consumes the token; this form's POST does.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{auth.customer.link.title} + ' · ' + ${business.brandName}">Accedi all'area clienti · Logistica Sanchez</title>
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <h1 th:text="#{auth.customer.link.title}">Accedi all'area clienti</h1>
+    <p class="lede" th:text="#{auth.customer.link.lead}">Premi il pulsante per entrare nella tua area clienti.</p>
+    <form method="post" th:action="@{/area-clienti/accesso}">
+      <input type="hidden" name="t" th:value="${token}">
+      <div class="actions"><button type="submit" class="btn btn-primary btn-lg" th:text="#{auth.customer.link.submit}">Accedi</button></div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

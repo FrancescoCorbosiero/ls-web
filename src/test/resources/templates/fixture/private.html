@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>Fixture privata</title>
+  <th:block th:replace="~{fragments/htmx :: meta}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<main id="main">
+  <h1>Area privata di prova</h1>
+  <p th:text="${nonce}">nonce</p>
+  <script th:attr="nonce=${cspNonce}">document.documentElement.dataset.ready = '1';</script>
+</main>
+</body>
+</html>

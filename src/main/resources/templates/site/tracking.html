@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+<th:block th:replace="~{layout/public :: htmlHead(true)}"></th:block>
+<title>Traccia la tua spedizione | Logistica Sanchez</title>
+<meta name="description" content="Inserisci il codice della spedizione e scopri a che punto è il tuo pallet: presa in carico, ritiro, viaggio e consegna. Assistenza rapida su WhatsApp.">
+<link rel="canonical" th:href="|${business.siteUrl}/tracking/|">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Traccia la tua spedizione | Logistica Sanchez">
+<meta property="og:description" content="Inserisci il codice della spedizione e scopri a che punto è il tuo pallet: presa in carico, ritiro, viaggio e consegna. Assistenza rapida su WhatsApp.">
+<meta property="og:url" th:content="|${business.siteUrl}/tracking/|">
+<meta property="og:image" th:content="|${business.siteUrl}/img/og/tracking.png|">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Traccia la tua spedizione | Logistica Sanchez">
+<script type="application/ld+json" th:inline="text">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":[(${layout.json(business.siteUrl + '/tracking/#webpage')})],"url":[(${layout.json(business.siteUrl + '/tracking/')})],"name":"Traccia la tua spedizione | Logistica Sanchez","description":"Inserisci il codice della spedizione e scopri a che punto è il tuo pallet: presa in carico, ritiro, viaggio e consegna. Assistenza rapida su WhatsApp.","inLanguage":"it-IT","isPartOf":{"@id":[(${layout.json(business.siteUrl + '/#website')})]},"about":{"@id":[(${layout.json(business.siteUrl + '/#business')})]},"primaryImageOfPage":{"@type":"ImageObject","url":[(${layout.json(business.siteUrl + '/img/og/tracking.png')})]},"breadcrumb":{"@id":[(${layout.json(business.siteUrl + '/tracking/#breadcrumb')})]}},{"@type":"BreadcrumbList","@id":[(${layout.json(business.siteUrl + '/tracking/#breadcrumb')})],"itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":[(${layout.json(business.siteUrl + '/')})]},{"@type":"ListItem","position":2,"name":"Traccia la spedizione","item":[(${layout.json(business.siteUrl + '/tracking/')})]}]},{"@type":"FAQPage","@id":[(${layout.json(business.siteUrl + '/tracking/#faq')})],"mainEntity":[{"@type":"Question","name":"Il codice non viene trovato: cosa faccio?","acceptedAnswer":{"@type":"Answer","text":"Controlla di averlo copiato per intero, senza spazi. Se la spedizione è stata prenotata da poco, potrebbe non essere ancora attiva: scrivici su WhatsApp e verifichiamo subito."}},{"@type":"Question","name":"Posso condividere il tracking con il destinatario?","acceptedAnswer":{"@type":"Answer","text":"Sì: dopo la ricerca usa «Copia il link» e invialo a chi vuoi. Il link apre direttamente lo stato della spedizione."}},{"@type":"Question","name":"Cos'è la prova di consegna (POD)?","acceptedAnswer":{"@type":"Answer","text":"È il documento firmato dal destinatario al momento della consegna. Certifica data, ora e quantità consegnata e ti arriva in formato digitale."}}]}]}</script>
+</head>
+<body data-page="tracking">
+<th:block th:replace="~{layout/public :: siteHeader('tracking')}"></th:block>
+<main id="main">
+  <div data-tracking>
+  <section class="page-hero">
+    <div class="container">
+      <nav class="breadcrumbs" aria-label="Percorso di navigazione"><ol><li><a href="/">Home</a></li><li><span aria-current="page">Traccia la spedizione</span></li></ol></nav>
+      <div class="page-hero-grid">
+        <div>
+          <p class="kicker">Tracking</p>
+          <h1>Traccia la tua spedizione</h1>
+          <p class="lede">Inserisci il codice che trovi sul documento di trasporto o nel messaggio di conferma del ritiro: ti mostriamo a che punto è il tuo pallet.</p>
+        </div>
+        <div class="track-card">
+          <form action="/tracking/" method="get">
+            <label class="label" for="track-code">Codice di spedizione</label>
+            <div class="input-group">
+              <input class="input input-code" id="track-code" name="code" type="text" placeholder="Codice di riferimento" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="track-code-err track-code-hint" required>
+              <button class="btn btn-primary" type="submit"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-search"/></svg>Traccia</button>
+            </div>
+            <p class="field-error" id="track-code-err" data-track-error aria-live="polite"></p>
+            <p class="hint" id="track-code-hint">Copialo per intero, così come è scritto sul documento.</p>
+          </form>
+          <div class="track-recent" data-track-recent></div>
+          <noscript><p class="note">Per il tracciamento online attiva JavaScript, oppure scrivici su WhatsApp indicando il codice.</p></noscript>
+        </div>
+      </div>
+      <div class="track-card track-result mt-m" data-track-result tabindex="-1" aria-live="polite"></div>
+    </div>
+  </section>
+  </div>
+
+  <section class="section" aria-labelledby="stati-title">
+    <div class="container split">
+      <div data-reveal>
+        <p class="kicker">Come leggere lo stato</p>
+        <h2 id="stati-title">Le fasi della tua spedizione</h2>
+        <p class="lede">Ogni passaggio viene registrato: ecco cosa significano gli stati che vedi nel tracking.</p>
+        <ul class="state-list mt-m" role="list"><li><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-check"/></svg></span><div><strong>Presa in carico</strong><p>Abbiamo ritirato la merce: da qui in poi viaggia sotto la nostra responsabilità.</p></div></li><li><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-truck"/></svg></span><div><strong>In transito</strong><p>Il pallet è in viaggio verso il terminal della zona di destinazione.</p></div></li><li><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-warehouse"/></svg></span><div><strong>Terminal di destinazione</strong><p>È arrivato al terminal più vicino al destinatario ed è pronto per la consegna.</p></div></li><li><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-navigation"/></svg></span><div><strong>In consegna</strong><p>È stato affidato al mezzo che effettua la consegna.</p></div></li><li><span class="feature-ico"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-circle-check"/></svg></span><div><strong>Consegnata</strong><p>Il destinatario ha ricevuto la merce.</p></div></li></ul>
+      </div>
+      <div data-reveal>
+        <div class="panel panel-alt">
+          <h3>Dove trovo il codice?</h3>
+          <ul class="ticks">
+            <li>Sul <strong>documento di trasporto (DDT)</strong> che accompagna la merce</li>
+            <li>Nel <strong>messaggio di conferma</strong> che ricevi quando prenotiamo il ritiro</li>
+            <li>Se sei il destinatario, chiedilo al <strong>mittente</strong> della spedizione</li>
+          </ul>
+          <p class="mb-0">Non lo trovi? Nessun problema: <a class="btn btn-wa btn-sm" th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20vorrei%20sapere%20lo%20stato%20di%20una%20spedizione.|" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg>Chiedi su WhatsApp</a></p>
+        </div>
+        <div class="faq mt-m"><div class="faq"><details name="faq-tracking"><summary><h3 class="faq-q">Il codice non viene trovato: cosa faccio?</h3></summary><div class="faq-a"><p>Controlla di averlo copiato per intero, senza spazi. Se la spedizione è stata prenotata da poco, potrebbe non essere ancora attiva: <a th:href="|${business.whatsappUrl()}?text=Ciao%20Logistica%20Sanchez%2C%20non%20trovo%20la%20mia%20spedizione%20nel%20tracking.|" target="_blank" rel="noopener">scrivici su WhatsApp</a> e verifichiamo subito.</p></div></details>
+<details name="faq-tracking"><summary><h3 class="faq-q">Posso condividere il tracking con il destinatario?</h3></summary><div class="faq-a"><p>Sì: dopo la ricerca usa «Copia il link» e invialo a chi vuoi. Il link apre direttamente lo stato della spedizione.</p></div></details>
+<details name="faq-tracking"><summary><h3 class="faq-q">Cos'è la prova di consegna (POD)?</h3></summary><div class="faq-a"><p>È il documento firmato dal destinatario al momento della consegna. Certifica data, ora e quantità consegnata e ti arriva in formato digitale.</p></div></details></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+<th:block th:replace="~{layout/public :: cta}"></th:block>
+<th:block th:replace="~{layout/public :: siteFooter}"></th:block>
+</body>
+</html>

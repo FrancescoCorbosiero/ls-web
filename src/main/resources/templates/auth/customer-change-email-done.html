@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<!-- The e-mail change is applied (CUS-06): every session ended, the customer signs in again with the new address. -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{auth.customer.changeEmailDone.title} + ' · ' + ${business.brandName}">E-mail aggiornata · Logistica Sanchez</title>
+  <meta name="referrer" content="no-referrer">
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
+<main id="main" class="section">
+  <div class="container-narrow">
+    <h1 th:text="#{auth.customer.changeEmailDone.title}">E-mail aggiornata</h1>
+    <p class="lede" th:text="#{auth.customer.changeEmailDone.lead(${newEmail})}">Da ora accedi con il nuovo indirizzo.</p>
+    <p><a class="btn btn-primary" th:href="@{/area-clienti/}" th:text="#{auth.customer.changeEmailDone.signIn}">Accedi</a></p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>
