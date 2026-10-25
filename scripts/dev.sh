@@ -28,7 +28,7 @@ DB=(--spring.profiles.active=local
     --DATABASE_USER=ls --DATABASE_PASSWORD=ls)
 
 echo "▸ Dati di prova (le password degli utenti staff cambiano a ogni avvio)"
-java -jar "$JAR" dev-seed "${DB[@]}" --logging.level.root=warn --spring.main.banner-mode=off
+java -jar "$JAR" dev-seed "${DB[@]}" --logging.level.root=warn --logging.level.it.logisticasanchez=warn --spring.main.banner-mode=off
 
 cat <<EOF
 
