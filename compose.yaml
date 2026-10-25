@@ -22,8 +22,10 @@ services:
       POSTGRES_PASSWORD: ls
       POSTGRES_DB: ls_web
     volumes:
-      - ./deploy/dev/init-databases.sql:/docker-entrypoint-initdb.d/10-databases.sql:ro
       - dev_pgdata:/var/lib/postgresql/data
+    configs:
+      - source: init_databases
+        target: /docker-entrypoint-initdb.d/10-databases.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ls -d ls_web"]
       interval: 3s
@@ -50,3 +52,11 @@ services:
 
 volumes:
   dev_pgdata:
+
+# Inline instead of a bind-mounted file: a bind mount of a missing file silently creates a directory.
+configs:
+  init_databases:
+    content: |
+      -- Extra local databases, created on the first start only: the tests use ls_web_test, the E2E suite ls_web_e2e.
+      CREATE DATABASE ls_web_test OWNER ls;
+      CREATE DATABASE ls_web_e2e OWNER ls;
