@@ -1,8 +1,10 @@
 package it.logisticasanchez.web.customers;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
+import it.logisticasanchez.web.auth.CustomerPasswordService;
 import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
+import it.logisticasanchez.web.auth.PasswordPolicy;
 import it.logisticasanchez.web.auth.RememberedSignInService;
 import it.logisticasanchez.web.platform.ratelimit.RateLimitKeys;
 import it.logisticasanchez.web.platform.ratelimit.RateLimiter;
@@ -13,6 +15,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
@@ -41,6 +44,7 @@ public class RegistrationController {
     private final RegistrationValidator validator;
     private final CustomerSessionService sessions;
     private final RememberedSignInService remembered;
+    private final CustomerPasswordService passwords;
     private final RateLimiter rateLimiter;
     private final ClientIpResolver clientIp;
 
@@ -49,12 +53,14 @@ public class RegistrationController {
             RegistrationValidator validator,
             CustomerSessionService sessions,
             RememberedSignInService remembered,
+            CustomerPasswordService passwords,
             RateLimiter rateLimiter,
             ClientIpResolver clientIp) {
         this.customers = customers;
         this.validator = validator;
         this.sessions = sessions;
         this.remembered = remembered;
+        this.passwords = passwords;
         this.rateLimiter = rateLimiter;
         this.clientIp = clientIp;
     }
@@ -128,9 +134,13 @@ public class RegistrationController {
             return "customers/registration";
         }
         if (!"confirm".equals(form.get("step"))) {
-            model.addAttribute("data", result.data());
-            model.addAttribute("rememberDays", remembered.offeredDays());
-            return "customers/registration-review";
+            return review(model, result.data(), null);
+        }
+        // a new customer chooses the password on the summary, right before «Conferma» (ADR 0032)
+        String passwordError =
+                principal == null ? passwordError(form.get("password"), form.get("passwordConfirm")) : null;
+        if (passwordError != null) {
+            return review(model, result.data(), passwordError);
         }
         String ip = clientIp.resolve(request);
         rateLimiter.require(RateLimitKeys.REGISTRATION, ip);
@@ -144,7 +154,13 @@ public class RegistrationController {
         CustomerService.Registration registration = customers.register(token, email, result.data(), ip);
         return switch (registration.outcome()) {
             case REGISTERED -> {
-                sessions.signIn(registration.principal(), form.get("ricordami") != null, request, response);
+                passwords.setPassword(registration.principal().customerUserId(), form.get("password"));
+                sessions.signIn(
+                        registration.principal(),
+                        CustomerSessionService.SignInMethod.LINK,
+                        form.get("ricordami") != null,
+                        request,
+                        response);
                 yield "redirect:" + AuthRoutes.CUSTOMER_HOME;
             }
             case SIGN_IN_LINK_SENT -> sent(model);
@@ -152,8 +168,28 @@ public class RegistrationController {
         };
     }
 
-    private static String sent(Model model) {
+    private String review(Model model, RegistrationData data, String passwordErrorKey) {
+        model.addAttribute("data", data);
+        model.addAttribute("rememberDays", remembered.offeredDays());
+        model.addAttribute("passwordMinLength", passwords.minLength());
+        model.addAttribute("passwordErrorKey", passwordErrorKey);
+        return "customers/registration-review";
+    }
+
+    /** The message key of what is wrong with the chosen password, or null when it can be used. */
+    private String passwordError(String password, String confirm) {
+        Optional<PasswordPolicy.Violation> violation = passwords.violation(password);
+        if (violation.isPresent()) {
+            return violation.get() == PasswordPolicy.Violation.COMMON
+                    ? "customers.password.common"
+                    : "customers.password.tooShort";
+        }
+        return password.equals(confirm) ? null : "customers.password.mismatch";
+    }
+
+    private String sent(Model model) {
         model.addAttribute("sent", true);
+        model.addAttribute("rememberDays", remembered.offeredDays());
         return "auth/customer-request";
     }
 

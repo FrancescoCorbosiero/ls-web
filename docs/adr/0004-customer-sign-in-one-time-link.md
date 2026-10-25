@@ -1,6 +1,6 @@
 # 0004 · Customer sign-in by one-time link consumed by `POST`; identity from the session
 
-* **Status:** Accepted (amended by ADR 0031 on 2026-10-25: after a sign-in link the device stays signed in for 60 days)
+* **Status:** Accepted (amended on 2026-10-25 by ADR 0031: the device stays signed in for 60 days; and by ADR 0032: customers also sign in with e-mail and password, the link stays for the first access and a forgotten password)
 * **Date:** 2026-10-24
 * **Requirement IDs:** CUS-01, EML-01, EML-06 (chapter 09) · **Questions:** Q-11 (one login per customer), Q-30 (old links), PD-14 (`/area-clienti/accesso` without trailing slash, D-100), D-69 (unverified = known) · **Findings:** OP-S1, OP-S2 (chapter 03 §10), SEC-11, SEC-12, SEC-19 (12a §5)
 

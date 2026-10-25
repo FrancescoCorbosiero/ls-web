@@ -40,6 +40,7 @@ class DevSeedCommandIT extends AbstractPostgresIT {
 
     private static final Pattern PASSWORD =
             Pattern.compile("(admin\\.seed|operatore\\.seed) \\((ADMIN|OPERATOR)\\)\\s+password: (\\S+)");
+    private static final Pattern CUSTOMER_PASSWORD = Pattern.compile("cliente ACTIVE .*  password: (\\S+)");
 
     @Autowired
     private DevSeedCommand command;
@@ -87,6 +88,18 @@ class DevSeedCommandIT extends AbstractPostgresIT {
                         .with(csrf()))
                 .andExpect(status().isFound())
                 .andExpect(redirectedUrl("/gestione/"));
+
+        // the ACTIVE seed customer signs in with its printed password (ADR 0032)
+        Matcher customerPassword = CUSTOMER_PASSWORD.matcher(out);
+        assertThat(customerPassword.find())
+                .as("customer password printed: %s", out)
+                .isTrue();
+        mvc.perform(post("/area-clienti/password")
+                        .param("email", DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)
+                        .param("password", customerPassword.group(1))
+                        .with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("/area-clienti/ordini/"));
 
         assertThat(customerStatus(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo("ACTIVE");
         assertThat(customerStatus(DevSeedCommand.PENDING_CUSTOMER_EMAIL)).isEqualTo("PENDING_APPROVAL");

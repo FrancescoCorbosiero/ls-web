@@ -7,6 +7,7 @@ public final class AuthRoutes {
 
     public static final String CUSTOMER_AREA = SecurityRoutes.CUSTOMER_AREA;
     public static final String CUSTOMER_LINK = CUSTOMER_AREA + "accesso";
+    public static final String CUSTOMER_PASSWORD = CUSTOMER_AREA + "password";
     public static final String CUSTOMER_REGISTRATION = CUSTOMER_AREA + "registrazione/";
     public static final String CUSTOMER_CHANGE_EMAIL = CUSTOMER_AREA + "cambio-email";
     public static final String CUSTOMER_LOGOUT = CUSTOMER_AREA + "logout";

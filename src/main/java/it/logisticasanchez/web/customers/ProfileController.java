@@ -1,10 +1,16 @@
 package it.logisticasanchez.web.customers;
 
+import it.logisticasanchez.web.auth.CustomerPasswordService;
 import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
+import it.logisticasanchez.web.auth.PasswordPolicy;
+import it.logisticasanchez.web.auth.RememberedSignInService;
 import it.logisticasanchez.web.platform.security.ClientIpResolver;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
@@ -17,16 +23,37 @@ import org.springframework.web.bind.annotation.RequestParam;
  * The profile page (CUS-06): the registration data read-only with «chiedi una modifica» (an
  * e-mail to the office), and the login e-mail change — the customer types the new address, which
  * gets a {@code CHANGE_EMAIL} link while the current address gets a notice; the page answers the
- * same way whatever the address (an address already in use gets nothing).
+ * same way whatever the address (an address already in use gets nothing). The password section
+ * (ADR 0032) sets or changes the password: the current one is asked unless the session was opened
+ * by an e-mailed link (the «password dimenticata» path); a change ends the other sessions and
+ * remembered devices, this one goes on.
  */
 @Controller
 public class ProfileController {
 
+    /** The error codes of the password form, in the query string, and their messages. */
+    static final Map<String, String> PASSWORD_ERRORS = Map.of(
+            "attuale", "customers.password.wrongCurrent",
+            "diverse", "customers.password.mismatch",
+            "corta", "customers.password.tooShort",
+            "comune", "customers.password.common");
+
     private final CustomerService customers;
+    private final CustomerPasswordService passwords;
+    private final CustomerSessionService sessions;
+    private final RememberedSignInService remembered;
     private final ClientIpResolver clientIp;
 
-    public ProfileController(CustomerService customers, ClientIpResolver clientIp) {
+    public ProfileController(
+            CustomerService customers,
+            CustomerPasswordService passwords,
+            CustomerSessionService sessions,
+            RememberedSignInService remembered,
+            ClientIpResolver clientIp) {
         this.customers = customers;
+        this.passwords = passwords;
+        this.sessions = sessions;
+        this.remembered = remembered;
         this.clientIp = clientIp;
     }
 
@@ -35,14 +62,61 @@ public class ProfileController {
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             @RequestParam(name = "email-inviata", required = false) String emailSent,
             @RequestParam(name = "email-errata", required = false) String emailInvalid,
+            @RequestParam(name = "password-salvata", required = false) String passwordSaved,
+            @RequestParam(name = "password-errore", required = false) String passwordError,
+            HttpServletRequest request,
             Model model) {
         CustomerPrincipal principal = CustomerSessionService.require(authentication);
         CustomerView customer = customers.find(principal.customerId()).orElseThrow();
+        boolean hasPassword = passwords.hasPassword(principal.customerUserId());
         model.addAttribute("email", principal.email());
         model.addAttribute("customer", customer);
         model.addAttribute("emailSent", emailSent != null);
         model.addAttribute("emailInvalid", emailInvalid != null);
+        model.addAttribute("hasPassword", hasPassword);
+        model.addAttribute("needsCurrentPassword", hasPassword && !CustomerSessionService.signedInByLink(request));
+        model.addAttribute("passwordMinLength", passwords.minLength());
+        model.addAttribute("passwordSaved", passwordSaved != null);
+        model.addAttribute("passwordErrorKey", passwordError == null ? null : PASSWORD_ERRORS.get(passwordError));
         return "customers/profile";
+    }
+
+    @PostMapping(CustomerRoutes.PROFILE_PASSWORD)
+    public String changePassword(
+            @RequestParam(name = "currentPassword", required = false) String currentPassword,
+            @RequestParam(name = "newPassword", required = false) String newPassword,
+            @RequestParam(name = "confirmPassword", required = false) String confirmPassword,
+            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
+            HttpServletRequest request,
+            HttpServletResponse response) {
+        CustomerPrincipal principal = CustomerSessionService.require(authentication);
+        long userId = principal.customerUserId();
+        boolean byLink = CustomerSessionService.signedInByLink(request);
+        if (passwords.hasPassword(userId) && !byLink && !passwords.isCurrentPassword(userId, currentPassword)) {
+            return passwordError("attuale");
+        }
+        Optional<PasswordPolicy.Violation> violation = passwords.violation(newPassword);
+        if (violation.isPresent()) {
+            return passwordError(violation.get() == PasswordPolicy.Violation.COMMON ? "comune" : "corta");
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            return passwordError("diverse");
+        }
+        passwords.setPassword(userId, newPassword);
+        // the other sessions and remembered devices end; this browser goes on, remembered as it was
+        boolean rememberDevice = remembered.cookieToken(request).isPresent();
+        sessions.endAllSessions(userId);
+        sessions.signIn(
+                principal,
+                byLink ? CustomerSessionService.SignInMethod.LINK : CustomerSessionService.SignInMethod.PASSWORD,
+                rememberDevice,
+                request,
+                response);
+        return "redirect:" + CustomerRoutes.PROFILE + "?password-salvata=1#password";
+    }
+
+    private static String passwordError(String code) {
+        return "redirect:" + CustomerRoutes.PROFILE + "?password-errore=" + code + "#password";
     }
 
     @PostMapping(CustomerRoutes.PROFILE_EMAIL)

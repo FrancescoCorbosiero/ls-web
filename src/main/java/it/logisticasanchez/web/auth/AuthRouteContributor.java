@@ -16,12 +16,14 @@ public class AuthRouteContributor implements SecurityRouteContributor {
     @Override
     public void contribute(SecurityRoutes routes) {
         routes
-                // Customer area (CUS-01, CUS-06): e-mail form, link pages (GET renders, POST consumes), logout.
-                // The registration page is the customers module's; the home is the orders module's.
+                // Customer area (CUS-01, CUS-06, ADR 0032): sign-in page, password sign-in, link pages
+                // (GET renders, POST consumes), logout. The registration page is the customers
+                // module's; the home is the orders module's.
                 .permitGet(AuthRoutes.CUSTOMER_AREA, AuthRoutes.CUSTOMER_LINK, AuthRoutes.CUSTOMER_CHANGE_EMAIL)
                 .permit(
                         HttpMethod.POST,
                         AuthRoutes.CUSTOMER_AREA,
+                        AuthRoutes.CUSTOMER_PASSWORD,
                         AuthRoutes.CUSTOMER_LINK,
                         AuthRoutes.CUSTOMER_CHANGE_EMAIL)
                 .customer(HttpMethod.POST, AuthRoutes.CUSTOMER_LOGOUT)

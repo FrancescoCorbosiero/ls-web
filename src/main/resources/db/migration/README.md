@@ -21,6 +21,7 @@ feature flags: `docs/adr/0025-feature-flags.md`.
 | `V012__report_recipients_and_anonymisation.sql` | `report_recipient` (ADM-09 allow-list), `customer.anonymised_at` (NFR-03) |
 | `V013__record_editing.sql` | `shipment_order` status `CANCELLED` with `cancelled_*`, `cancel_reason`, `edited_at`, `edited_by_type`; customers created by staff are `ACTIVE` before their e-mail is verified (ADR 0028) |
 | `V014__remembered_sign_in.sql` | `remembered_sign_in`: the devices on which a customer stays signed in for 60 days after a sign-in link (owner decision of 2026-10-25, ADR 0031) |
+| `V015__customer_password.sql` | `customer_user.password_hash`, `password_changed_at`: customers may sign in with e-mail and password (owner decision of 2026-10-25, ADR 0032) |
 
 Rules for the next migration: no `legacy_*`, `*_raw` or `data_quality` column (owner
 decision Q-55, no data migration); no `INSERT` into `staff_user`, `customer` or

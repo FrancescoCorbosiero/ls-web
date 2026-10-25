@@ -11,6 +11,10 @@ public final class RateLimitKeys {
     public static final String SIGNIN_LINK_EMAIL = "signin.link.email";
     /** CUS-01: sign-in link requests, subject = client IP. */
     public static final String SIGNIN_LINK_IP = "signin.link.ip";
+    /** CUS-01 (ADR 0032): password sign-in attempts, subject = normalised e-mail. */
+    public static final String SIGNIN_PASSWORD_EMAIL = "signin.password.email";
+    /** CUS-01 (ADR 0032): password sign-in attempts, subject = client IP. */
+    public static final String SIGNIN_PASSWORD_IP = "signin.password.ip";
     /** ADM-01: staff login attempts, subject = client IP. */
     public static final String STAFF_LOGIN = "staff.login";
     /** TRK-04: tracking lookups, subject = client IP. */

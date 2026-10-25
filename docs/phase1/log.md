@@ -1752,3 +1752,50 @@ tecnici»).
 * No staff action signs a customer out of every device (the e-mail change does it); add one
   if the office needs it.
 * M2.1: the proposal is in the chat of 2026-10-25; the owner picks the scope.
+
+## Step F — Customer password sign-in (2026-10-25)
+
+The owner's message of 2026-10-25: «se questo maledetto link non è comodo mettiamo una semplice
+basic auth! non mi sembra di star chiedendo la luna!» — Q-56 added to chapter 11 and decided;
+ADR 0032.
+
+### What was built
+
+* Migration `V015__customer_password.sql`: `customer_user.password_hash`,
+  `password_changed_at` (both or neither).
+* `auth.CustomerPasswordService`: `authenticate` (rate limits `signin.password.ip` 30 and
+  `signin.password.email` 10 per 15 minutes, one answer for every refusal, bcrypt work in every
+  case), `setPassword` (policy: 8 characters, `ls.security.customer-password.min-length`, and the
+  common-password list; audit `customer.password.set` / `.change`), `isCurrentPassword`.
+* Sign-in page `/area-clienti/`: e-mail and password with «Resta connesso» (`POST
+  /area-clienti/password`), then «Prima volta o password dimenticata?» with the link form (button
+  «Ricevi il link»). `CustomerSessionService` records how the session was opened (`LINK`,
+  `PASSWORD`): after a link the profile sets a new password without the current one.
+* Profile section «Password» (`POST /area-clienti/profilo/password`): set or change; a change ends
+  the other sessions and remembered devices, this browser goes on. Registration summary: «Scegli
+  la password» before «Conferma». Orders home: «Scegli una password per entrare senza aspettare
+  l'e-mail.» until one is set. Anonymisation clears the password. `dev-seed` prints a password for
+  the ACTIVE customer.
+* Tests: `CustomerPasswordIT` (8), `DevSeedCommandIT` (customer password sign-in),
+  `RateLimiterTest` (the two keys), registration helpers send the password, route matrix (two
+  POST routes), schema files; E2E: the registration chooses the password, «[CUS-01] the customer
+  signs out and back in with e-mail and password».
+
+### New Italian texts for the owner's review
+
+Sign-in page: «Accedi all'area clienti», «Password», «Accedi», «E-mail o password non corrette.»,
+«Prima volta o password dimenticata?», «Ti mandiamo un link per entrare; se sei un nuovo cliente,
+il link ti porta alla registrazione.», «Ricevi il link» (also on «Il link non è più valido»).
+Profile: «Password», «Scegli una password per entrare con e-mail e password, senza aspettare il
+link.», «Cambia la password con cui entri: le altre sessioni e i dispositivi ricordati vengono
+chiusi.», «Password attuale», «Nuova password», «Ripeti la password», «Almeno {n} caratteri,
+diversa dalle password più comuni.», «Salva la password», «Password salvata: da ora entri con
+e-mail e password.», «La password attuale non è corretta.», «Le due password non coincidono.»,
+«La password deve avere almeno {n} caratteri.», «Questa password è troppo comune: scegline
+un'altra.». Registration: «Scegli la password». Home: «Scegli una password per entrare senza
+aspettare l'e-mail.», «Imposta la password».
+
+### Open points
+
+* No e-mail notice when the password changes; add one (a new EML entry) if the owner wants it.
+* M2.1 still waits for the owner's pick (proposal in the chat of 2026-10-25).

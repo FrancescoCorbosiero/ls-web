@@ -96,7 +96,8 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
         out.println("  " + OPERATOR_USERNAME + " (OPERATOR) password: "
                 + staff(OPERATOR_USERNAME, "Operatore Seed", StaffRole.OPERATOR));
         out.println("  cliente ACTIVE            e-mail: " + ACTIVE_CUSTOMER_EMAIL
-                + customer(ACTIVE_CUSTOMER_EMAIL, "Ditta Attiva S.r.l.", "ACTIVE"));
+                + customer(ACTIVE_CUSTOMER_EMAIL, "Ditta Attiva S.r.l.", "ACTIVE")
+                + "  password: " + customerPassword(ACTIVE_CUSTOMER_EMAIL));
         out.println("  cliente PENDING_APPROVAL  e-mail: " + PENDING_CUSTOMER_EMAIL
                 + customer(PENDING_CUSTOMER_EMAIL, "Ditta In Attesa S.r.l.", "PENDING_APPROVAL"));
         out.println("  cliente PENDING_VERIFICATION e-mail: " + UNVERIFIED_CUSTOMER_EMAIL
@@ -210,6 +211,17 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
                 "DECLINED".equals(status) ? now : null);
         jdbc.update("insert into customer_user (customer_id, email) values (?, ?)", customerId, email);
         return "";
+    }
+
+    /** The ACTIVE seed customer can also sign in with e-mail and password (ADR 0032): a new one each run. */
+    private String customerPassword(String email) {
+        String password = randomPassword();
+        jdbc.update(
+                "update customer_user set password_hash = ?, password_changed_at = ? where email = ?",
+                encoder.encode(password),
+                Timestamp.from(Instant.now(clock)),
+                email);
+        return password;
     }
 
     /** 20 characters of base64url: 120 random bits, above the 12-character policy. */

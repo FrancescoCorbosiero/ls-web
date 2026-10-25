@@ -96,6 +96,7 @@ public class RouteRegistry {
     static boolean isSignInEntry(String pattern) {
         return pattern.equals(SecurityRoutes.CUSTOMER_AREA)
                 || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "accesso")
+                || pattern.equals(SecurityRoutes.CUSTOMER_AREA + "password")
                 || pattern.equals(SecurityRoutes.BACKOFFICE)
                 || pattern.equals(SecurityRoutes.BACKOFFICE + "login")
                 || pattern.equals(SecurityRoutes.BACKOFFICE + "logout")

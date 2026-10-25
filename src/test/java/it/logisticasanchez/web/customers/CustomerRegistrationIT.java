@@ -325,6 +325,9 @@ class CustomerRegistrationIT extends AbstractPostgresIT {
         params.put("vatNumber", "13113080967");
         params.put("taxCode", "");
         params.put("website", "");
+        // the password chosen on the summary (ADR 0032)
+        params.put("password", "Pallet-di-prova-2026");
+        params.put("passwordConfirm", "Pallet-di-prova-2026");
         params.putAll(overrides);
         MockHttpServletRequestBuilder builder = post("/area-clienti/registrazione/")
                 .with(csrf())

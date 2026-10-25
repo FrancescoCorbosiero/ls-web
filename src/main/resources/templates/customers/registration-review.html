@@ -36,7 +36,21 @@
       <input type="hidden" name="email" th:value="${values['email']}">
       <input type="hidden" th:each="f : ${values}" th:if="${f.key != 'email'}" th:name="${f.key}" th:value="${f.value}">
       <input type="hidden" name="website" value="">
-      <th:block th:if="${!reregister}"><th:block th:replace="~{auth/remember :: remember(${rememberDays})}"></th:block></th:block>
+      <th:block th:if="${!reregister}">
+        <h2 th:text="#{customers.password.registrationHeading}">Scegli la password</h2>
+        <p class="callout callout-error" role="alert" th:if="${passwordErrorKey != null}" th:text="${#messages.msg(passwordErrorKey, passwordMinLength)}">Errore</p>
+        <input type="text" name="username" autocomplete="username" th:value="${values['email']}" hidden>
+        <div class="field">
+          <label class="label" for="password" th:text="#{customers.password.choose}">Password</label>
+          <input class="input" id="password" name="password" type="password" autocomplete="new-password" maxlength="200" required aria-describedby="password-hint">
+          <p class="field-hint" id="password-hint" th:text="#{customers.password.hint(${passwordMinLength})}">Almeno 8 caratteri, diversa dalle password più comuni.</p>
+        </div>
+        <div class="field">
+          <label class="label" for="passwordConfirm" th:text="#{customers.password.confirm}">Ripeti la password</label>
+          <input class="input" id="passwordConfirm" name="passwordConfirm" type="password" autocomplete="new-password" maxlength="200" required>
+        </div>
+        <th:block th:replace="~{auth/remember :: remember(${rememberDays})}"></th:block>
+      </th:block>
       <button type="submit" name="step" value="confirm" class="btn" th:text="#{customers.review.confirm}">Conferma</button>
       <button type="submit" name="step" value="edit" class="btn btn-light" th:text="#{customers.review.edit}">Modifica</button>
     </form>

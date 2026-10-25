@@ -18,6 +18,6 @@ public class CustomersRouteContributor implements SecurityRouteContributor {
         routes.permitGet(CustomerRoutes.REGISTRATION)
                 .permit(HttpMethod.POST, CustomerRoutes.REGISTRATION)
                 .customer(HttpMethod.GET, CustomerRoutes.PROFILE)
-                .customer(HttpMethod.POST, CustomerRoutes.PROFILE_EMAIL);
+                .customer(HttpMethod.POST, CustomerRoutes.PROFILE_EMAIL, CustomerRoutes.PROFILE_PASSWORD);
     }
 }

@@ -26,6 +26,14 @@
     </div>
     <th:block th:replace="~{layout/private :: flash}"></th:block>
 
+    <div th:if="${passwordMissing}" class="callout callout-info" role="status" data-password-missing>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>
+      <div>
+        <p class="strong" th:text="#{customers.password.missing}">Scegli una password per entrare senza aspettare l'e-mail.</p>
+        <p class="callout-actions"><a class="btn btn-light btn-sm" href="/area-clienti/profilo/#password" th:text="#{customers.password.missingAction}">Imposta la password</a></p>
+      </div>
+    </div>
+
     <div th:if="${customer.status.name() == 'PENDING_APPROVAL' or customer.status.name() == 'PENDING_VERIFICATION'}" class="callout callout-info" role="status" data-customer-status="pending">
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>
       <div>

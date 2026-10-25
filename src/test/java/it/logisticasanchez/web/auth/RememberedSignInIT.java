@@ -449,7 +449,9 @@ class RememberedSignInIT extends AbstractPostgresIT {
                 .param("phone", "0362 000000")
                 .param("vatNumber", "")
                 .param("taxCode", "")
-                .param("website", "");
+                .param("website", "")
+                .param("password", "Pallet-di-prova-2026")
+                .param("passwordConfirm", "Pallet-di-prova-2026");
         if (remember) {
             builder.param("ricordami", "1");
         }

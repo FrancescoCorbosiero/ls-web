@@ -19,6 +19,10 @@ public record RateLimitProperties(
         @DefaultValue Limit signinLinkEmail,
         /** CUS-01: sign-in link requests per client IP. */
         @DefaultValue Limit signinLinkIp,
+        /** CUS-01 (ADR 0032): password sign-in attempts per normalised e-mail. */
+        @DefaultValue Limit signinPasswordEmail,
+        /** CUS-01 (ADR 0032): password sign-in attempts per client IP. */
+        @DefaultValue Limit signinPasswordIp,
         /** ADM-01: staff login attempts per client IP (the per-account lock-out is PD-10). */
         @DefaultValue Limit staffLogin,
         /** TRK-04: tracking lookups per client IP. */
@@ -31,6 +35,8 @@ public record RateLimitProperties(
     public RateLimitProperties {
         signinLinkEmail = or(signinLinkEmail, 5, Duration.ofMinutes(15));
         signinLinkIp = or(signinLinkIp, 20, Duration.ofMinutes(15));
+        signinPasswordEmail = or(signinPasswordEmail, 10, Duration.ofMinutes(15));
+        signinPasswordIp = or(signinPasswordIp, 30, Duration.ofMinutes(15));
         staffLogin = or(staffLogin, 20, Duration.ofMinutes(15));
         trackingLookup = or(trackingLookup, 60, Duration.ofMinutes(1));
         formSubmit = or(formSubmit, 10, Duration.ofMinutes(10));
