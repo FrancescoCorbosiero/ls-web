@@ -12,9 +12,24 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 PORT="${PORT:-8080}"
 
-echo "▸ Database locale (PostgreSQL 16 in .local/pg, porta 54329)"
-scripts/local-db.sh start >/dev/null
-eval "$(scripts/local-db.sh env)"
+PG_BIN="${LS_PG_BIN:-/usr/lib/postgresql/16/bin}"
+if [[ -x "$PG_BIN/initdb" ]]; then
+  echo "▸ Database locale (PostgreSQL 16 in .local/pg, porta 54329)"
+  scripts/local-db.sh start >/dev/null
+  eval "$(scripts/local-db.sh env)"
+elif command -v docker >/dev/null && docker info >/dev/null 2>&1; then
+  echo "▸ Database locale in Docker (postgres:16, porta 54329; deploy/compose.dev.yml)"
+  docker compose -f deploy/compose.dev.yml up -d --wait db >/dev/null
+  export TEST_DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web_test TEST_DATABASE_USER=ls TEST_DATABASE_PASSWORD=ls
+else
+  cat >&2 <<'EOF'
+dev.sh: serve PostgreSQL 16 in una di queste due forme:
+  - i binari server (initdb, pg_ctl, psql): macOS  brew install postgresql@16  e  export LS_PG_BIN=$(brew --prefix postgresql@16)/bin
+                                             Debian/Ubuntu  sudo apt install postgresql-16  (binari in /usr/lib/postgresql/16/bin)
+  - oppure Docker in esecuzione: il database parte da deploy/compose.dev.yml
+EOF
+  exit 1
+fi
 
 JAR="$(ls target/ls-web-*.jar 2>/dev/null | head -1 || true)"
 if [[ "${1:-}" == "--rebuild" || -z "$JAR" || -n "$(find src pom.xml -newer "$JAR" -print -quit 2>/dev/null)" ]]; then

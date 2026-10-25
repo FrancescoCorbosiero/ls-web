@@ -33,11 +33,16 @@ Step-by-step guide in Italian: `docs/runbooks/local-setup.md`; deploy: `docs/run
 ## Prerequisites
 
 * JDK 21 (the only toolchain supported; `./mvnw` enforces it)
-* PostgreSQL 16 server binaries (`initdb`, `pg_ctl`, `psql`) for the local database, or a
-  Docker daemon for Testcontainers
+* A local PostgreSQL 16, in one of two forms:
+  * the server binaries (`initdb`, `pg_ctl`, `psql`): macOS `brew install postgresql@16` and
+    `export LS_PG_BIN=$(brew --prefix postgresql@16)/bin`; Debian/Ubuntu `sudo apt install postgresql-16`
+    (binaries in `/usr/lib/postgresql/16/bin`, the default). Check with `$LS_PG_BIN/initdb --version`.
+  * or Docker: `docker compose -f deploy/compose.dev.yml up -d db` starts `postgres:16` on
+    `localhost:54329` with the same credentials and databases; `scripts/dev.sh` does it by itself
+    when the binaries are missing. `--profile app up --build` also runs the app image on :8080.
 * Node 22 (only for the Playwright end-to-end suite under `e2e/`)
 
-Maven is not needed: the wrapper downloads Maven 3.9.11.
+Maven is not needed: the wrapper downloads it.
 
 ## Local database
 
