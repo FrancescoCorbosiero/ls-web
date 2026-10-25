@@ -17,14 +17,14 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 /**
- * PUB-02: every UI text lives in {@code messages_it.properties} (the only locale): each
+ * PUB-02: every UI text lives in {@code messages.properties} (the only locale): each
  * {@code #{key}} and {@code #messages.msg('key')} reference in the templates resolves, and no
  * key is empty.
  */
 @Tag("PUB-02")
 class MessageBundleTest {
 
-    private static final Path BUNDLE = Path.of("src", "main", "resources", "messages_it.properties");
+    private static final Path BUNDLE = Path.of("src", "main", "resources", "messages.properties");
     private static final Path TEMPLATES = Path.of("src", "main", "resources", "templates");
     private static final Pattern MESSAGE_REFERENCE =
             Pattern.compile("#\\{([A-Za-z0-9_.]+)[(}]|#messages\\.msg\\('([A-Za-z0-9_.]+)'");
@@ -55,6 +55,6 @@ class MessageBundleTest {
             }
         }
         assertThat(references).as("message references found in the templates").isGreaterThan(50);
-        assertThat(missing).as("keys missing from messages_it.properties").isEmpty();
+        assertThat(missing).as("keys missing from messages.properties").isEmpty();
     }
 }

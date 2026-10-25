@@ -1569,3 +1569,11 @@ MIG-01…03 blocked (Q-55). `docker build` could not be run here (no Docker daem
   row, reports/backoffice rows), the Q-55 wording trim of §4/§5/§8, ADR 0015 EML-S1 line, the
   confidential-figure guard and a local gitleaks run, the §4.3 `docs/parity-plan.md` freeze
   (dropped by the lighter process; the matrix header says so).
+
+## Fix after CI run 4 (2026-10-25)
+
+CI failed with 45 `??key_it??` renderings and a `NoSuchMessageException` while the local
+build passed: Spring Boot's `MessageSourceAutoConfiguration` only creates the message
+source when the base file `messages.properties` exists, and locally a stale copy survived
+in `target/classes`. The Italian bundle is now `messages.properties` (the app has one
+locale, `spring.web.locale=it` fixed); the test and the layout comment follow.
