@@ -32,7 +32,7 @@
           <tr th:each="o : ${orders}" th:attr="data-order=${o.tempCode}">
             <th:block th:replace="~{backoffice/orders :: orderCells(${o})}"></th:block>
             <td class="row-actions">
-              <span class="pill pill-soft" th:if="${o.editedByCustomer()}" th:title="#{backoffice.order.editedByCustomerAt(${fmt.dateTime(o.editedAt)})}" th:text="#{backoffice.order.editedByCustomerShort}" data-edited>Modificato dal cliente</span>
+              <span class="pill pill-soft" th:if="${o.editedByCustomer()}" th:title="#{backoffice.order.editedByCustomerAt(${fmt.at(o.editedAt)})}" th:text="#{backoffice.order.editedByCustomerShort}" data-edited>Modificato dal cliente</span>
               <a class="btn btn-xs" th:href="@{/gestione/ordini/{id}/approva(id=${o.id})}" th:text="#{backoffice.orders.approve}">Approva ordine</a>
               <a class="btn btn-danger btn-xs" th:href="@{/gestione/ordini/{id}/rifiuta(id=${o.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
               <a class="btn btn-light btn-xs" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="#{backoffice.orders.detail}">Dettaglio</a>

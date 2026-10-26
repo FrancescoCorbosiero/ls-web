@@ -59,7 +59,7 @@
             <td th:attr="data-label=#{backoffice.customers.col.phone}" th:text="${c.phone}">tel</td>
             <td th:attr="data-label=#{backoffice.customers.col.emailVerified}" th:text="${c.emailVerified()} ? #{backoffice.yes} : #{backoffice.no}">SI</td>
             <td th:attr="data-label=#{backoffice.customers.col.status}"><span th:replace="~{layout/private :: customerStatus(${c.status})}">Attivo</span></td>
-            <td th:attr="data-label=#{backoffice.customers.col.registeredAt}" th:text="${fmt.date(c.registeredAt)}">01/01/2026</td>
+            <td th:attr="data-label=#{backoffice.customers.col.registeredAt}" th:text="${fmt.when(c.registeredAt)}" th:title="${fmt.dateTime(c.registeredAt)}">01/01/2026</td>
           </tr>
         </tbody>
       </table>

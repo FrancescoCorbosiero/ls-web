@@ -66,7 +66,7 @@
             <li th:each="o : ${today.toApprove()}" th:attr="data-order=${o.displayCode()}">
               <a class="strong" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.displayCode()}">TEMP-</a>
               <span th:text="${o.sender.name} + ' → ' + ${o.recipient.city}">Mittente → Città</span>
-              <span class="muted small" th:text="#{backoffice.today.since(${fmt.date(o.submittedAt)})}">dal</span>
+              <span class="muted small" th:text="${fmt.when(o.submittedAt)}" th:title="${fmt.dateTime(o.submittedAt)}">dal</span>
             </li>
           </ul>
           <a class="small" th:if="${today.toApproveCount() > today.toApprove().size()}" href="/gestione/ordini/in-approvazione/" th:text="#{backoffice.today.more(${today.toApproveCount() - today.toApprove().size()})}">e altri</a>
@@ -79,7 +79,7 @@
             <li th:each="o : ${today.toPickUp()}" th:attr="data-order=${o.displayCode()}">
               <a class="strong" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.displayCode()}">CODICE</a>
               <span th:text="${o.sender.name} + ' → ' + ${o.recipient.city}">Mittente → Città</span>
-              <span class="muted small" th:text="#{backoffice.today.since(${fmt.date(o.approvedAt)})}">dal</span>
+              <span class="muted small" th:text="${fmt.when(o.approvedAt)}" th:title="${fmt.dateTime(o.approvedAt)}">dal</span>
             </li>
           </ul>
           <a class="small" th:if="${today.toPickUpCount() > today.toPickUp().size()}" href="/gestione/ordini/?stato=APPROVED&amp;tracking=1" th:text="#{backoffice.today.more(${today.toPickUpCount() - today.toPickUp().size()})}">e altri</a>
@@ -92,7 +92,7 @@
             <li th:each="o : ${today.stuck()}" th:attr="data-order=${o.displayCode()}">
               <a class="strong" th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.displayCode()}">CODICE</a>
               <span th:text="${o.sender.name} + ' → ' + ${o.recipient.city} + ' · ' + ${o.trackingLabel}">Mittente → Città · Stato</span>
-              <span class="muted small" th:text="#{backoffice.today.since(${fmt.date(o.approvedAt)})}">dal</span>
+              <span class="muted small" th:text="${fmt.when(o.approvedAt)}" th:title="${fmt.dateTime(o.approvedAt)}">dal</span>
             </li>
           </ul>
           <a class="small" th:if="${today.stuckCount() > today.stuck().size()}" href="/gestione/ordini/?stato=APPROVED&amp;tracking=in-corso" th:text="#{backoffice.today.more(${today.stuckCount() - today.stuck().size()})}">e altri</a>
@@ -122,7 +122,7 @@
                 <td th:attr="data-label=#{backoffice.orders.col.customer}" th:text="${o.sender.name}">Mittente</td>
                 <td th:attr="data-label=#{orders.col.recipient}"><span th:text="${o.recipient.name}">Dest</span><span class="sub" th:text="${o.recipient.city} + ' (' + ${o.recipient.province} + ')'">Città</span></td>
                 <td th:attr="data-label=#{orders.col.status}"><span th:replace="~{layout/private :: orderStatus(${o.status})}">Stato</span></td>
-                <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+                <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.when(o.submittedAt)}" th:title="${fmt.dateTime(o.submittedAt)}">01/01/2026</td>
               </tr>
             </tbody>
           </table>

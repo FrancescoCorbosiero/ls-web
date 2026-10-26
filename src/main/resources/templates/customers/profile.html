@@ -42,7 +42,7 @@
       <div class="callout callout-info" role="status" th:if="${pendingChange != null}" data-pending-change>
         <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-history"/></svg>
         <div>
-          <p class="strong" th:text="#{customers.profile.pendingChange(${fmt.date(pendingChange.requestedAt)})}">Il 01/10/2026 hai chiesto di cambiare questi dati: la modifica aspetta l'approvazione del nostro ufficio.</p>
+          <p class="strong" th:text="#{customers.profile.pendingChange(${fmt.at(pendingChange.requestedAt)})}">Il 01/10/2026 hai chiesto di cambiare questi dati: la modifica aspetta l'approvazione del nostro ufficio.</p>
           <ul>
             <li th:each="c : ${pendingChange.changes()}"><span th:text="#{'customers.change.field.' + ${c.name}}">Campo</span>: <strong th:text="${c.requested}">valore</strong></li>
           </ul>

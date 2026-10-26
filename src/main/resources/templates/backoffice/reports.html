@@ -53,7 +53,7 @@
         <p class="muted" th:if="${recent.isEmpty()}" th:text="#{backoffice.reports.none}">Nessun report inviato finora.</p>
         <ol class="timeline" th:if="${!recent.isEmpty()}" data-table="reports">
           <li th:each="r : ${recent}" th:attr="data-report=${r.id}">
-            <span class="when" th:text="${fmt.dateTime(r.createdAt)}">data</span>
+            <span class="when" th:text="${fmt.when(r.createdAt)}" th:title="${fmt.dateTime(r.createdAt)}">data</span>
             <a th:href="@{/gestione/clienti/{id}/(id=${r.customerId})}" th:text="#{backoffice.reports.customerRef(${r.customerId})}">cliente</a>
             <span class="sub muted small" th:text="${r.periodText()} + ' · ' + (${r.onlyDelivered} ? #{backoffice.reports.onlyDeliveredShort} : #{backoffice.reports.allApproved}) + ' · ' + #{backoffice.reports.rowCount(${r.rowCount})}">periodo</span>
             <span class="sub muted small" th:text="${#strings.listJoin(r.recipients, ', ')}">destinatari</span>

@@ -34,7 +34,7 @@
             <td th:text="${u.email ?: '-'}">-</td>
             <td th:text="#{'backoffice.staffUsers.role.' + ${u.role.name()}}">Amministratore</td>
             <td th:text="${!u.active} ? #{backoffice.staffUsers.disabled} : (${u.passwordSet} ? #{backoffice.staffUsers.active} : #{backoffice.staffUsers.passwordPending})">Attivo</td>
-            <td th:text="${u.lastLoginAt != null} ? ${fmt.dateTime(u.lastLoginAt)} : '-'">-</td>
+            <td th:text="${fmt.when(u.lastLoginAt)}" th:title="${u.lastLoginAt != null} ? ${fmt.dateTime(u.lastLoginAt)} : ''">-</td>
             <td th:if="${twoFactor}" data-two-factor>
               <span th:text="${u.twoFactor} ? #{backoffice.staffUsers.twoFactor.on} : #{backoffice.staffUsers.twoFactor.off}">Attiva</span>
               <form class="inline-form" method="post" th:if="${u.twoFactor}" th:action="@{/gestione/impostazioni/utenti/{id}/doppia-verifica(id=${u.id})}">

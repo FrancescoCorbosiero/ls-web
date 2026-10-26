@@ -45,7 +45,7 @@
         </tr></thead>
         <tbody>
           <tr th:each="l : ${page.content}" th:attr="data-lead=${l.id}">
-            <td th:attr="data-label=#{backoffice.leads.col.date}" th:text="${fmt.dateTime(l.createdAt)}">01/01/2026 10:00</td>
+            <td th:attr="data-label=#{backoffice.leads.col.date}" th:text="${fmt.when(l.createdAt)}" th:title="${fmt.dateTime(l.createdAt)}">01/01/2026 10:00</td>
             <td th:attr="data-label=#{backoffice.leads.col.form}" th:text="${l.formLabel()}">Preventivo</td>
             <td class="strong" th:attr="data-label=#{backoffice.leads.col.from}"><div class="cell-block"><a th:href="@{/gestione/richieste/{id}/(id=${l.id})}" th:text="${l.name}">Nome</a><span class="sub" th:if="${l.company != null}" th:text="${l.company}">Azienda</span></div></td>
             <td th:attr="data-label=#{backoffice.leads.col.summary}"><div class="cell-block" th:text="${l.summary()}">Servizio · tratta</div></td>
