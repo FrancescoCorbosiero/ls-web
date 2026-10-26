@@ -4,7 +4,8 @@
 Each page keeps its <head> metadata and its <main> verbatim (PUB-01); only the four partials
 become fragment calls (layout/public), and the business data of ADR 0027 (site URL, phone,
 WhatsApp, office e-mail, VAT, Instagram) become expressions over ${business} (PUB-02). The
-order-portal links become «Area clienti» → /area-clienti/ (chapter 06 §7.1, ADR 0012).
+order-portal links become «Area clienti» → /area-clienti/ (chapter 06 §7.1, ADR 0012). Two lists
+get an alternative drawn from the accessory services, rendered only with ENH-14 on (ADR 0043).
 
     python3 tools/port-ls-home-pages.py            # rewrites src/main/resources/templates/site/**
     python3 tools/port-ls-home-pages.py --check    # exit 1 when the templates differ from a fresh port
@@ -176,6 +177,47 @@ def add_texts(html: str, page_key: str) -> str:
     return html
 
 
+# ENH-14 (flag admin.enumerations, ADR 0043): with the flag on, «Servizi accessori» of /servizi/
+# and the extras of the quote wizard are drawn from the accessory services; with it off the model
+# attribute is null and the ported block is rendered unchanged (PUB-01, PUB-06). Each entry:
+# template key → (start of the ported block, the text that follows its end, the attribute added
+# to its opening tag, the block drawn from the enumeration, inserted right after the ported one).
+ENUMERATION_BLOCKS = {
+    "servizi": (
+        '<div class="features features-3" data-stagger>',
+        "\n    </div>\n  </section>",
+        'th:if="${siteAccessories == null}"',
+        '<div class="features features-3" data-stagger th:if="${siteAccessories != null}" data-accessories>'
+        '<div class="feature" th:each="s : ${siteAccessories}">\n'
+        '          <span class="feature-ico"><svg class="icon" aria-hidden="true"><use th:href="|/img/icons.svg#${s.icon}|"/></svg></span>\n'
+        '          <h3 th:text="${s.label}">Servizio</h3>\n'
+        '          <p th:text="${s.description}">Descrizione</p>\n'
+        "        </div></div>",
+    ),
+    "preventivo": (
+        '<div class="choice-grid">\n              <label class="check-card"><input type="checkbox" name="servizi_extra[]"',
+        "\n          </div>\n        </fieldset>",
+        'th:if="${quoteExtras == null}"',
+        '<div class="choice-grid" th:if="${quoteExtras != null}" data-accessories>'
+        '<label class="check-card" th:each="s : ${quoteExtras}"><input type="checkbox" name="servizi_extra[]" th:value="${s.label}">'
+        '<span>[[${s.label}]]<small th:if="${s.hint != null}" th:text="${s.hint}">Suggerimento</small></span></label></div>',
+    ),
+}
+
+
+def enumeration_blocks(html: str, key: str) -> str:
+    """Adds the ENH-14 alternative after the ported block of a page (each block must exist exactly once)."""
+    if key not in ENUMERATION_BLOCKS:
+        return html
+    start_text, after_text, condition, dynamic = ENUMERATION_BLOCKS[key]
+    if html.count(start_text) != 1:
+        raise SystemExit(f"{key}: ENH-14 block not found once")
+    start = html.index(start_text)
+    end = html.index(after_text, start)
+    opening_end = html.index(">", start)
+    return html[:opening_end] + " " + condition + html[opening_end:end] + dynamic + html[end:]
+
+
 def targets():
     """(source file, template path, page key, error page?) for every page of the static site."""
     out = []
@@ -197,7 +239,7 @@ def main(check: bool) -> int:
         html = source.read_text(encoding="utf-8")
         # The header's nav key is the page's data-page (blog posts share "blog", chapter 06 §3.1).
         nav_key = re.search(r'<body[^>]*\sdata-page="([^"]*)"', html).group(1)
-        ported = port(html, nav_key, error_page)
+        ported = enumeration_blocks(port(html, nav_key, error_page), key)
         if check:
             if not target.is_file() or target.read_text(encoding="utf-8") != ported:
                 drift.append(str(target.relative_to(ROOT)))

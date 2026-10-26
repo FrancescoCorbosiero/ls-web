@@ -251,6 +251,7 @@ public class BackofficeSettingsController {
         model.addAttribute("auditEnabled", flags.isEnabled(FlagKey.ADMIN_AUDIT)); // ENH-13
         model.addAttribute("noticesEnabled", flags.isEnabled(FlagKey.SITE_NOTICE_BANNER)); // ENH-17
         model.addAttribute("closuresEnabled", flags.isEnabled(FlagKey.SITE_OPEN_NOW)); // ENH-18
+        model.addAttribute("accessoriesEnabled", flags.isEnabled(FlagKey.ADMIN_ENUMERATIONS)); // ENH-14
         return "backoffice/settings";
     }
 

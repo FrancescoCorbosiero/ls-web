@@ -141,12 +141,12 @@
           </div>
           <div class="wizard-block">
             <p class="label">Servizi accessori <span class="opt">(facoltativi)</span></p>
-            <div class="choice-grid">
+            <div class="choice-grid" th:if="${quoteExtras == null}">
               <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Sponda idraulica"><span>Sponda idraulica<small>A destinazione non c'è un muletto</small></span></label>
               <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Consegna su appuntamento"><span>Consegna su appuntamento<small>Giorno e fascia oraria concordati</small></span></label>
               <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Preavviso al destinatario"><span>Preavviso al destinatario<small>Telefonata prima della consegna</small></span></label>
               <label class="check-card"><input type="checkbox" name="servizi_extra[]" value="Merce fragile o non sovrapponibile"><span>Merce fragile o non sovrapponibile<small>Viaggia senza altri carichi sopra</small></span></label>
-            </div>
+            </div><div class="choice-grid" th:if="${quoteExtras != null}" data-accessories><label class="check-card" th:each="s : ${quoteExtras}"><input type="checkbox" name="servizi_extra[]" th:value="${s.label}"><span>[[${s.label}]]<small th:if="${s.hint != null}" th:text="${s.hint}">Suggerimento</small></span></label></div>
           </div>
         </fieldset>
 

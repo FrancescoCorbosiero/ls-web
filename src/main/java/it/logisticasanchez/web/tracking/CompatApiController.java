@@ -103,9 +103,14 @@ public class CompatApiController {
                 .toList();
     }
 
+    /**
+     * EP-20: the services of the order, active or not, by id (ENH-14: not those of the public
+     * lists only, and in the same order whatever the back office does to the display order).
+     */
     @GetMapping(value = ACCESSORY_SERVICES_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
     public List<EnumItem> accessoryServices() {
-        return services.findAllByOrderBySortOrderAsc().stream()
+        return services.findAllByOrderByIdAsc().stream()
+                .filter(AccessoryService::isInOrders)
                 .map(s -> new EnumItem(s.getId(), s.getName(), s.getLabel()))
                 .toList();
     }

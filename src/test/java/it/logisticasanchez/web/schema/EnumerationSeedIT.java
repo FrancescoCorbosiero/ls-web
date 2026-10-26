@@ -13,8 +13,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
  * ADM-10: the enumerations are seeded with exactly the legacy values — the six tracking states
- * and the six accessory services of chapter 02 §9 / 12b §2.2 (ids, names, labels, order; item 0
- * of the services is "none").
+ * and the six accessory services of the order of chapter 02 §9 / 12b §2.2 (ids, names, labels,
+ * order; item 0 of the services is "none"). The rows of the public lists added by V023 (ENH-14)
+ * are not on the order and come after them.
  */
 @Tag("ADM-10")
 @SpringBootTest
@@ -50,7 +51,8 @@ class EnumerationSeedIT extends AbstractPostgresIT {
     @Test
     void exactlyTheSixLegacyAccessoryServicesWithItemZeroAsNone() {
         List<Map<String, Object>> rows = jdbc.queryForList(
-                "select id, name, label, is_none, active, sort_order from accessory_service order by sort_order");
+                "select id, name, label, is_none, active, sort_order from accessory_service where in_orders"
+                        + " and id <= 5 order by sort_order");
 
         assertThat(rows).hasSize(6);
         assertThat(rows.stream().map(row -> List.of(row.get("id"), row.get("name"), row.get("label"))))
@@ -69,14 +71,19 @@ class EnumerationSeedIT extends AbstractPostgresIT {
     }
 
     @Test
-    void servicesAddedLaterContinueAfterTheLegacyIds() {
+    void servicesAddedLaterContinueAfterTheSeededIds() {
         Long next =
                 jdbc.queryForObject("select nextval(pg_get_serial_sequence('accessory_service', 'id'))", Long.class);
         try {
-            assertThat(next).as("ENH-14 rows start at id 6").isEqualTo(6L);
+            Long highest = jdbc.queryForObject("select max(id) from accessory_service", Long.class);
+            assertThat(next)
+                    .as("new rows never reuse an id: after the legacy 0-5 and the six rows of V023 (ENH-14)")
+                    .isGreaterThan(highest)
+                    .isGreaterThanOrEqualTo(12L);
         } finally {
-            // nextval consumed a value: put the sequence back where the seed left it.
-            jdbc.execute("alter table accessory_service alter column id restart with 6");
+            // nextval consumed a value: the next row gets it again.
+            jdbc.queryForObject(
+                    "select setval(pg_get_serial_sequence('accessory_service', 'id'), ?, false)", Long.class, next);
         }
     }
 }

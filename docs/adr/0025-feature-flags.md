@@ -143,6 +143,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
   the hours of every public page, from the openings of the next 14 days and the browser's clock;
   «Chiusure dell'ufficio» under «Impostazioni». Unit `OpeningHoursTest`, flag-on `OpenNowIT`, «flag
   off = M1» `OpenNowOffIT`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-14, `admin.enumerations` built** (ADR 0043; V023): «Servizi accessori» under
+  «Impostazioni», one list for the order, `/servizi/` and the quote wizard; the two public lists
+  drawn from it only with the flag on. Flag-on tests `AccessoryServicesIT`, «flag off = M1»
+  `AccessoryServicesOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 

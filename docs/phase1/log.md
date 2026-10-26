@@ -2288,3 +2288,56 @@ giorno è già passato.», «L'ultimo giorno viene dopo il primo.», «Al massim
 «Il motivo può avere al massimo 100 caratteri.», «Inserisci una data valida.»; flashes «Chiusura
 aggiunta: il sito ne tiene conto accanto all'orario.», «Chiusura rimossa: quel giorno vale
 l'orario di sempre.».
+
+## Step R — M2: ENH-14, accessory services from the back office (2026-10-26)
+
+Eighth and last of the M2 items of the owner's request «procedi con quelli che puoi fare ora».
+ADR 0043.
+
+### What was built
+
+* Migration `V023__accessory_service_placements.sql`: `in_orders`, `on_site`, `in_quote`,
+  `description`, `icon`, `quote_hint` on `accessory_service`, with checks (at least one place; text
+  and icon on the site; item 0 only on the order); «Sponda idraulica» gets the card and the extra
+  of the ported pages, the six other services of those pages become rows not on the order.
+* `tracking`: `AccessoryServiceAdmin` (the list, add with the next id and a code of its own,
+  update, move, switch off and on, delete when unused; audited); `TrackingCatalog` offers the order
+  forms only the services of the order (keeping one already chosen), and reads the two public
+  lists; EP-20 serves the services of the order by id.
+* `site`: `SiteAccessoryModelAttributes` (`siteAccessories` on `/servizi/`, `quoteExtras` on
+  `/preventivo/`, only with the flag on); `FormValidator` accepts the extras of the list with the
+  flag on; the port script adds the drawn block after the ported one of the two pages (the ported
+  one renders with the flag off).
+* `orders`, `quotes`: the validator and the saved quotes accept services of the order only.
+* «Servizi accessori» (`BackofficeAccessoryServicesController`,
+  `/gestione/impostazioni/servizi-accessori/`, ADMIN only) and its link on «Impostazioni».
+* Tests: `AccessoryServicesIT` (5), `AccessoryServicesOffIT` (3); `EnumerationSeedIT` (ADM-10: the
+  six legacy services of the order; new ids after the seeds), schema expectations and migration
+  counts (23), route matrix; E2E `m2.spec.ts`: the seeded cards, a service added by the ADMIN on
+  `/servizi/`, in the wizard and in the order form, switched off and deleted (axe, phone width).
+
+### New Italian texts for the owner's review
+
+«Servizi accessori», «Un solo elenco per l'ordine, la pagina Servizi del sito e il preventivo: per
+ogni servizio scegli dove compare. L'ordine dell'elenco vale ovunque.», columns «Servizio», «Dove
+compare» («Ordine», «Sito», «Preventivo»), «Stato» («Attivo», «Disattivato»), «Codice …», «Icona
+sul sito: …», «Sempre la prima scelta dell'ordine: non si modifica.», buttons «Su», «Giù»,
+«Modifica», «Disattiva», «Riattiva», «Elimina» (with «… «nome»» for screen readers); «Modifica
+«…»», «Torna ai servizi accessori»; form «Aggiungi un servizio», «Nome» («Compare così ovunque lo
+mostri: nell'ordine, sul sito, nel preventivo.»), «Dove compare»: «Nell'ordine (area clienti e
+gestione)», «Nella pagina Servizi del sito», «Tra i servizi del preventivo» («Almeno uno. Nel
+preventivo il nome è anche il testo che arriva con la richiesta.»; for a legacy service «È uno dei
+servizi storici dell'ordine: resta sempre nell'ordine.»), «Descrizione sul sito» («Il testo sotto
+il nome nella pagina Servizi: serve se il servizio compare sul sito.»), «Icona sul sito» («Scegli
+un'icona» and 20 names: «Freccia verso terra», «Calendario con orologio», …), «Suggerimento nel
+preventivo (facoltativo)» («La riga piccola sotto il nome, per esempio «Giorno e fascia oraria
+concordati».»), «Aggiungi il servizio», «Salva le modifiche», «Annulla»; errors «Scrivi il nome del
+servizio.», «Il nome può avere al massimo 120 caratteri.», «C'è già un servizio con questo
+nome.», «Scegli almeno un posto in cui compare.», «Scrivi la descrizione che compare sul sito.»,
+«La descrizione può avere al massimo 300 caratteri.», «Scegli l'icona che compare sul sito.»,
+«Scegli un'icona dell'elenco.», «Il suggerimento può avere al massimo 120 caratteri.»; flashes
+«Servizio «…» aggiunto in fondo all'elenco.», «Servizio «…» aggiornato.», ««…» spostato: l'ordine
+vale ovunque compare.», ««…» è di nuovo attivo.», ««…» disattivato: non compare più, gli ordini
+che lo hanno lo conservano.», ««…» eliminato.», ««…» è in ordini o preventivi già registrati: non
+si può eliminare, puoi disattivarlo.». The public cards and extras keep the texts of the ported
+pages.

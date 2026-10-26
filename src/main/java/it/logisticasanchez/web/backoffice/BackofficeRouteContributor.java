@@ -73,7 +73,9 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.PRIVACY,
                         BackofficeRoutes.AUDIT,
                         BackofficeRoutes.NOTICES,
-                        BackofficeRoutes.CLOSURES)
+                        BackofficeRoutes.CLOSURES,
+                        BackofficeRoutes.ACCESSORY_SERVICES,
+                        BackofficeRoutes.ACCESSORY_SERVICE)
                 .admin(
                         HttpMethod.POST,
                         BackofficeRoutes.SETTINGS_FLAG,
@@ -86,6 +88,11 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.NOTICE_DELETE,
                         BackofficeRoutes.CLOSURES,
                         BackofficeRoutes.CLOSURE_REMOVE,
+                        BackofficeRoutes.ACCESSORY_SERVICES,
+                        BackofficeRoutes.ACCESSORY_SERVICE,
+                        BackofficeRoutes.ACCESSORY_SERVICE_MOVE,
+                        BackofficeRoutes.ACCESSORY_SERVICE_STATE,
+                        BackofficeRoutes.ACCESSORY_SERVICE_DELETE,
                         BackofficeRoutes.PRIVACY_LOOKUP,
                         BackofficeRoutes.PRIVACY_EXPORT,
                         BackofficeRoutes.PRIVACY_ANONYMISE);

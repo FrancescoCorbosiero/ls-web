@@ -73,6 +73,13 @@ public final class BackofficeRoutes {
     public static final String CLOSURES = SETTINGS + "chiusure/";
 
     public static final String CLOSURE_REMOVE = CLOSURES + "{giorno}/rimuovi";
+    /** ENH-14 (admin.enumerations, ADR 0043): the accessory services of the order, /servizi/ and the quote wizard. */
+    public static final String ACCESSORY_SERVICES = SETTINGS + "servizi-accessori/";
+
+    public static final String ACCESSORY_SERVICE = ACCESSORY_SERVICES + "{id}/";
+    public static final String ACCESSORY_SERVICE_MOVE = ACCESSORY_SERVICE + "sposta";
+    public static final String ACCESSORY_SERVICE_STATE = ACCESSORY_SERVICE + "stato";
+    public static final String ACCESSORY_SERVICE_DELETE = ACCESSORY_SERVICE + "elimina";
 
     public static final String PRIVACY = SETTINGS + "privacy/";
     public static final String PRIVACY_LOOKUP = PRIVACY + "cerca";

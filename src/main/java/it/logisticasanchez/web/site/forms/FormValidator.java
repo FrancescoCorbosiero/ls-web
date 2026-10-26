@@ -1,6 +1,9 @@
 package it.logisticasanchez.web.site.forms;
 
 import it.logisticasanchez.web.platform.config.SiteProperties;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
+import it.logisticasanchez.web.tracking.TrackingCatalog;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -12,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,7 +24,9 @@ import org.springframework.stereotype.Component;
  * names, allowed values, labels, check order and error codes ({@code invalid:<field>}). One
  * deliberate change: a value longer than its maximum, or a CAP that is not exactly five digits,
  * is rejected instead of being cut to size (chapter 06 §5.5 "Fix"). PD-04: a decimal comma in
- * the quantity stays accepted unless {@code ls.site.form.quantity-integer-only} is set.
+ * the quantity stays accepted unless {@code ls.site.form.quantity-integer-only} is set. ENH-14:
+ * with {@code admin.enumerations} on, the extras allowed are those the wizard draws from the
+ * enumeration (their labels are the field values, ADR 0043).
  */
 @Component
 public class FormValidator {
@@ -52,9 +58,19 @@ public class FormValidator {
     static final DateTimeFormatter ITALIAN_LONG_DATE = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN);
 
     private final boolean quantityIntegerOnly;
+    private final FeatureFlags flags;
+    private final TrackingCatalog catalog;
 
+    /** Without the enumeration: the extras are always those of the ported wizard. */
     public FormValidator(SiteProperties site) {
+        this(site, null, null);
+    }
+
+    @Autowired
+    public FormValidator(SiteProperties site, FeatureFlags flags, TrackingCatalog catalog) {
         this.quantityIntegerOnly = site.form().quantityIntegerOnly();
+        this.flags = flags;
+        this.catalog = catalog;
     }
 
     /** The {@code form-name} of the request, if it names a known form. */
@@ -65,6 +81,16 @@ public class FormValidator {
             }
         }
         return Optional.empty();
+    }
+
+    /** The extras of the wizard: those of the ported page, or with ENH-14 on the quote extras of the enumeration. */
+    List<String> allowedExtras() {
+        if (flags == null || !flags.isEnabled(FlagKey.ADMIN_ENUMERATIONS)) {
+            return EXTRAS;
+        }
+        return catalog.quoteExtras().stream()
+                .map(TrackingCatalog.QuoteExtra::label)
+                .toList();
     }
 
     /** Validates the fields of {@code form}; throws {@link InvalidFormException} on the first failing field. */
@@ -103,9 +129,10 @@ public class FormValidator {
         BigDecimal altezza = number(get.value("altezza", 6), 10, 300, "altezza", true);
         check(c.telefono != null, "telefono");
         check(CONTACT_LABELS.containsKey(preferito), "contatto_preferito");
+        List<String> allowed = allowedExtras();
         List<String> extras = new ArrayList<>();
         for (String extra : get.values("servizi_extra[]")) {
-            if (EXTRAS.contains(extra) && !extras.contains(extra)) {
+            if (allowed.contains(extra) && !extras.contains(extra)) {
                 extras.add(extra);
             }
         }

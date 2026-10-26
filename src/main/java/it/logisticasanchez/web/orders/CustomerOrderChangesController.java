@@ -183,7 +183,7 @@ public class CustomerOrderChangesController {
         model.addAttribute("order", order);
         model.addAttribute("form", form);
         model.addAttribute("version", version == null ? order.version() : version);
-        model.addAttribute("services", catalog.activeServices());
+        model.addAttribute("services", catalog.activeServices(form.value("accessoryServiceId")));
         model.addAttribute("kinds", LineKind.values());
         model.addAttribute("mode", "edit");
         return "orders/order-form";

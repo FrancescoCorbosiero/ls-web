@@ -116,6 +116,14 @@ POST	/gestione/impostazioni/avvisi/{id}/elimina	403	403	403	403
 GET	/gestione/impostazioni/chiusure/	302	403	403	404
 POST	/gestione/impostazioni/chiusure/	403	403	403	403
 POST	/gestione/impostazioni/chiusure/{giorno}/rimuovi	403	403	403	403
+# ENH-14 the accessory services (ADR 0043): ADMIN only, 404 while admin.enumerations is off, as in this run.
+GET	/gestione/impostazioni/servizi-accessori/	302	403	403	404
+POST	/gestione/impostazioni/servizi-accessori/	403	403	403	403
+GET	/gestione/impostazioni/servizi-accessori/{id}/	302	403	403	404
+POST	/gestione/impostazioni/servizi-accessori/{id}/	403	403	403	403
+POST	/gestione/impostazioni/servizi-accessori/{id}/sposta	403	403	403	403
+POST	/gestione/impostazioni/servizi-accessori/{id}/stato	403	403	403	403
+POST	/gestione/impostazioni/servizi-accessori/{id}/elimina	403	403	403	403
 # ENH-09 an ADMIN resets a user's two-factor secret (ADR 0039); POST only, CSRF first.
 POST	/gestione/impostazioni/utenti/{id}/doppia-verifica	403	403	403	403
 GET	/gestione/impostazioni/privacy/	302	403	403	200
