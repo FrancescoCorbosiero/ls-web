@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { randomUUID } from 'node:crypto';
 import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
@@ -23,7 +24,7 @@ const customer = {
   city: 'Seregno',
   postalCode: '20831',
   phone: '0362 123456',
-  password: `E2e-pallet-${stamp}`,
+  password: randomUUID(), // synthetic, made at run time (ADR 0032)
 };
 const order = {
   transportDocument: `DDT-E2E-${stamp}`,

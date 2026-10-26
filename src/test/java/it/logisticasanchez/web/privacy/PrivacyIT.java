@@ -17,6 +17,7 @@ import it.logisticasanchez.web.orders.OrderView;
 import it.logisticasanchez.web.platform.audit.AuditActorType;
 import it.logisticasanchez.web.platform.audit.AuditEntry;
 import it.logisticasanchez.web.platform.audit.AuditService;
+import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.reports.ReportService;
 import it.logisticasanchez.web.site.forms.LeadRetentionJob;
 import it.logisticasanchez.web.support.AbstractPostgresIT;
@@ -27,6 +28,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -101,8 +103,8 @@ class PrivacyIT extends AbstractPostgresIT {
                 admin.getId(),
                 new ReportService.Request(
                         ids.customerId(),
-                        LocalDate.now().toString(),
-                        LocalDate.now().toString(),
+                        LocalDate.now(ItalianFormats.ROME).toString(),
+                        LocalDate.now(ItalianFormats.ROME).toString(),
                         false,
                         true,
                         ""));
@@ -213,8 +215,10 @@ class PrivacyIT extends AbstractPostgresIT {
     void retentionJobsAnonymiseExpiredLeadsAndPurgeSentBodies() {
         String fresh = CustomerTestData.uniqueEmail("lead-fresco");
         String old = CustomerTestData.uniqueEmail("lead-vecchio");
-        long freshId = insertLead(fresh, LocalDate.now().plusMonths(1));
-        long oldId = insertLead(old, LocalDate.now().minusDays(1));
+        // retain_until is a UTC day, as LeadService computes it: not the JVM's day (CI runs in Europe/Rome)
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        long freshId = insertLead(fresh, today.plusMonths(1));
+        long oldId = insertLead(old, today.minusDays(1));
         int affected = leadRetention.run(Instant.now());
         assertThat(affected).isGreaterThanOrEqualTo(1);
         assertThat(jdbc.queryForMap(

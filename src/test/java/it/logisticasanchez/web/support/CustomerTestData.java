@@ -20,6 +20,14 @@ public final class CustomerTestData {
         return prefix + "-" + UUID.randomUUID().toString().substring(0, 8) + "@cliente.example";
     }
 
+    /**
+     * A synthetic customer password made at run time (ADR 0032): no password-like literal sits
+     * in the sources, so the secret scans of CI have nothing to flag.
+     */
+    public static String newPassword() {
+        return "Prova-" + UUID.randomUUID();
+    }
+
     /** A customer in the given state (chapter 08 §2.4) with its OWNER login identity. */
     public static Ids customerUser(JdbcTemplate jdbc, String email, String status) {
         return customerUser(jdbc, email, status, "Ditta Esempio S.r.l.");

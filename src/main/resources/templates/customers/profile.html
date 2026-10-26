@@ -46,26 +46,26 @@
       <div class="form-actions"><button type="submit" class="btn" th:text="#{customers.profile.emailSubmit}">Invia il link di conferma</button></div>
     </form>
 
-    <h2 id="password" th:text="#{customers.password.heading}">Password</h2>
-    <p class="callout callout-info" role="status" th:if="${passwordSaved}" th:text="#{customers.password.saved}">Password salvata: da ora entri con e-mail e password.</p>
+    <h2 id="password" th:text="#{customers.signinForm.heading}">Password</h2>
+    <p class="callout callout-info" role="status" th:if="${passwordSaved}" th:text="#{customers.signinForm.saved}">Password salvata: da ora entri con e-mail e password.</p>
     <p class="callout callout-error" role="alert" th:if="${passwordErrorKey != null}" th:text="${#messages.msg(passwordErrorKey, passwordMinLength)}">Errore</p>
-    <p class="muted" th:text="${hasPassword} ? #{customers.password.leadChange} : #{customers.password.leadSet}">Scegli una password per entrare con e-mail e password, senza aspettare il link.</p>
+    <p class="muted" th:text="${hasPassword} ? #{customers.signinForm.leadChange} : #{customers.signinForm.leadSet}">Scegli una password per entrare con e-mail e password, senza aspettare il link.</p>
     <form method="post" th:action="@{/area-clienti/profilo/password}" class="fields">
       <input type="text" name="username" autocomplete="username" th:value="${email}" hidden>
       <div class="field" th:if="${needsCurrentPassword}">
-        <label class="label" for="currentPassword" th:text="#{customers.password.current}">Password attuale</label>
+        <label class="label" for="currentPassword" th:text="#{customers.signinForm.current}">Password attuale</label>
         <input class="input" id="currentPassword" name="currentPassword" type="password" autocomplete="current-password" maxlength="200" required>
       </div>
       <div class="field">
-        <label class="label" for="newPassword" th:text="#{customers.password.new}">Nuova password</label>
+        <label class="label" for="newPassword" th:text="#{customers.signinForm.new}">Nuova password</label>
         <input class="input" id="newPassword" name="newPassword" type="password" autocomplete="new-password" maxlength="200" required aria-describedby="newPassword-hint">
-        <p class="field-hint" id="newPassword-hint" th:text="#{customers.password.hint(${passwordMinLength})}">Almeno 8 caratteri, diversa dalle password più comuni.</p>
+        <p class="field-hint" id="newPassword-hint" th:text="#{customers.signinForm.hint(${passwordMinLength})}">Almeno 8 caratteri, diversa dalle password più comuni.</p>
       </div>
       <div class="field">
-        <label class="label" for="confirmPassword" th:text="#{customers.password.confirm}">Ripeti la password</label>
+        <label class="label" for="confirmPassword" th:text="#{customers.signinForm.confirm}">Ripeti la password</label>
         <input class="input" id="confirmPassword" name="confirmPassword" type="password" autocomplete="new-password" maxlength="200" required>
       </div>
-      <div class="form-actions"><button type="submit" class="btn" th:text="#{customers.password.submit}">Salva la password</button></div>
+      <div class="form-actions"><button type="submit" class="btn" th:text="#{customers.signinForm.submit}">Salva la password</button></div>
     </form>
   </div>
 </main>

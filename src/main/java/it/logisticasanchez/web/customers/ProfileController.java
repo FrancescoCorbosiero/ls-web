@@ -33,10 +33,10 @@ public class ProfileController {
 
     /** The error codes of the password form, in the query string, and their messages. */
     static final Map<String, String> PASSWORD_ERRORS = Map.of(
-            "attuale", "customers.password.wrongCurrent",
-            "diverse", "customers.password.mismatch",
-            "corta", "customers.password.tooShort",
-            "comune", "customers.password.common");
+            "attuale", "customers.signinForm.wrongCurrent",
+            "diverse", "customers.signinForm.mismatch",
+            "corta", "customers.signinForm.tooShort",
+            "comune", "customers.signinForm.common");
 
     private final CustomerService customers;
     private final CustomerPasswordService passwords;

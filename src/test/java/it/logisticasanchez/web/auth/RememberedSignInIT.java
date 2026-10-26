@@ -14,6 +14,7 @@ import it.logisticasanchez.web.notifications.OutboundEmail;
 import it.logisticasanchez.web.notifications.OutboxWorker;
 import it.logisticasanchez.web.platform.ratelimit.RateLimiter;
 import it.logisticasanchez.web.support.AbstractPostgresIT;
+import it.logisticasanchez.web.support.CustomerTestData;
 import it.logisticasanchez.web.support.MutableClock;
 import jakarta.servlet.http.Cookie;
 import java.time.Duration;
@@ -64,6 +65,7 @@ class RememberedSignInIT extends AbstractPostgresIT {
             Pattern.compile("https://logisticasanchez\\.com/area-clienti/registrazione/\\?t=([A-Za-z0-9_-]+)");
     private static final String COOKIE = RememberedSignInService.PLAIN_COOKIE;
     private static final long SIXTY_DAYS = Duration.ofDays(60).toSeconds();
+    private static final String PASSWORD = CustomerTestData.newPassword();
 
     @Autowired
     private MockMvc mvc;
@@ -450,8 +452,8 @@ class RememberedSignInIT extends AbstractPostgresIT {
                 .param("vatNumber", "")
                 .param("taxCode", "")
                 .param("website", "")
-                .param("password", "Pallet-di-prova-2026")
-                .param("passwordConfirm", "Pallet-di-prova-2026");
+                .param("password", PASSWORD)
+                .param("passwordConfirm", PASSWORD);
         if (remember) {
             builder.param("ricordami", "1");
         }
