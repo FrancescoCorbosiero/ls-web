@@ -26,7 +26,7 @@
     <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
     <palantir-java-format.version>2.102.0</palantir-java-format.version>
     <!-- AWS SDK v2 BOM (ADR 0001): SESv2 only in M1, used by the notifications outbox worker. -->
-    <awssdk.version>2.57.2</awssdk.version>
+    <awssdk.version>2.57.3</awssdk.version>
     <openpdf.version>3.0.5</openpdf.version>
   </properties>
 
