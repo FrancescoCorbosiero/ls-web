@@ -32,6 +32,7 @@ public final class ItalianFormats {
 
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy", Locale.ITALIAN);
     private static final DateTimeFormatter DATE_TIME = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.ITALIAN);
+    private static final DateTimeFormatter LONG_DATE = DateTimeFormatter.ofPattern("EEEE d MMMM yyyy", Locale.ITALIAN);
 
     private ItalianFormats() {}
 
@@ -43,6 +44,11 @@ public final class ItalianFormats {
     /** {@code 24/10/2026 15:30}, in Europe/Rome; «-» for null. */
     public static String formatDateTime(Instant instant) {
         return instant == null ? "-" : DATE_TIME.format(instant.atZone(ROME));
+    }
+
+    /** {@code giovedì 29 ottobre 2026}: a day written out (the delivery day of ENH-05); «-» for null. */
+    public static String formatLongDate(java.time.LocalDate day) {
+        return day == null ? "-" : LONG_DATE.format(day);
     }
 
     public static String trim(String value) {

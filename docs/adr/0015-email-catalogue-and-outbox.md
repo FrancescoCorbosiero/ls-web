@@ -83,6 +83,12 @@ from the record never from a request field (SEC-05, SEC-14), URL-encoded links o
 adds the component), a marked address shown to staff; L-E11 not ported. The module appends
 these sections and turns the status to Accepted.
 
+### EML-10 (2026-10-26, ENH-05)
+
+The tracking update «Aggiornamento spedizione N. {codice}: {stato}» of ADR 0034, behind
+`tracking.notifyCustomer`: outbox kind `EML-10` (V017), queued by `OrderService.setTrackingState`
+in the event's transaction for TRANSITO, TERMINAL_DEST and ASSEGNATO only.
+
 ## Consequences
 
 * A controller that needs to send e-mail calls a domain service, which enqueues; the test of

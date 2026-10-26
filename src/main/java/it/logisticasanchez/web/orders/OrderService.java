@@ -42,8 +42,9 @@ import org.springframework.transaction.annotation.Transactional;
  * EML-04 + EML-06), the customer's list and detail (CUS-05: own orders only), and the back-office
  * rules of chapter 08 §2.4 — approve with a unique code and an amount > 0 (ADM-04, Q-06, 12c
  * §4.2; PRESA event, EML-05), decline (EML-05), tracking state changes as events with EML-09
- * only when the state becomes CONSEGNATO (ADM-06), the internal note (ADM-07). Every change
- * writes the audit log in the same transaction.
+ * only when the state becomes CONSEGNATO (ADM-06) and, with ENH-05 on, EML-10 for the states in
+ * between ({@link TrackingUpdateNotice}), the internal note (ADM-07). Every change writes the
+ * audit log in the same transaction.
  */
 @Service
 public class OrderService {
@@ -63,6 +64,7 @@ public class OrderService {
     private final DomainEvents events;
     private final OrdersProperties rules;
     private final Clock clock;
+    private final TrackingUpdateNotice trackingUpdates;
 
     public OrderService(
             ShipmentOrderRepository orders,
@@ -75,7 +77,8 @@ public class OrderService {
             AuditService audit,
             DomainEvents events,
             OrdersProperties rules,
-            Clock clock) {
+            Clock clock,
+            TrackingUpdateNotice trackingUpdates) {
         this.orders = orders;
         this.trackingEvents = trackingEvents;
         this.notes = notes;
@@ -87,6 +90,7 @@ public class OrderService {
         this.events = events;
         this.rules = rules;
         this.clock = clock;
+        this.trackingUpdates = trackingUpdates;
     }
 
     /**
@@ -496,6 +500,8 @@ public class OrderService {
                     new TrackingEvent(order.getId(), state.id(), now, TrackingEvent.SOURCE_STAFF, staffUserId));
             if (state.id() == TrackingState.CONSEGNATO) {
                 notifications.enqueue(mails.delivered(view(order)));
+            } else {
+                trackingUpdates.mailFor(view(order), state).ifPresent(notifications::enqueue); // ENH-05
             }
             audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "order.tracking")
                     .entity("shipment_order", order.getId(), order.getCode())
@@ -510,7 +516,13 @@ public class OrderService {
     public List<OrderView.TrackingChange> trackingHistory(long orderId) {
         return trackingEvents.findByOrderIdOrderByOccurredAtAscIdAsc(orderId).stream()
                 .map(e -> new OrderView.TrackingChange(
-                        e.getStateId(), label(e.getStateId()), e.getOccurredAt(), e.getSource()))
+                        e.getStateId(),
+                        label(e.getStateId()),
+                        catalog.state(e.getStateId())
+                                .map(TrackingCatalog.StateView::publicTitle)
+                                .orElse("-"),
+                        e.getOccurredAt(),
+                        e.getSource()))
                 .toList();
     }
 

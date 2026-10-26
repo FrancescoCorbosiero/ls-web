@@ -129,6 +129,6 @@ public record OrderView(
             BigDecimal lineWeightKg,
             BigDecimal lineVolumeM3) {}
 
-    /** One tracking change (ADM-06 history). */
-    public record TrackingChange(short stateId, String label, Instant occurredAt, String source) {}
+    /** One change of tracking state: the state, its label, its public title (ENH-05), when, by what (APPROVAL, STAFF, BULK). */
+    public record TrackingChange(short stateId, String label, String title, Instant occurredAt, String source) {}
 }

@@ -7,8 +7,11 @@ import it.logisticasanchez.web.notifications.MailLayout.Content;
 import it.logisticasanchez.web.notifications.MailLayout.Row;
 import it.logisticasanchez.web.platform.config.BusinessProperties;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
+import it.logisticasanchez.web.tracking.TrackingCatalog;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import org.springframework.stereotype.Component;
 
 /**
@@ -16,7 +19,8 @@ import org.springframework.stereotype.Component;
  * reader notes; brand «Logistica Sanchez», Q-37): EML-04 order received (new, Q-07), EML-05
  * approved (code, detail, amount, tracking link) / declined (quoting the code), EML-06 new order
  * to the office and, new with CUS-07, the office notices of a pending order changed or withdrawn
- * by the customer, EML-09 delivered. Labels, Italian numbers, no staff notes (12c §1.6).
+ * by the customer, EML-09 delivered; EML-10, new with ENH-05, the tracking update (ADR 0034).
+ * Labels, Italian numbers, no staff notes (12c §1.6).
  */
 @Component
 public class OrderMails {
@@ -25,6 +29,13 @@ public class OrderMails {
     static final String KIND_ORDER_OUTCOME = "EML-05";
     static final String KIND_OFFICE_NOTIFICATION = "EML-06";
     static final String KIND_DELIVERED = "EML-09";
+    static final String KIND_TRACKING_UPDATE = "EML-10";
+
+    /** EML-10: what each notified state means for the customer, as the legend of /tracking/ says it. */
+    private static final Map<Integer, String> TRACKING_UPDATE_TEXT = Map.of(
+            2, "La spedizione è in viaggio verso il terminal della zona di destinazione.",
+            3, "La spedizione è arrivata al terminal più vicino al destinatario ed è pronta per la consegna.",
+            4, "La spedizione è stata affidata al mezzo che effettua la consegna.");
 
     private final MailLayout layout;
     private final BusinessProperties business;
@@ -147,6 +158,34 @@ public class OrderMails {
                 .button("www.logisticasanchez.com", trackingUrl(order));
         return layout.customer(
                 KIND_DELIVERED, order.sender().email(), "Consegna effettuata per ordine N. " + order.code(), content);
+    }
+
+    /**
+     * EML-10 (ENH-05, new; ADR 0034): the shipment moved on — in transit, at the destination
+     * terminal, out for delivery — with the indicative delivery day when the CAP has one.
+     */
+    EmailMessage trackingUpdate(OrderView order, TrackingCatalog.StateView state, LocalDate deliveryDay) {
+        List<Row> rows = new ArrayList<>();
+        rows.add(new Row("Codice", order.code()));
+        rows.add(new Row("Stato", state.publicTitle()));
+        rows.add(new Row("Destinatario", order.recipient().name()));
+        rows.add(new Row(
+                "Città", order.recipient().city() + " (" + order.recipient().province() + ")"));
+        rows.add(new Row("Codice documento trasporto", order.transportDocumentCode()));
+        if (deliveryDay != null) {
+            rows.add(new Row("Consegna prevista (indicativa)", ItalianFormats.formatLongDate(deliveryDay)));
+        }
+        Content content = Content.titled(
+                        "Aggiornamento sulla spedizione N. " + order.code() + ": " + state.publicTitle())
+                .paragraph(TRACKING_UPDATE_TEXT.getOrDefault((int) state.id(), state.publicTitle() + "."))
+                .table("Spedizione", rows)
+                .paragraph("Ti scriviamo a ogni passaggio della spedizione; alla consegna ricevi la conferma.")
+                .button("Traccia la spedizione", trackingUrl(order));
+        return layout.customer(
+                KIND_TRACKING_UPDATE,
+                order.sender().email(),
+                "Aggiornamento spedizione N. " + order.code() + ": " + state.publicTitle(),
+                content);
     }
 
     /** The legacy blocks «Dettaglio Spedizione», «Dettaglio Ordine», «Pallets» and «I tuoi dati» (12c §1; labels, not enum names). */

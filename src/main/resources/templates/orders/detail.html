@@ -4,7 +4,8 @@
   recomputed totals, shipment data, recipient and sender, the dates of the order's life; while it
   is pending, «Modifica» and «Annulla l'ordine» (CUS-07), or the office's contacts when changes
   stay with the office (Q-12 seam); with orders.repeat on, «Ordina di nuovo» (ENH-07: the order
-  form filled from this order).
+  form filled from this order); with tracking.history on, the tracking states with their dates
+  and the delivery day (ENH-05).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -64,6 +65,16 @@
         <li th:each="s : ${steps}" th:classappend="${s.id() <= order.trackingStateId} ? 'is-done'" th:attr="aria-current=${s.id() == order.trackingStateId} ? 'step' : null"><span th:text="${s.stepLabel()}">Presa in carico</span></li>
       </ol>
       <p class="muted small mt-s mb-0" th:if="${order.trackingUpdatedAt != null}" th:text="#{orders.detail.trackingUpdatedAt(${fmt.dateTime(order.trackingUpdatedAt)})}">Aggiornato il</p>
+      <div class="tracking-history" th:if="${trackingTimeline != null}" data-tracking-timeline>
+        <p class="delivery-day" th:if="${deliveryDay != null}" data-delivery-day>
+          <span class="label" th:text="${delivered} ? #{orders.tracking.deliveredOn} : #{orders.tracking.eta}">Consegna prevista</span>
+          <strong th:text="${fmt.longDate(deliveryDay)}">giovedì 29 ottobre 2026</strong>
+          <span class="muted small" th:if="${!delivered}" th:text="#{orders.tracking.etaHint}">Indicativa: dal CAP del destinatario, in giorni lavorativi dal ritiro.</span>
+        </p>
+        <ol class="timeline">
+          <li th:each="e : ${trackingTimeline}"><span class="when" th:text="${fmt.dateTime(e.occurredAt)}">data</span><span th:text="${e.title}">In transito</span></li>
+        </ol>
+      </div>
     </section>
 
     <div class="app-grid main-aside">

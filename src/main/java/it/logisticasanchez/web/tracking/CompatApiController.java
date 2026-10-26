@@ -2,6 +2,8 @@ package it.logisticasanchez.web.tracking;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import it.logisticasanchez.web.platform.config.CompatProperties;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.ratelimit.RateLimitKeys;
 import it.logisticasanchez.web.platform.ratelimit.RateLimiter;
 import it.logisticasanchez.web.platform.security.ClientIpResolver;
@@ -24,7 +26,10 @@ import org.springframework.web.bind.annotation.RestController;
  * «Non gestito» for unknown and temporary codes, 400 for an empty code; API-01, TRK-01…04) and
  * the two enumerations EP-19/EP-20 (API-02), with exactly the legacy JSON shape. Lookups are
  * rate-limited per client IP (TRK-04); unknown JSON fields are ignored unless
- * {@code ls.compat.strict-json} is set (PD-09). CORS is handled by {@link CompatCorsFilter}.
+ * {@code ls.compat.strict-json} is set (PD-09). CORS is handled by {@link CompatCorsFilter}. With
+ * {@code tracking.history} on (ENH-05, ADR 0034) the answer for an approved code also carries
+ * {@code eta} (the delivery day) and {@code events} ({@code time}, {@code status},
+ * {@code location}), the fields the TRK-03 allow-list foresees and the site's widget renders.
  */
 @RestController
 public class CompatApiController {
@@ -39,6 +44,7 @@ public class CompatApiController {
     private final RateLimiter rateLimiter;
     private final ClientIpResolver clientIp;
     private final boolean strictJson;
+    private final FeatureFlags flags;
 
     public CompatApiController(
             TrackingLookupService lookup,
@@ -46,13 +52,15 @@ public class CompatApiController {
             AccessoryServiceRepository services,
             RateLimiter rateLimiter,
             ClientIpResolver clientIp,
-            CompatProperties compat) {
+            CompatProperties compat,
+            FeatureFlags flags) {
         this.lookup = lookup;
         this.states = states;
         this.services = services;
         this.rateLimiter = rateLimiter;
         this.clientIp = clientIp;
         this.strictJson = compat.strictJson(); // PD-09
+        this.flags = flags;
     }
 
     @PostMapping(value = TRACE_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -68,10 +76,24 @@ public class CompatApiController {
             throw new ClientErrorException(ErrorCode.BAD_REQUEST);
         }
         rateLimiter.require(RateLimitKeys.TRACKING_LOOKUP, clientIp.resolve(request));
+        if (flags.isEnabled(FlagKey.TRACKING_HISTORY)) { // ENH-05
+            return lookup.history(code)
+                    .map(h -> new TraceResponse(
+                            h.status(),
+                            iso(h.updatedAt()),
+                            h.deliveryDay() == null ? null : h.deliveryDay().toString(),
+                            h.events().stream()
+                                    .map(e -> new TraceEvent(iso(e.time()), e.status(), e.location()))
+                                    .toList()))
+                    .orElseGet(() -> new TraceResponse(TrackingLookupService.NOT_HANDLED, null));
+        }
         return lookup.lookup(code)
-                .map(t -> new TraceResponse(
-                        t.status(), t.updatedAt() == null ? null : DateTimeFormatter.ISO_INSTANT.format(t.updatedAt())))
+                .map(t -> new TraceResponse(t.status(), iso(t.updatedAt())))
                 .orElseGet(() -> new TraceResponse(TrackingLookupService.NOT_HANDLED, null));
+    }
+
+    private static String iso(java.time.Instant instant) {
+        return instant == null ? null : DateTimeFormatter.ISO_INSTANT.format(instant);
     }
 
     @GetMapping(value = TRACKING_STATES_PATH, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -90,10 +112,20 @@ public class CompatApiController {
 
     /**
      * The EP-13 answer: {@code status} is always a non-empty label; {@code updatedAt} (ISO-8601,
-     * UTC) is the only extra field, present when the state has changed at least once (TRK-03).
+     * UTC) is the only extra field in M1, present when the state has changed at least once
+     * (TRK-03). ENH-05 adds {@code eta} (an ISO date) and {@code events}, newest first.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public record TraceResponse(String status, String updatedAt) {}
+    public record TraceResponse(String status, String updatedAt, String eta, List<TraceEvent> events) {
+
+        public TraceResponse(String status, String updatedAt) {
+            this(status, updatedAt, null, null);
+        }
+    }
+
+    /** ENH-05: one change of state — when (ISO-8601, UTC), the state label, the location when there is one. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public record TraceEvent(String time, String status, String location) {}
 
     /** The EP-19/EP-20 item: {@code {id, name, label}} with a numeric id (chapter 02 §9). */
     public record EnumItem(int id, String name, String label) {}
