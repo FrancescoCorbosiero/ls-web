@@ -6,7 +6,7 @@ import { PageProblems, expectNoHorizontalScroll, offline } from '../support/brow
 import { base32Decode, currentStep, totpCode } from '../support/totp';
 
 /**
- * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036, 0037, 0038, 0039): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033…0040): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -509,6 +509,22 @@ test('[ENH-09] a staff login sets the app up once, then asks only its code', asy
   await context.close();
 });
 
+test('[ENH-13] the admin reads who turned the features on in the audit log', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="admin.audit"]')).toContainText('Disponibile');
+  await setFlag('admin.audit', true);
+  await staffPage.getByRole('link', { name: 'Registro delle attività' }).click();
+  await expect(staffPage.getByRole('heading', { level: 1 })).toHaveText('Registro delle attività');
+  await staffPage.locator('#azione').selectOption('flag.toggle');
+  await staffPage.getByRole('button', { name: 'Filtra' }).click();
+  await expect(staffPage).toHaveURL(/azione=flag\.toggle/);
+  const rows = staffPage.locator('tr[data-action="flag.toggle"]');
+  await expect(rows.first()).toContainText(staff.username);
+  await expect(rows.first()).toContainText('feature_flag');
+  expect(await rows.count()).toBeGreaterThanOrEqual(8);
+  await expectAccessible(staffPage);
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
@@ -522,6 +538,7 @@ test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
     [staffPage, '/gestione/ordini/'],
     [staffPage, '/gestione/clienti/'],
     [staffPage, '/gestione/richieste/'],
+    [staffPage, '/gestione/impostazioni/registro/'],
   ];
   for (const [page, path] of screens) {
     await page.emulateMedia({ reducedMotion: 'reduce' });

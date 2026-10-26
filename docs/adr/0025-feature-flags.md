@@ -133,6 +133,9 @@ are added by stage 3 with the publisher and a test that each named event is publ
   code of an authenticator app after the password, set up on the same page (QR code, key); ADMIN
   «Azzera» and `reset-staff-totp` for a lost phone. Flag-on tests `StaffTwoFactorIT`, «flag off =
   M1» `StaffTwoFactorOffIT`, `TotpTest`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-13, `admin.audit` built** (ADR 0040): «Registro delle attività» under
+  «Impostazioni», filters by who, action, object and days, never the personal values. Flag-on
+  tests `AuditViewerIT`, «flag off = M1» `AuditViewerOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 

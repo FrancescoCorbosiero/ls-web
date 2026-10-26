@@ -2,7 +2,7 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
 
-/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037; the customers' data changes of ADR 0038). */
+/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037; the customers' data changes of ADR 0038; the audit log viewer of ADR 0040). */
 public final class BackofficeRoutes {
 
     public static final String HOME = AuthRoutes.BACKOFFICE;
@@ -61,6 +61,9 @@ public final class BackofficeRoutes {
     public static final String STAFF_USERS = SETTINGS + "utenti/";
     /** ENH-09 (security.adminTotp, ADR 0039): an ADMIN removes a user's two-factor secret. */
     public static final String STAFF_USER_TWO_FACTOR_RESET = STAFF_USERS + "{id}/doppia-verifica";
+
+    /** ENH-13 (admin.audit, ADR 0040): the audit log viewer. */
+    public static final String AUDIT = SETTINGS + "registro/";
 
     public static final String PRIVACY = SETTINGS + "privacy/";
     public static final String PRIVACY_LOOKUP = PRIVACY + "cerca";

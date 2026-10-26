@@ -35,9 +35,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * form per flag, each with what it does and whether it is built: built flags first, and only
  * those can be turned on), the report recipients allow-list, the staff accounts (creation sends
  * the set-password link, EML-S1; with {@code security.adminTotp} on, whether each has two-factor
- * set up and «Azzera» for a lost phone, ENH-09) and the privacy tools of NFR-03 (export as JSON,
- * erasure by anonymisation behind a confirmation page). Every action is audited by the service it
- * calls.
+ * set up and «Azzera» for a lost phone, ENH-09), the privacy tools of NFR-03 (export as JSON,
+ * erasure by anonymisation behind a confirmation page) and, with {@code admin.audit} on, the link to
+ * the audit log viewer (ENH-13). Every action is audited by the service it calls.
  */
 @Controller
 public class BackofficeSettingsController {
@@ -248,6 +248,7 @@ public class BackofficeSettingsController {
         model.addAttribute("email", email);
         model.addAttribute("descrizione", label);
         model.addAttribute("error", error);
+        model.addAttribute("auditEnabled", flags.isEnabled(FlagKey.ADMIN_AUDIT)); // ENH-13
         return "backoffice/settings";
     }
 

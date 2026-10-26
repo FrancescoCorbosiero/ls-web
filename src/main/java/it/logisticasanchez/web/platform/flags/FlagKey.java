@@ -25,7 +25,7 @@ public enum FlagKey {
     DELIVERY_UNIFIED_TIMES("delivery.unifiedTimes", "ENH-10", false),
     PRICING_MARGIN_VIEW("pricing.marginView", "ENH-11", false),
     DOCUMENTS("documents", "ENH-12", false),
-    ADMIN_AUDIT("admin.audit", "ENH-13", false),
+    ADMIN_AUDIT("admin.audit", "ENH-13", true),
     ADMIN_ENUMERATIONS("admin.enumerations", "ENH-14", false),
     ORDERS_BULK_TRACKING("orders.bulkTracking", "ENH-15", true),
     CUSTOMERS_PROFILE_EDIT("customers.profileEdit", "ENH-16", true),

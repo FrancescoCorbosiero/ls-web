@@ -19,6 +19,7 @@
     <p class="form-actions">
       <a class="btn btn-light" href="/gestione/impostazioni/utenti/" th:text="#{backoffice.staffUsers.title}">Utenti della gestione</a>
       <a class="btn btn-light" href="/gestione/impostazioni/privacy/" th:text="#{backoffice.privacy.title}">Privacy: esporta o anonimizza</a>
+      <a class="btn btn-light" th:if="${auditEnabled}" href="/gestione/impostazioni/registro/" data-audit-link th:text="#{backoffice.audit.title}">Registro delle attività</a>
     </p>
 
     <h2 th:text="#{backoffice.settings.recipients}">Destinatari autorizzati dei report</h2>
