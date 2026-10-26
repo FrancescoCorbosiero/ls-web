@@ -196,7 +196,7 @@ class CustomerOrderChangesIT extends AbstractPostgresIT {
 
         assertThat(html(base))
                 .contains("data-cancelled")
-                .contains("Hai annullato questo ordine il")
+                .contains("Hai annullato questo ordine oggi alle")
                 .doesNotContain("href=\"" + base + "modifica\"");
         assertThat(html("/area-clienti/ordini/?stato=chiusi")).contains("data-order=\"" + order.tempCode() + "\"");
         // closed for good

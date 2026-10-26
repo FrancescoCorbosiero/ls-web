@@ -2341,3 +2341,25 @@ vale ovunque compare.», ««…» è di nuovo attivo.», ««…» disattivato:
 che lo hanno lo conservano.», ««…» eliminato.», ««…» è in ordini o preventivi già registrati: non
 si può eliminare, puoi disattivarlo.». The public cards and extras keep the texts of the ported
 pages.
+
+## Step S — Times first in the screens (2026-10-26)
+
+Owner request: the office works by the day, so the screens show the time and the day only when
+it is not today. ADR 0044.
+
+### What was built
+
+* `fmt.when` (lists, cells, timelines: `14:32`, `ieri 14:32`, `12/10 14:32`, `12/10/2025 14:32`,
+  the full date on hover) and `fmt.at` (sentences: `oggi alle 14:32`, `il 12/10 alle 14:32`), from
+  the application clock in Europe/Rome; applied to the customer area and the back office.
+  Documents, e-mails, exports, the quote page and schedules keep the full date.
+* Tests: `FormatsTest` (Rome midnight against UTC, summer time, another year).
+
+### New Italian texts for the owner's review
+
+«Inviato {0}», «Registrato {0}», «Modulo «…», arrivata {1}», «Rifiutato {0}. Motivo: …», «Annullato
+dall'ufficio {0}. Motivo: …», «Il cliente ha annullato l'ordine {0}.», «Il cliente ha modificato
+l'ordine {0}: …», «Modificato dal cliente {0}», «Il cliente l'ha chiesta dal suo profilo {0}. …»,
+«Hai annullato questo ordine {0}.», «Il centro logistico ha annullato questo ordine {0}. …», «Hai
+chiesto di cambiare questi dati {0}: …», «Aggiornato {0}»; columns «Inviato», «Registrato»,
+«Richiesta», «Arrivata»; the words «oggi alle», «ieri», «domani», «il … alle».

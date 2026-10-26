@@ -235,7 +235,7 @@ class BackofficeOrderChangesIT extends AbstractPostgresIT {
                         .andReturn()
                         .getResponse()
                         .getContentAsString())
-                .contains("Il centro logistico ha annullato questo ordine il");
+                .contains("Il centro logistico ha annullato questo ordine oggi alle");
         // closed for everyone, ADMIN included
         mvc.perform(get(base + "modifica").session(adminSession)).andExpect(redirectedUrl(base));
         mvc.perform(get(base + "annulla").session(adminSession)).andExpect(redirectedUrl(base));
@@ -324,7 +324,7 @@ class BackofficeOrderChangesIT extends AbstractPostgresIT {
                         .andReturn()
                         .getResponse()
                         .getContentAsString())
-                .contains("Il centro logistico ha annullato questo ordine il")
+                .contains("Il centro logistico ha annullato questo ordine oggi alle")
                 .doesNotContain("230,50");
     }
 

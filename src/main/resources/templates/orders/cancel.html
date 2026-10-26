@@ -21,7 +21,7 @@
       <p class="strong ink" th:text="#{orders.cancel.question}">Vuoi davvero annullare questo ordine?</p>
       <dl class="facts mb-m">
         <div><dt th:text="#{orders.col.code}">Codice</dt><dd th:text="${order.displayCode()}">TEMP-</dd></div>
-        <div><dt th:text="#{orders.col.date}">Data</dt><dd th:text="${fmt.dateTime(order.submittedAt)}">data</dd></div>
+        <div><dt th:text="#{orders.col.date}">Data</dt><dd th:text="${fmt.when(order.submittedAt)}" th:title="${fmt.dateTime(order.submittedAt)}">data</dd></div>
         <div><dt th:text="#{orders.col.recipient}">Destinatario</dt><dd th:text="${order.recipient.name} + ', ' + ${order.recipient.city}">dest</dd></div>
         <div><dt th:text="#{orders.totals}">Totale</dt><dd th:text="${order.weightText()} + ' · ' + ${order.volumeText()}">0 kg</dd></div>
       </dl>

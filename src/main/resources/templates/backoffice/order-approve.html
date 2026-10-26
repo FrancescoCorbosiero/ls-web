@@ -20,7 +20,7 @@
     <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
     <div class="callout callout-warn" role="status" th:if="${order.editedByCustomer()}" data-edited>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
-      <p th:text="#{backoffice.order.editedByCustomer(${fmt.dateTime(order.editedAt)})}">Il cliente ha modificato l'ordine.</p>
+      <p th:text="#{backoffice.order.editedByCustomer(${fmt.at(order.editedAt)})}">Il cliente ha modificato l'ordine.</p>
     </div>
     <div class="app-grid main-aside">
       <section class="panel">

@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 @ControllerAdvice
 public class PlatformModelAttributes {
 
-    private static final Formats FORMATS = new Formats();
-
     private final BusinessProperties business;
     private final Layout layout;
+    private final Formats formats;
 
     public PlatformModelAttributes(BusinessProperties business, Clock clock) {
         this.business = business;
         this.layout = new Layout(clock);
+        this.formats = new Formats(clock);
     }
 
     @ModelAttribute("layout")
@@ -35,7 +35,7 @@ public class PlatformModelAttributes {
 
     @ModelAttribute("fmt")
     public Formats formats() {
-        return FORMATS;
+        return formats;
     }
 
     @ModelAttribute("business")

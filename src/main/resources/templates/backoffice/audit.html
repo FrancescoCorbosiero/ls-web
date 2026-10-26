@@ -83,7 +83,7 @@
         </tr></thead>
         <tbody>
           <tr th:each="e : ${page.content}" th:attr="data-audit=${e.id},data-action=${e.action}">
-            <td th:attr="data-label=#{backoffice.audit.col.when}" th:text="${fmt.dateTime(e.occurredAt)}">01/10/2026 10:00</td>
+            <td th:attr="data-label=#{backoffice.audit.col.when}" th:text="${fmt.when(e.occurredAt)}" th:title="${fmt.dateTime(e.occurredAt)}">01/10/2026 10:00</td>
             <td th:attr="data-label=#{backoffice.audit.col.who}" th:switch="${e.actorType.name()}">
               <span th:case="'STAFF'" th:text="${e.actorId != null and staffNames[e.actorId] != null} ? ${staffNames[e.actorId].username} : #{backoffice.audit.staffUnknown(${#strings.toString(e.actorId)})}">admin</span>
               <span th:case="'CUSTOMER'" th:text="#{backoffice.audit.customer(${#strings.toString(e.actorId)})}">Cliente · accesso 3</span>

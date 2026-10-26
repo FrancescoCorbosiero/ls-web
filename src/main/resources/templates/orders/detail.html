@@ -24,7 +24,7 @@
         <p class="page-meta">
           <span th:replace="~{layout/private :: orderStatus(${order.status})}">In attesa</span>
           <span th:replace="~{layout/private :: trackingPill(${order})}">Presa in carico</span>
-          <span th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span>
+          <span th:text="#{orders.detail.submittedAt(${fmt.at(order.submittedAt)})}">Inviato il</span>
         </p>
       </div>
       <div class="page-actions" th:if="${(selfService and order.editableByCustomer()) or (repeatEnabled and customer.canOrder())}">
@@ -53,7 +53,7 @@
     </div>
     <div class="callout" role="status" th:if="${order.isCancelled()}" data-cancelled>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg>
-      <p th:text="${order.cancelledByCustomer()} ? #{orders.detail.cancelledByYou(${fmt.dateTime(order.cancelledAt)})} : #{orders.detail.cancelledByOffice(${fmt.dateTime(order.cancelledAt)})}">Annullato il</p>
+      <p th:text="${order.cancelledByCustomer()} ? #{orders.detail.cancelledByYou(${fmt.at(order.cancelledAt)})} : #{orders.detail.cancelledByOffice(${fmt.at(order.cancelledAt)})}">Annullato il</p>
     </div>
 
     <section class="panel mb-m" th:if="${order.isApproved()}" aria-labelledby="tracking-title" data-tracking-steps>
@@ -64,7 +64,7 @@
       <ol class="track">
         <li th:each="s : ${steps}" th:classappend="${s.id() <= order.trackingStateId} ? 'is-done'" th:attr="aria-current=${s.id() == order.trackingStateId} ? 'step' : null"><span th:text="${s.stepLabel()}">Presa in carico</span></li>
       </ol>
-      <p class="muted small mt-s mb-0" th:if="${order.trackingUpdatedAt != null}" th:text="#{orders.detail.trackingUpdatedAt(${fmt.dateTime(order.trackingUpdatedAt)})}">Aggiornato il</p>
+      <p class="muted small mt-s mb-0" th:if="${order.trackingUpdatedAt != null}" th:text="#{orders.detail.trackingUpdatedAt(${fmt.at(order.trackingUpdatedAt)})}">Aggiornato il</p>
       <div class="tracking-history" th:if="${trackingTimeline != null}" data-tracking-timeline>
         <p class="delivery-day" th:if="${deliveryDay != null}" data-delivery-day>
           <span class="label" th:text="${delivered} ? #{orders.tracking.deliveredOn} : #{orders.tracking.eta}">Consegna prevista</span>
@@ -72,7 +72,7 @@
           <span class="muted small" th:if="${!delivered}" th:text="#{orders.tracking.etaHint}">Indicativa: dal CAP del destinatario, in giorni lavorativi dal ritiro.</span>
         </p>
         <ol class="timeline">
-          <li th:each="e : ${trackingTimeline}"><span class="when" th:text="${fmt.dateTime(e.occurredAt)}">data</span><span th:text="${e.title}">In transito</span></li>
+          <li th:each="e : ${trackingTimeline}"><span class="when" th:text="${fmt.when(e.occurredAt)}" th:title="${fmt.dateTime(e.occurredAt)}">data</span><span th:text="${e.title}">In transito</span></li>
         </ol>
       </div>
     </section>
@@ -136,11 +136,11 @@
         <section class="panel">
           <h2 th:text="#{orders.detail.history}">Cronologia</h2>
           <ol class="timeline">
-            <li><span class="when" th:text="${fmt.dateTime(order.submittedAt)}">data</span><span th:text="#{orders.history.submitted}">Ordine inviato</span></li>
-            <li th:if="${order.editedAt != null}"><span class="when" th:text="${fmt.dateTime(order.editedAt)}">data</span><span th:text="${order.editedByCustomer()} ? #{orders.history.editedByYou} : #{orders.history.editedByOffice}">Modificato</span></li>
-            <li th:if="${order.approvedAt != null}"><span class="when" th:text="${fmt.dateTime(order.approvedAt)}">data</span><span th:text="#{orders.history.approved(${order.code})}">Confermato</span></li>
-            <li th:if="${order.declinedAt != null}"><span class="when" th:text="${fmt.dateTime(order.declinedAt)}">data</span><span th:text="#{orders.history.declined}">Rifiutato</span></li>
-            <li th:if="${order.cancelledAt != null}"><span class="when" th:text="${fmt.dateTime(order.cancelledAt)}">data</span><span th:text="#{orders.history.cancelled}">Annullato</span></li>
+            <li><span class="when" th:text="${fmt.when(order.submittedAt)}" th:title="${fmt.dateTime(order.submittedAt)}">data</span><span th:text="#{orders.history.submitted}">Ordine inviato</span></li>
+            <li th:if="${order.editedAt != null}"><span class="when" th:text="${fmt.when(order.editedAt)}" th:title="${fmt.dateTime(order.editedAt)}">data</span><span th:text="${order.editedByCustomer()} ? #{orders.history.editedByYou} : #{orders.history.editedByOffice}">Modificato</span></li>
+            <li th:if="${order.approvedAt != null}"><span class="when" th:text="${fmt.when(order.approvedAt)}" th:title="${fmt.dateTime(order.approvedAt)}">data</span><span th:text="#{orders.history.approved(${order.code})}">Confermato</span></li>
+            <li th:if="${order.declinedAt != null}"><span class="when" th:text="${fmt.when(order.declinedAt)}" th:title="${fmt.dateTime(order.declinedAt)}">data</span><span th:text="#{orders.history.declined}">Rifiutato</span></li>
+            <li th:if="${order.cancelledAt != null}"><span class="when" th:text="${fmt.when(order.cancelledAt)}" th:title="${fmt.dateTime(order.cancelledAt)}">data</span><span th:text="#{orders.history.cancelled}">Annullato</span></li>
           </ol>
         </section>
       </div>

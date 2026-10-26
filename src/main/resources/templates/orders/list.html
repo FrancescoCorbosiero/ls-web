@@ -112,7 +112,7 @@
           <tbody>
             <tr th:each="o : ${orders}" th:attr="data-order=${o.displayCode()}">
               <td class="code" th:attr="data-label=#{orders.col.code}"><a th:href="@{/area-clienti/ordini/{c}/(c=${o.displayCode()})}" th:text="${o.displayCode()}">TEMP-…</a></td>
-              <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+              <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.when(o.submittedAt)}" th:title="${fmt.dateTime(o.submittedAt)}">01/01/2026</td>
               <td th:attr="data-label=#{orders.col.recipient}"><span th:text="${o.recipient.name}">Destinatario</span><span class="sub" th:text="${o.recipient.city} + ' (' + ${o.recipient.province} + ')'">Città</span></td>
               <td th:attr="data-label=#{orders.col.status}"><span th:replace="~{layout/private :: orderStatus(${o.status})}">In attesa</span></td>
               <td th:attr="data-label=#{orders.col.tracking}"><span th:replace="~{layout/private :: trackingPill(${o})}">Presa in carico</span><span class="muted" th:if="${!o.isApproved()}">-</span></td>

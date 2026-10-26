@@ -24,7 +24,7 @@
         <p class="page-meta">
           <span th:replace="~{layout/private :: orderStatus(${order.status})}">Stato</span>
           <span th:replace="~{layout/private :: trackingPill(${order})}">Presa in carico</span>
-          <span th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span>
+          <span th:text="#{orders.detail.submittedAt(${fmt.at(order.submittedAt)})}">Inviato il</span>
           <span class="pill pill-soft" th:if="${order.createdByStaff()}" th:text="#{backoffice.order.createdByStaff}">Inserito dall'ufficio</span>
         </p>
       </div>
@@ -40,15 +40,15 @@
 
     <div class="callout callout-warn" role="status" th:if="${order.isPending() and order.editedByCustomer()}" data-edited>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
-      <p th:text="#{backoffice.order.editedByCustomer(${fmt.dateTime(order.editedAt)})}">Il cliente ha modificato l'ordine: controlla i dati prima di approvarlo.</p>
+      <p th:text="#{backoffice.order.editedByCustomer(${fmt.at(order.editedAt)})}">Il cliente ha modificato l'ordine: controlla i dati prima di approvarlo.</p>
     </div>
     <div class="callout callout-error" role="status" th:if="${order.isDeclined()}">
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
-      <p th:text="#{backoffice.order.declined(${fmt.dateTime(order.declinedAt)}, ${order.declineReason ?: '-'})}">Rifiutato</p>
+      <p th:text="#{backoffice.order.declined(${fmt.at(order.declinedAt)}, ${order.declineReason ?: '-'})}">Rifiutato</p>
     </div>
     <div class="callout" role="status" th:if="${order.isCancelled()}" data-cancelled>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg>
-      <p th:text="${order.cancelledByCustomer()} ? #{backoffice.order.cancelledByCustomer(${fmt.dateTime(order.cancelledAt)})} : #{backoffice.order.cancelledByStaff(${fmt.dateTime(order.cancelledAt)}, ${order.cancelReason ?: '-'})}">Annullato</p>
+      <p th:text="${order.cancelledByCustomer()} ? #{backoffice.order.cancelledByCustomer(${fmt.at(order.cancelledAt)})} : #{backoffice.order.cancelledByStaff(${fmt.at(order.cancelledAt)}, ${order.cancelReason ?: '-'})}">Annullato</p>
     </div>
     <div class="callout callout-info" role="status" th:if="${order.isApproved() and !changeable}">
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>
@@ -144,7 +144,7 @@
           </form>
           <h3 th:text="#{backoffice.order.history}">Storico</h3>
           <ol class="timeline" data-history>
-            <li th:each="h : ${history}"><span class="when" th:text="${fmt.dateTime(h.occurredAt)}">data</span><strong th:text="${h.label}">stato</strong></li>
+            <li th:each="h : ${history}"><span class="when" th:text="${fmt.when(h.occurredAt)}" th:title="${fmt.dateTime(h.occurredAt)}">data</span><strong th:text="${h.label}">stato</strong></li>
           </ol>
         </section>
         <section class="panel" id="note" data-section="note">
@@ -162,11 +162,11 @@
         <section class="panel" data-section="history">
           <h2 th:text="#{orders.detail.history}">Cronologia</h2>
           <ol class="timeline">
-            <li><span class="when" th:text="${fmt.dateTime(order.submittedAt)}">data</span><span th:text="${order.createdByStaff()} ? #{backoffice.history.createdByStaff} : #{backoffice.history.submitted}">Inviato dal cliente</span></li>
-            <li th:if="${order.editedAt != null}"><span class="when" th:text="${fmt.dateTime(order.editedAt)}">data</span><span th:text="${order.editedByCustomer()} ? #{backoffice.history.editedByCustomer} : #{backoffice.history.editedByStaff}">Modificato</span></li>
-            <li th:if="${order.approvedAt != null}"><span class="when" th:text="${fmt.dateTime(order.approvedAt)}">data</span><span th:text="#{orders.history.approved(${order.code})}">Confermato</span></li>
-            <li th:if="${order.declinedAt != null}"><span class="when" th:text="${fmt.dateTime(order.declinedAt)}">data</span><span th:text="#{orders.history.declined}">Rifiutato</span></li>
-            <li th:if="${order.cancelledAt != null}"><span class="when" th:text="${fmt.dateTime(order.cancelledAt)}">data</span><span th:text="${order.cancelledByCustomer()} ? #{backoffice.history.cancelledByCustomer} : #{backoffice.history.cancelledByStaff}">Annullato</span></li>
+            <li><span class="when" th:text="${fmt.when(order.submittedAt)}" th:title="${fmt.dateTime(order.submittedAt)}">data</span><span th:text="${order.createdByStaff()} ? #{backoffice.history.createdByStaff} : #{backoffice.history.submitted}">Inviato dal cliente</span></li>
+            <li th:if="${order.editedAt != null}"><span class="when" th:text="${fmt.when(order.editedAt)}" th:title="${fmt.dateTime(order.editedAt)}">data</span><span th:text="${order.editedByCustomer()} ? #{backoffice.history.editedByCustomer} : #{backoffice.history.editedByStaff}">Modificato</span></li>
+            <li th:if="${order.approvedAt != null}"><span class="when" th:text="${fmt.when(order.approvedAt)}" th:title="${fmt.dateTime(order.approvedAt)}">data</span><span th:text="#{orders.history.approved(${order.code})}">Confermato</span></li>
+            <li th:if="${order.declinedAt != null}"><span class="when" th:text="${fmt.when(order.declinedAt)}" th:title="${fmt.dateTime(order.declinedAt)}">data</span><span th:text="#{orders.history.declined}">Rifiutato</span></li>
+            <li th:if="${order.cancelledAt != null}"><span class="when" th:text="${fmt.when(order.cancelledAt)}" th:title="${fmt.dateTime(order.cancelledAt)}">data</span><span th:text="${order.cancelledByCustomer()} ? #{backoffice.history.cancelledByCustomer} : #{backoffice.history.cancelledByStaff}">Annullato</span></li>
           </ol>
         </section>
       </div>

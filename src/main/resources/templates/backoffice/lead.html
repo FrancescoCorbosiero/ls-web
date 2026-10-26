@@ -21,7 +21,7 @@
         <h1 th:text="${lead.name}">Nome</h1>
         <p class="page-meta">
           <span th:replace="~{backoffice/layout :: leadStatus(${lead.status})}">Nuova</span>
-          <span th:text="#{backoffice.leads.receivedAt(${lead.formLabel()}, ${fmt.dateTime(lead.createdAt)})}">Modulo «Preventivo», arrivata il</span>
+          <span th:text="#{backoffice.leads.receivedAt(${lead.formLabel()}, ${fmt.at(lead.createdAt)})}">Modulo «Preventivo», arrivata il</span>
         </p>
       </div>
       <div class="page-actions">

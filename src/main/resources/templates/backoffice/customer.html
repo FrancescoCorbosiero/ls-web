@@ -16,7 +16,7 @@
         <h1 th:text="${customer.companyName}">Cliente</h1>
         <p class="page-meta">
           <span th:replace="~{layout/private :: customerStatus(${customer.status})}">Attivo</span>
-          <span th:text="#{backoffice.customer.registeredAt(${fmt.dateTime(customer.registeredAt)})}">Registrato il</span>
+          <span th:text="#{backoffice.customer.registeredAt(${fmt.at(customer.registeredAt)})}">Registrato il</span>
           <span class="pill pill-soft" th:if="${customer.createdByStaff()}" th:text="#{backoffice.customer.createdByStaff}">Creato dall'ufficio</span>
         </p>
       </div>
@@ -30,7 +30,7 @@
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
     <section class="panel mb-m" th:if="${changeRequest != null}" aria-labelledby="modifica-title" data-change-request>
       <h2 id="modifica-title" th:text="#{backoffice.customerChange.title}">Modifica dei dati da approvare</h2>
-      <p class="muted small" th:text="#{backoffice.customerChange.lead(${fmt.dateTime(changeRequest.requestedAt)})}">Il cliente l'ha chiesta dal suo profilo il 01/10/2026 10:00.</p>
+      <p class="muted small" th:text="#{backoffice.customerChange.lead(${fmt.at(changeRequest.requestedAt)})}">Il cliente l'ha chiesta dal suo profilo il 01/10/2026 10:00.</p>
       <div class="data-table-wrap" th:if="${!changeRequest.changes().isEmpty()}">
         <table class="data-table stacked" data-table="customer-change">
           <thead><tr>
@@ -79,7 +79,7 @@
             <tbody>
               <tr th:each="o : ${orders}" th:attr="data-order=${o.displayCode()}">
                 <td class="code" th:attr="data-label=#{orders.col.code}"><a th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.displayCode()}">codice</a></td>
-                <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.date(o.submittedAt)}">01/01/2026</td>
+                <td th:attr="data-label=#{orders.col.date}" th:text="${fmt.when(o.submittedAt)}" th:title="${fmt.dateTime(o.submittedAt)}">01/01/2026</td>
                 <td th:attr="data-label=#{orders.col.recipient}"><span th:text="${o.recipient.name}">dest</span><span class="sub" th:text="${o.recipient.city}">città</span></td>
                 <td th:attr="data-label=#{orders.col.status}"><span th:replace="~{layout/private :: orderStatus(${o.status})}">stato</span></td>
                 <td th:attr="data-label=#{orders.col.tracking}"><span th:replace="~{layout/private :: trackingPill(${o})}">-</span><span class="muted" th:if="${!o.isApproved()}">-</span></td>

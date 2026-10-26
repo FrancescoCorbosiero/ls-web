@@ -36,7 +36,7 @@
         <div><dt th:text="#{backoffice.orders.col.customer}">Cliente mittente</dt><dd th:text="${order.sender.name}">-</dd></div>
         <div><dt th:text="#{orders.col.recipient}">Destinatario</dt><dd th:text="${order.recipient.name} + ', ' + ${order.recipient.city}">-</dd></div>
         <div><dt th:text="#{backoffice.tracking.current}">Stato attuale</dt><dd data-current th:text="${order.trackingLabel}">-</dd></div>
-        <div th:if="${order.trackingUpdatedAt != null}"><dt th:text="#{backoffice.tracking.updatedAt}">Aggiornato il</dt><dd th:text="${fmt.dateTime(order.trackingUpdatedAt)}">-</dd></div>
+        <div th:if="${order.trackingUpdatedAt != null}"><dt th:text="#{backoffice.tracking.updatedAt}">Aggiornato il</dt><dd th:text="${fmt.when(order.trackingUpdatedAt)}" th:title="${fmt.dateTime(order.trackingUpdatedAt)}">-</dd></div>
       </dl>
       <form method="post" th:action="@{/gestione/tracking/}" class="fields">
         <input type="hidden" name="codice" th:value="${order.code}">
