@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Customer page (ADM-03; ADR 0029): the registration data, its orders, the actions — approve/decline while pending (ADM-02), «Modifica dati» and «Nuovo ordine» (ADM-12, ADM-11), the privacy tools for an ADMIN (NFR-03). -->
+<!-- Customer page (ADM-03; ADR 0029): the registration data, its orders, the actions — approve/decline while pending (ADM-02), «Modifica dati» and «Nuovo ordine» (ADM-12, ADM-11), the privacy tools for an ADMIN (NFR-03); with customers.profileEdit on, the customer's data change waiting for approval (ENH-16, ADR 0038). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="${customer.companyName} + ' · ' + #{layout.private.backoffice}">Cliente · Gestione</title>
@@ -28,6 +28,37 @@
       </div>
     </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <section class="panel mb-m" th:if="${changeRequest != null}" aria-labelledby="modifica-title" data-change-request>
+      <h2 id="modifica-title" th:text="#{backoffice.customerChange.title}">Modifica dei dati da approvare</h2>
+      <p class="muted small" th:text="#{backoffice.customerChange.lead(${fmt.dateTime(changeRequest.requestedAt)})}">Il cliente l'ha chiesta dal suo profilo il 01/10/2026 10:00.</p>
+      <div class="data-table-wrap" th:if="${!changeRequest.changes().isEmpty()}">
+        <table class="data-table stacked" data-table="customer-change">
+          <thead><tr>
+            <th scope="col" th:text="#{backoffice.customerChange.field}">Dato</th>
+            <th scope="col" th:text="#{backoffice.customerChange.current}">Ora</th>
+            <th scope="col" th:text="#{backoffice.customerChange.requested}">Richiesto</th>
+          </tr></thead>
+          <tbody>
+            <tr th:each="c : ${changeRequest.changes()}" th:attr="data-field=${c.name}">
+              <td th:attr="data-label=#{backoffice.customerChange.field}" th:text="#{'customers.change.field.' + ${c.name}}">Ragione sociale</td>
+              <td th:attr="data-label=#{backoffice.customerChange.current}" th:text="${c.current}">-</td>
+              <td class="strong" th:attr="data-label=#{backoffice.customerChange.requested}" th:text="${c.requested}">-</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="muted small" th:if="${changeRequest.changes().isEmpty()}" th:text="#{backoffice.customerChange.same}">I dati richiesti sono già quelli attuali: approvando non cambia nulla.</p>
+      <form method="post" class="mt-s" th:action="@{/gestione/clienti/{id}/modifica-dati/{r}/approva(id=${customer.id},r=${changeRequest.id})}">
+        <button type="submit" class="btn" data-approve-change><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{backoffice.customerChange.approve}">Approva la modifica</span></button>
+      </form>
+      <form method="post" class="mt-s" th:action="@{/gestione/clienti/{id}/modifica-dati/{r}/rifiuta(id=${customer.id},r=${changeRequest.id})}" data-decline-change>
+        <div class="field">
+          <label class="label" for="motivo" th:text="#{backoffice.customerChange.reason}">Motivo del rifiuto (facoltativo, lo legge il cliente)</label>
+          <textarea class="textarea" id="motivo" name="motivo" rows="2" maxlength="500"></textarea>
+        </div>
+        <p class="form-actions"><button type="submit" class="btn btn-danger" th:text="#{backoffice.customerChange.decline}">Rifiuta la modifica</button></p>
+      </form>
+    </section>
     <div class="app-grid main-aside">
       <section class="panel">
         <div class="panel-head">

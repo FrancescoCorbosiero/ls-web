@@ -34,10 +34,10 @@
         <span class="tile-label" th:text="#{backoffice.nav.ordersPending}">Ordini da approvare</span>
         <span class="tile-hint" th:text="#{backoffice.home.ordersPending}">Richieste di spedizione da confermare con codice e importo.</span>
       </a></li>
-      <li><a class="tile" th:classappend="${queue.customers() > 0} ? 'is-attention'" href="/gestione/clienti/in-approvazione/" data-tile="customers">
-        <span class="tile-top"><span class="tile-value" th:text="${queue.customers()}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-check"/></svg></span>
+      <li><a class="tile" th:classappend="${queue.customerApprovals() > 0} ? 'is-attention'" href="/gestione/clienti/in-approvazione/" data-tile="customers">
+        <span class="tile-top"><span class="tile-value" th:text="${queue.customerApprovals()}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-check"/></svg></span>
         <span class="tile-label" th:text="#{backoffice.home.customersPendingTitle}">Clienti da approvare</span>
-        <span class="tile-hint" th:text="#{backoffice.home.customersPending}">Clienti registrati in attesa della tua approvazione.</span>
+        <span class="tile-hint" th:text="${queue.customerChanges() != null} ? #{backoffice.home.customersPendingChanges} : #{backoffice.home.customersPending}">Clienti registrati in attesa della tua approvazione.</span>
       </a></li>
       <li><a class="tile" href="/gestione/ordini/?stato=APPROVED&amp;tracking=in-corso" data-tile="transit">
         <span class="tile-top"><span class="tile-value" th:text="${inTransit}">0</span><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-truck"/></svg></span>

@@ -25,6 +25,10 @@ POST	/area-clienti/profilo/rubrica/nuovo	403	403	403	403
 GET	/area-clienti/profilo/rubrica/{id}	302	404	403	403
 POST	/area-clienti/profilo/rubrica/{id}	403	403	403	403
 POST	/area-clienti/profilo/rubrica/{id}/elimina	403	403	403	403
+# ENH-16 the customer's own data (ADR 0038): 404 for a customer while customers.profileEdit is off, as in this run.
+GET	/area-clienti/profilo/dati	302	404	403	403
+POST	/area-clienti/profilo/dati	403	403	403	403
+POST	/area-clienti/profilo/dati/ritira	403	403	403	403
 # orders module (CUS-04, CUS-05, CUS-07): list, detail, the new-order form and the changes to a pending order behind a customer session.
 GET	/area-clienti/ordini/	302	200	403	403
 GET	/area-clienti/ordini/{codice}/	302	404	403	403
@@ -61,6 +65,9 @@ POST	/gestione/clienti/{id}/rifiuta	403	403	403	403
 # sends staff back to its page with a message (302); which one the sample id 1 is depends on the tests run before.
 GET	/gestione/clienti/{id}/modifica	302	403	404|200|302	404|200|302
 POST	/gestione/clienti/{id}/modifica	403	403	403	403
+# ENH-16 the customer's data change waiting for approval (ADR 0038); POST only, CSRF first.
+POST	/gestione/clienti/{id}/modifica-dati/{request}/approva	403	403	403	403
+POST	/gestione/clienti/{id}/modifica-dati/{request}/rifiuta	403	403	403	403
 GET	/gestione/ordini/	302	403	200	200
 GET	/gestione/ordini/in-approvazione/	302	403	200	200
 GET	/gestione/ordini/nuovo	302	403	200	200

@@ -160,6 +160,37 @@ public class Customer {
         apply(data);
     }
 
+    /**
+     * The customer changes its address and phone from the profile (ENH-16, ADR 0038); the identity
+     * fields wait for the office ({@link #changeIdentity}). True when a value changed.
+     */
+    boolean changeContacts(RegistrationData data) {
+        if (anonymisedAt != null) {
+            throw new RuleViolationException("I dati di un cliente anonimizzato non si modificano.");
+        }
+        boolean changed = !Objects.equals(addressLine, data.addressLine())
+                || !Objects.equals(province, data.province())
+                || !Objects.equals(city, data.city())
+                || !Objects.equals(postalCode, data.postalCode())
+                || !Objects.equals(phone, data.phone());
+        this.addressLine = data.addressLine();
+        this.province = data.province();
+        this.city = data.city();
+        this.postalCode = data.postalCode();
+        this.phone = data.phone();
+        return changed;
+    }
+
+    /** The office approved the customer's change of company name, VAT number or tax code (ENH-16). */
+    void changeIdentity(CustomerIdentity identity) {
+        if (anonymisedAt != null) {
+            throw new RuleViolationException("I dati di un cliente anonimizzato non si modificano.");
+        }
+        this.companyName = Objects.requireNonNull(identity.companyName(), "companyName");
+        this.vatNumber = identity.vatNumber();
+        this.taxCode = identity.taxCode();
+    }
+
     /** Staff approve: only a verified customer waiting for approval (Q-28). */
     void approve(long staffUserId, Instant at) {
         if (status != CustomerStatus.PENDING_APPROVAL) {

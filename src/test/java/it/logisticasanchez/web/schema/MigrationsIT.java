@@ -52,10 +52,10 @@ class MigrationsIT extends AbstractPostgresIT {
             assertThat(first.success).isTrue();
             assertThat(first.migrationsExecuted)
                     .as("versioned migrations applied to a clean schema")
-                    .isEqualTo(18);
-            assertThat(applied).hasSize(18);
+                    .isEqualTo(19);
+            assertThat(applied).hasSize(19);
             assertThat(applied[0].getVersion().getVersion()).isEqualTo("001");
-            assertThat(applied[17].getVersion().getVersion()).isEqualTo("018");
+            assertThat(applied[18].getVersion().getVersion()).isEqualTo("019");
             assertThat(flyway.info().pending()).isEmpty();
 
             MigrateResult second = flyway.migrate();

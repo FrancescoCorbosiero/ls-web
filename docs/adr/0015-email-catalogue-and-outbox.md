@@ -95,6 +95,13 @@ in the event's transaction for TRANSITO, TERMINAL_DEST and ASSEGNATO only.
 queued by `QuoteService.create` with the link of the saved quote (ADR 0037). V018 widens the check
 to `EML-10`…`EML-19` for the M2 e-mails to come.
 
+### EML-12 (2026-10-26, ENH-16)
+
+`customers.profileEdit`: outbox kind `EML-12` to the customer with the office's answer to its data
+change (ADR 0038): «Dati aggiornati» with the new values, or «Modifica dei dati non accettata» with
+the reason; queued by `CustomerChangeService.approve` and `.decline`. The office notice of the
+change itself is an EML-06 («Dati del cliente aggiornati», «Modifica dei dati da approvare»).
+
 ## Consequences
 
 * A controller that needs to send e-mail calls a domain service, which enqueues; the test of

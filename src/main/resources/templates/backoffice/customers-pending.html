@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «In Approvazione» (ADM-02; chapter 04 §3.2: nine legacy columns, «SI»/«NO», the legacy empty state; ADR 0029 layout). -->
+<!-- «In Approvazione» (ADM-02; chapter 04 §3.2: nine legacy columns, «SI»/«NO», the legacy empty state; ADR 0029 layout); with customers.profileEdit on, the customers' data changes waiting for approval (ENH-16, ADR 0038). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.customersPending.title} + ' · ' + #{layout.private.backoffice}">In Approvazione · Gestione</title>
@@ -54,6 +54,29 @@
         </tbody>
       </table>
     </div>
+
+    <section class="mt-l" th:if="${changeRequests != null and !changeRequests.isEmpty()}" aria-labelledby="modifiche-title" data-section="customer-changes">
+      <h2 id="modifiche-title" th:text="#{backoffice.customerChanges.title}">Modifiche dei dati da approvare</h2>
+      <p class="muted" th:text="#{backoffice.customerChanges.lead}">Ragione sociale, partita IVA o codice fiscale che i clienti hanno chiesto di cambiare dal loro profilo: apri il cliente per approvare o rifiutare.</p>
+      <div class="data-table-wrap">
+        <table class="data-table stacked" data-table="customer-changes">
+          <thead><tr>
+            <th scope="col" th:text="#{backoffice.customers.col.companyName}">Ragione sociale</th>
+            <th scope="col" th:text="#{backoffice.customerChanges.col.change}">Modifica richiesta</th>
+            <th scope="col" th:text="#{backoffice.customerChanges.col.requestedAt}">Chiesta il</th>
+            <th scope="col" th:text="#{backoffice.col.actions}">Azioni</th>
+          </tr></thead>
+          <tbody>
+            <tr th:each="r : ${changeRequests}" th:attr="data-change-request=${r.customerId}">
+              <td th:attr="data-label=#{backoffice.customers.col.companyName}"><div class="cell-block"><a class="strong" th:href="@{/gestione/clienti/{id}/(id=${r.customerId})}" th:text="${r.current.companyName}">Ditta</a><span class="sub" th:text="${r.customerEmail}">email</span></div></td>
+              <td th:attr="data-label=#{backoffice.customerChanges.col.change}"><div class="cell-block"><div th:each="c : ${r.changes()}"><span th:text="#{'customers.change.field.' + ${c.name}}">Campo</span>: <span class="strong" th:text="${c.requested}">valore</span></div></div></td>
+              <td th:attr="data-label=#{backoffice.customerChanges.col.requestedAt}" th:text="${fmt.dateTime(r.requestedAt)}">01/10/2026</td>
+              <td class="row-actions"><a class="btn btn-xs" th:href="@{/gestione/clienti/{id}/(id=${r.customerId})}" th:text="#{backoffice.customerChanges.open}">Apri il cliente</a></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

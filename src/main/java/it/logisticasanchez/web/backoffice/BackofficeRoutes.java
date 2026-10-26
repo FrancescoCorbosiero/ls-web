@@ -2,7 +2,7 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
 
-/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037). */
+/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037; the customers' data changes of ADR 0038). */
 public final class BackofficeRoutes {
 
     public static final String HOME = AuthRoutes.BACKOFFICE;
@@ -14,6 +14,10 @@ public final class BackofficeRoutes {
     public static final String CUSTOMER_APPROVE = CUSTOMER + "approva";
     public static final String CUSTOMER_DECLINE = CUSTOMER + "rifiuta";
     public static final String CUSTOMER_EDIT = CUSTOMER + "modifica";
+    /** ENH-16 (customers.profileEdit, ADR 0038): the customer's data change waiting for approval. */
+    public static final String CUSTOMER_CHANGE_APPROVE = CUSTOMER + "modifica-dati/{request}/approva";
+
+    public static final String CUSTOMER_CHANGE_DECLINE = CUSTOMER + "modifica-dati/{request}/rifiuta";
     /** ENH-08 (admin.exports, ADR 0035): the list as a CSV file. */
     public static final String CUSTOMERS_EXPORT = CUSTOMERS + "esporta";
 

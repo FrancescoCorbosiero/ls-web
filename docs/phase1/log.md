@@ -2091,3 +2091,63 @@ preventivo è per lui.», «La richiesta è già chiusa: il preventivo non si pr
 almeno una riga di pallet o colli.», «Inserisci un importo maggiore di zero, per esempio
 180,50.», «Scegli fino a quando vale il preventivo: da oggi a un anno.», «La nota per il cliente
 può avere al massimo 1000 caratteri.», «Il preventivo PRV-… non è più ritirabile.».
+
+## Step M — M2: ENH-16, the customer's own data changes (2026-10-26)
+
+Third of the M2 items of the owner's request «procedi con quelli che puoi fare ora». ADR 0038.
+
+### What was built
+
+* Migration `V019__customer_change_requests.sql` (`customer_change_request`, one PENDING per
+  customer); in `customers`: `CustomerChangeService` (save on the page's version, withdraw,
+  approve, decline, export, erasure), `CustomerChangeRequest`, `CustomerIdentity`,
+  `ChangeRequestView`, `ProfileEditController` (`/area-clienti/profilo/dati`, `…/dati/ritira`),
+  `Customer.changeContacts` / `changeIdentity`, `CustomerRepository.lockById`, `CustomerMails`
+  (EML-06 office notices, EML-12 to the customer).
+* Profile: «Modifica i dati» for an ACTIVE customer in place of «Chiedi una modifica», the change
+  waiting for approval with «Ritira la richiesta».
+* Back office: the request on the customer page with «Approva la modifica» / «Rifiuta la
+  modifica» (`BackofficeCustomersController`), the section «Modifiche dei dati da approvare» on
+  «In Approvazione», `WorkQueue.customerChanges` in the navigation count and on the home.
+* `PrivacyService` exports («richiesteModificaDati») and erases the requests.
+* Tests: `ProfileEditIT` (6), `ProfileEditOffIT`, schema expectations and migration counts (19),
+  route matrix; E2E `m2.spec.ts`: a customer created by the office changes its phone and asks for
+  a new company name, the office approves, the customer gets EML-12; the form under axe and on a
+  phone.
+
+### New Italian texts for the owner's review
+
+Profile: «Puoi aggiornare tu i tuoi dati: indirizzo e telefono cambiano subito, ragione sociale,
+partita IVA e codice fiscale dopo l'approvazione del nostro ufficio.», «Modifica i dati», «Il
+{data} hai chiesto di cambiare questi dati: la modifica aspetta l'approvazione del nostro
+ufficio.», «Ritira la richiesta». Form «Modifica i tuoi dati»: «Torna al profilo», «Indirizzo e
+telefono cambiano subito. Ragione sociale, partita IVA e codice fiscale cambiano quando il nostro
+ufficio approva la modifica.», «Ragione sociale e dati fiscali», «Cambiano dopo l'approvazione del
+nostro ufficio: ti avvisiamo via e-mail.», «In attesa di approvazione. Ora: …», «Indirizzo e
+telefono», «È l'indirizzo del ritiro: vale per i prossimi ordini, quelli già inviati restano con i
+dati di allora.», «Salva i dati»; flashes «Dati salvati: valgono per i prossimi ordini.», «La
+modifica di ragione sociale, partita IVA o codice fiscale è stata inviata al nostro ufficio: vale
+quando la approviamo e ti avvisiamo via e-mail.», «La richiesta di modifica in attesa è stata
+ritirata.», «Non hai cambiato nessun dato.», «Hai ritirato la richiesta di modifica: i tuoi dati
+restano quelli di prima.», «Non c'è nessuna richiesta di modifica in attesa.»; errors «Puoi
+modificare i tuoi dati quando il tuo account è attivo.», «I tuoi dati sono stati modificati nel
+frattempo: controlla i dati aggiornati e riprova.». Back office: «Modifica dei dati da approvare»,
+«Il cliente l'ha chiesta dal suo profilo il …. Approvando, i nuovi dati valgono per i prossimi
+ordini.» (Dato, Ora, Richiesto), «I dati richiesti sono già quelli attuali: approvando non cambia
+nulla.», «Approva la modifica», «Motivo del rifiuto (facoltativo, lo legge il cliente)», «Rifiuta
+la modifica»; «Modifiche dei dati da approvare», «Ragione sociale, partita IVA o codice fiscale che
+i clienti hanno chiesto di cambiare dal loro profilo: apri il cliente per approvare o rifiutare.»
+(Modifica richiesta, Chiesta il, «Apri il cliente»); home «Registrazioni e modifiche dei dati dei
+clienti in attesa della tua approvazione.»; flashes «Modifica approvata: i dati di «…» sono
+aggiornati e il cliente riceve un'e-mail.», «Modifica rifiutata: i dati restano quelli di prima e
+il cliente riceve un'e-mail.», «La richiesta di modifica non è più in attesa.». E-mails: EML-06
+«Dati del cliente aggiornati» / «Modifica dei dati da approvare» («Hai una nuova notifica: un
+cliente ha aggiornato i suoi dati dall'area clienti. Valgono per i prossimi ordini.» / «… un
+cliente chiede di cambiare ragione sociale, partita IVA o codice fiscale. La modifica aspetta la
+tua approvazione nella pagina del cliente.», tables «Dati aggiornati» «… (prima: …)» and «Da
+approvare» «… (ora: …)», button «Apri il cliente»); EML-12 «Dati aggiornati» («Abbiamo
+aggiornato i tuoi dati», «Il nostro ufficio ha approvato la modifica che hai chiesto. Ecco i tuoi
+dati:», «Valgono per i prossimi ordini: quelli già inviati restano con i dati di allora.») and
+«Modifica dei dati non accettata» («La modifica dei tuoi dati non è stata accettata», «Il nostro
+ufficio non ha accettato la modifica di ragione sociale, partita IVA o codice fiscale che hai
+chiesto: i tuoi dati restano quelli di prima.», «Motivo: …»), button «Vai al tuo profilo».

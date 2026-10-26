@@ -125,6 +125,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
   request linked to an active customer, EML-11 with the link (public page and PDF), «Ordina il
   preventivo» in the customer area making a pending order with the quote's lines. Flag-on tests
   `SavedQuotesIT`, «flag off = M1» `SavedQuotesOffIT`, `QuoteTokensTest`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-16, `customers.profileEdit` built** (ADR 0038; V019): «Modifica i dati» for
+  an ACTIVE customer, address and phone at once, company name, VAT number and tax code after the
+  office's approval (EML-12 to the customer). Flag-on tests `ProfileEditIT`, «flag off = M1»
+  `ProfileEditOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 
