@@ -1,10 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
 /**
- * M2.1 end to end (ADR 0025, 0033, 0034): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2.1 end to end (ADR 0025, 0033, 0034, 0035): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -223,6 +224,79 @@ test('[ENH-05] public tracking shows the states with their dates and the deliver
   await expect(result.locator('ol.events li')).toHaveCount(2);
 });
 
+test('[ENH-15] the admin turns on the office tools', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  for (const key of ['orders.bulkTracking', 'admin.dashboard', 'admin.exports']) {
+    await expect(staffPage.locator(`tr[data-flag="${key}"]`)).toContainText('Disponibile');
+    await setFlag(key, true);
+  }
+});
+
+test('[ENH-15] one tracking state on a pasted list of codes, checked before it is set', async () => {
+  const unknown = `NON-ESISTE-${stamp}`;
+  await staffPage.goto('/gestione/tracking/');
+  const bulk = staffPage.locator('[data-bulk]');
+  await bulk.locator('#codici').fill(`test-0002\n${unknown}, TEST-0002`);
+  await bulk.locator('#bulk-stato').selectOption('4');
+  await bulk.getByRole('button', { name: "Controlla l'elenco" }).click();
+
+  const preview = staffPage.locator('[data-bulk-preview]');
+  await expect(preview).toContainText('Spedizioni trovate: 1');
+  await expect(preview.locator('[data-bulk-not-found]')).toContainText(unknown);
+  await expect(preview.locator('tr[data-order="TEST-0002"]')).toContainText('Transito');
+  await expectAccessible(staffPage);
+  await preview.getByRole('button', { name: 'Imposta «Assegnato» su 1 spedizione' }).click();
+
+  await expect(staffPage).toHaveURL(/\/gestione\/tracking\/$/);
+  await expect(staffPage.locator('[data-flash]')).toContainText('Tracking «Assegnato» impostato su 1 spedizione.');
+  await expect(staffPage.locator('[data-flash]')).toContainText(unknown);
+  // the rules of a single change, e-mail included (tracking.notifyCustomer is on)
+  await waitForMail({ to: seedCustomer.email, subject: /Aggiornamento spedizione N\. TEST-0002: Affidata al mezzo per la consegna/ });
+});
+
+test('[ENH-08] «Oggi» on the Panoramica: to approve, to pick up, on the way for too long', async () => {
+  await staffPage.goto('/gestione/');
+  const today = staffPage.locator('[data-today]');
+  await expect(today.getByRole('heading', { name: 'Oggi', exact: true })).toBeVisible();
+  // dev-seed's DDT-SEED-0001 and the orders of this spec wait for approval
+  await expect(today.locator('[data-today-group="toApprove"] li').first()).toBeVisible();
+  await expect(today.locator('[data-today-group="toPickUp"]')).toContainText('Da ritirare');
+  await expect(today.locator('[data-today-group="stuck"]')).toContainText('In viaggio da più di 3 giorni');
+});
+
+test('[ENH-08] the order search finds a shipment by recipient, city or customer', async () => {
+  await staffPage.goto('/gestione/ordini/');
+  await expect(staffPage.locator('#codice')).toHaveAttribute('placeholder', 'Codice, destinatario, città, DDT o cliente');
+  for (const text of ['Destinatario Due', 'como', 'Ditta Attiva']) {
+    await staffPage.locator('#codice').fill(text);
+    await staffPage.getByRole('button', { name: 'Filtra' }).click();
+    await expect(staffPage.locator('tr[data-order="TEST-0002"]'), `search «${text}»`).toBeVisible();
+  }
+});
+
+test('[ENH-08] the order and customer lists download as CSV files', async () => {
+  await staffPage.goto('/gestione/ordini/?stato=&codice=TEST-0002');
+  const [orders] = await Promise.all([
+    staffPage.waitForEvent('download'),
+    staffPage.getByRole('link', { name: 'Esporta CSV' }).click(),
+  ]);
+  expect(orders.suggestedFilename()).toMatch(/^ordini-\d{4}-\d{2}-\d{2}\.csv$/);
+  const ordersCsv = readFileSync(await orders.path(), 'utf8');
+  expect(ordersCsv.startsWith('\uFEFF"ID";"Codice";"Codice provvisorio";')).toBe(true);
+  expect(ordersCsv).toContain('"TEST-0002"');
+  expect(ordersCsv).toContain('"Destinatario Due S.r.l."');
+
+  await staffPage.goto('/gestione/clienti/?q=cliente.attivo');
+  const [customers] = await Promise.all([
+    staffPage.waitForEvent('download'),
+    staffPage.getByRole('link', { name: 'Esporta CSV' }).click(),
+  ]);
+  expect(customers.suggestedFilename()).toMatch(/^clienti-\d{4}-\d{2}-\d{2}\.csv$/);
+  const customersCsv = readFileSync(await customers.path(), 'utf8');
+  expect(customersCsv.trim().split('\r\n')).toHaveLength(2);
+  expect(customersCsv).toContain('"Ditta Attiva S.r.l."');
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
@@ -230,6 +304,10 @@ test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
     [customerPage, '/area-clienti/ordini/nuovo/'],
     [customerPage, '/area-clienti/ordini/TEST-0002/'],
     [staffPage, '/gestione/ordini/nuovo'],
+    [staffPage, '/gestione/'],
+    [staffPage, '/gestione/tracking/'],
+    [staffPage, '/gestione/ordini/'],
+    [staffPage, '/gestione/clienti/'],
   ];
   for (const [page, path] of screens) {
     await page.emulateMedia({ reducedMotion: 'reduce' });

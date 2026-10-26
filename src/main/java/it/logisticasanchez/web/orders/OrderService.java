@@ -22,11 +22,13 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -194,17 +196,32 @@ public class OrderService {
             }
             String code = ItalianFormats.trim(search.code()).toLowerCase(Locale.ROOT);
             if (!code.isEmpty()) {
-                String like =
-                        "%" + code.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+                String like = like(code);
                 where.add(cb.or(
                         cb.like(cb.lower(root.get("code")), like, '\\'),
                         cb.like(cb.lower(root.get("tempCode")), like, '\\')));
+            }
+            // ADR 0035 (admin.dashboard): one text in the codes, the recipient, the city, the DDT and the customer
+            String text = ItalianFormats.trim(search.text()).toLowerCase(Locale.ROOT);
+            if (!text.isEmpty()) {
+                String like = like(text);
+                List<Predicate> any = new ArrayList<>();
+                for (String field : List.of(
+                        "code", "tempCode", "recipientName", "recipientCity", "transportDocumentCode", "senderName")) {
+                    any.add(cb.like(cb.lower(root.get(field)), like, '\\'));
+                }
+                where.add(cb.or(any.toArray(Predicate[]::new)));
             }
             return cb.and(where.toArray(Predicate[]::new));
         };
         Pageable pageable =
                 PageRequest.of(Math.max(0, page), size, Sort.by(Sort.Order.desc("submittedAt"), Sort.Order.desc("id")));
         return orders.findAll(spec, pageable).map(this::view);
+    }
+
+    /** {@code %text%} for a LIKE with {@code \\} as the escape character. */
+    private static String like(String text) {
+        return "%" + text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     /** The approved order with this definitive code (trimmed, ignoring case): the tracking page (ADM-06). */
@@ -493,22 +510,119 @@ public class OrderService {
         ShipmentOrder order = orders.findById(orderId).orElseThrow();
         TrackingCatalog.StateView state =
                 catalog.state(stateId).orElseThrow(() -> new RuleViolationException("Stato di tracking sconosciuto."));
-        short previous = order.getTrackingStateId();
-        Instant now = clock.instant();
-        if (order.setTrackingState(state.id(), now)) {
-            trackingEvents.save(
-                    new TrackingEvent(order.getId(), state.id(), now, TrackingEvent.SOURCE_STAFF, staffUserId));
-            if (state.id() == TrackingState.CONSEGNATO) {
-                notifications.enqueue(mails.delivered(view(order)));
-            } else {
-                trackingUpdates.mailFor(view(order), state).ifPresent(notifications::enqueue); // ENH-05
-            }
-            audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "order.tracking")
-                    .entity("shipment_order", order.getId(), order.getCode())
-                    .change(Map.of("trackingStateId", previous), Map.of("trackingStateId", state.id())));
-            events.publish(new DomainEvent.TrackingChanged(order.getId(), state.id(), staffUserId));
-        }
+        applyTrackingState(order, state, clock.instant(), TrackingEvent.SOURCE_STAFF, staffUserId);
         return view(order);
+    }
+
+    /**
+     * One change of tracking state (ADM-06, ENH-15): the event, EML-09 at CONSEGNATO or the ENH-05
+     * update, the audit entry and the domain event; nothing when the order is already in the state.
+     * Returns whether the state changed.
+     */
+    private boolean applyTrackingState(
+            ShipmentOrder order, TrackingCatalog.StateView state, Instant now, String source, long staffUserId) {
+        short previous = order.getTrackingStateId();
+        if (!order.setTrackingState(state.id(), now)) {
+            return false;
+        }
+        trackingEvents.save(new TrackingEvent(order.getId(), state.id(), now, source, staffUserId));
+        if (state.id() == TrackingState.CONSEGNATO) {
+            notifications.enqueue(mails.delivered(view(order)));
+        } else {
+            trackingUpdates.mailFor(view(order), state).ifPresent(notifications::enqueue); // ENH-05
+        }
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put("trackingStateId", state.id());
+        if (TrackingEvent.SOURCE_BULK.equals(source)) {
+            after.put("source", source);
+        }
+        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "order.tracking")
+                .entity("shipment_order", order.getId(), order.getCode())
+                .change(Map.of("trackingStateId", previous), after));
+        events.publish(new DomainEvent.TrackingChanged(order.getId(), state.id(), staffUserId));
+        return true;
+    }
+
+    /** ENH-15 (ADR 0035): the codes of a pasted list, the approved orders they name, the codes that name none. */
+    public record BulkSelection(List<OrderView> orders, List<String> notFound) {}
+
+    /** ENH-15: what a bulk change did — the orders whose state changed and those already in it. */
+    public record BulkResult(List<OrderView> changed, List<OrderView> unchanged) {}
+
+    /**
+     * ENH-15: the approved orders named by these codes (trimmed, ignoring case, each once, in the
+     * order typed) and the codes that name none — unknown, or a temporary code of an order not yet
+     * confirmed: tracking is for confirmed orders only (ADR 0008).
+     */
+    @Transactional(readOnly = true)
+    public BulkSelection approvedByCodes(List<String> codes) {
+        List<OrderView> found = new ArrayList<>();
+        List<String> notFound = new ArrayList<>();
+        Set<Long> seen = new HashSet<>();
+        for (String code : codes) {
+            Optional<ShipmentOrder> order =
+                    orders.findApprovedByCode(ItalianFormats.trim(code).toLowerCase(Locale.ROOT));
+            if (order.isEmpty()) {
+                notFound.add(code);
+            } else if (seen.add(order.get().getId())) {
+                found.add(view(order.get()));
+            }
+        }
+        return new BulkSelection(found, notFound);
+    }
+
+    /**
+     * ENH-15: one tracking state on many approved orders, in one transaction and at one time: an
+     * event (source BULK) by the same staff user for every order whose state changes, with the
+     * e-mails and the audit of {@link #setTrackingState}; nothing for an order already in the
+     * state. An order that is no longer approved refuses the whole change.
+     */
+    @Transactional
+    public BulkResult setTrackingStates(List<Long> orderIds, long staffUserId, int stateId) {
+        TrackingCatalog.StateView state =
+                catalog.state(stateId).orElseThrow(() -> new RuleViolationException("Stato di tracking sconosciuto."));
+        Instant now = clock.instant();
+        List<OrderView> changed = new ArrayList<>();
+        List<OrderView> unchanged = new ArrayList<>();
+        for (Long id : orderIds) {
+            ShipmentOrder order = orders.findById(id)
+                    .filter(o -> o.getStatus() == OrderStatus.APPROVED)
+                    .orElseThrow(() -> new RuleViolationException(
+                            "Un ordine dell'elenco non è più confermato: ricontrolla i codici."));
+            if (applyTrackingState(order, state, now, TrackingEvent.SOURCE_BULK, staffUserId)) {
+                changed.add(view(order));
+            } else {
+                unchanged.add(view(order));
+            }
+        }
+        return new BulkResult(changed, unchanged);
+    }
+
+    /**
+     * ADR 0035 «Oggi» (admin.dashboard): the confirmed orders whose goods are still to pick up —
+     * tracking «Presa in carico» (or «Non gestito») —, confirmed longest ago first.
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderView> toPickUp(int size) {
+        Specification<ShipmentOrder> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), OrderStatus.APPROVED),
+                root.get("trackingStateId").in((short) TrackingState.NON_GESTITO, TrackingState.PRESA));
+        return orders.findAll(spec, PageRequest.of(0, size, Sort.by("approvedAt", "id")))
+                .map(this::view);
+    }
+
+    /**
+     * ADR 0035 «Oggi»: the confirmed orders on their way (in transit, at the destination terminal,
+     * out for delivery) that were confirmed before {@code before}, longest ago first.
+     */
+    @Transactional(readOnly = true)
+    public Page<OrderView> travellingSince(Instant before, int size) {
+        Specification<ShipmentOrder> spec = (root, query, cb) -> cb.and(
+                cb.equal(root.get("status"), OrderStatus.APPROVED),
+                root.get("trackingStateId").in((short) 2, (short) 3, (short) 4),
+                cb.lessThan(root.get("approvedAt"), before));
+        return orders.findAll(spec, PageRequest.of(0, size, Sort.by("approvedAt", "id")))
+                .map(this::view);
     }
 
     /** ADM-06: the tracking history of an order, oldest first. */

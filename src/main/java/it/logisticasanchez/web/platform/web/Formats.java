@@ -15,6 +15,11 @@ public final class Formats {
         return ItalianFormats.formatDateTime(instant);
     }
 
+    /** A day as {@code 24/10/2026} (ADR 0035). */
+    public String day(java.time.LocalDate day) {
+        return day == null ? "-" : day.format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+    }
+
     /** A day written out, «giovedì 29 ottobre 2026» (ENH-05). */
     public String longDate(java.time.LocalDate day) {
         return ItalianFormats.formatLongDate(day);

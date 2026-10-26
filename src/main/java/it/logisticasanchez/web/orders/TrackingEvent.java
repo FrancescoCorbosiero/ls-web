@@ -15,6 +15,8 @@ public class TrackingEvent {
 
     public static final String SOURCE_APPROVAL = "APPROVAL";
     public static final String SOURCE_STAFF = "STAFF";
+    /** ENH-15: set on many orders at once from «Tracking» (ADR 0035). */
+    public static final String SOURCE_BULK = "BULK";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

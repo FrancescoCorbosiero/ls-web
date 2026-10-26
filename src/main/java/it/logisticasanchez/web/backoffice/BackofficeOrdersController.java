@@ -1,7 +1,6 @@
 package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.customers.CustomerService;
-import it.logisticasanchez.web.orders.OrderSearch;
 import it.logisticasanchez.web.orders.OrderService;
 import it.logisticasanchez.web.orders.OrderStatus;
 import it.logisticasanchez.web.orders.OrderView;
@@ -12,9 +11,6 @@ import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.springframework.security.core.Authentication;
@@ -32,7 +28,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * copy; ADR 0017, ADR 0029): «In Approvazione» (temporary codes shown as «-») with «Approva ordine»
  * (fields «Codice» and «Importo Totale (per cliente)», Italian comma) and the decline page, both
  * on the version of the order the page showed (ADR 0028); «Ordini»
- * with server-side pagination, filters (state, tracking, customer, dates) and search by code;
+ * with server-side pagination, filters (state, tracking, customer, dates) and search by code — or,
+ * with the office tools on ({@code admin.dashboard}, ADR 0035), by any text of {@link OrderFilters};
  * the detail with the three legacy sections, the lines grouped with their quantity, the tracking
  * form (current state preselected, any of the six), the internal note beside the customer's
  * read-only note and the history; «Tracking» by code. Rules and e-mails live in
@@ -42,8 +39,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class BackofficeOrdersController {
 
     static final int PAGE_SIZE = 25;
-    /** The «tracking» filter value for the shipments not yet delivered (the home's «Spedizioni in corso»). */
-    static final String UNDELIVERED = "in-corso";
 
     private final OrderService orders;
     private final CustomerService customers;
@@ -67,39 +62,17 @@ public class BackofficeOrdersController {
 
     @GetMapping(BackofficeRoutes.ORDERS)
     public String list(@RequestParam Map<String, String> params, Model model) {
-        Map<String, String> filters = new LinkedHashMap<>();
-        for (String name : new String[] {"stato", "tracking", "cliente", "da", "a", "codice"}) {
-            filters.put(name, ItalianFormats.trim(params.get(name)));
-        }
-        if (!params.containsKey("stato")) {
-            filters.put("stato", OrderStatus.APPROVED.name()); // the legacy «registered» list
-        }
-        String error = null;
-        OrderSearch search;
-        try {
-            boolean undelivered = UNDELIVERED.equals(filters.get("tracking"));
-            search = new OrderSearch(
-                    status(filters.get("stato")),
-                    undelivered ? null : integer(filters.get("tracking")).orElse(null),
-                    integer(filters.get("cliente")).map(Integer::longValue).orElse(null),
-                    date(filters.get("da")),
-                    date(filters.get("a")),
-                    filters.get("codice"),
-                    undelivered);
-            if (search.from() != null && search.to() != null && search.from().isAfter(search.to())) {
-                throw new RuleViolationException("La data di inizio deve precedere quella di fine.");
-            }
-        } catch (RuleViolationException e) {
-            error = e.detail();
-            search = OrderSearch.none();
-        }
+        boolean officeTools = flags.isEnabled(FlagKey.ADMIN_DASHBOARD); // ADR 0035: free-text search
+        OrderFilters filters = OrderFilters.of(params, officeTools);
         int page = integer(params.get("pagina"))
                 .filter(n -> n >= 1)
                 .map(n -> n - 1)
                 .orElse(0);
-        model.addAttribute("filters", filters);
-        model.addAttribute("error", error);
-        model.addAttribute("page", orders.search(search, page, PAGE_SIZE));
+        model.addAttribute("filters", filters.values());
+        model.addAttribute("error", filters.error());
+        model.addAttribute("page", orders.search(filters.search(), page, PAGE_SIZE));
+        model.addAttribute("freeSearch", officeTools);
+        model.addAttribute("exportEnabled", flags.isEnabled(FlagKey.ADMIN_EXPORTS)); // ENH-08
         model.addAttribute("states", catalog.states());
         model.addAttribute("customers", customers.listAll());
         model.addAttribute("statuses", OrderStatus.values());
@@ -244,6 +217,12 @@ public class BackofficeOrdersController {
         model.addAttribute("notFound", !typed.isEmpty() && model.getAttribute("order") == null && error == null);
         model.addAttribute("states", catalog.states());
         model.addAttribute("error", error);
+        // ENH-15 (ADR 0035): the bulk form, only while orders.bulkTracking is on
+        model.addAttribute("bulkEnabled", flags.isEnabled(FlagKey.ORDERS_BULK_TRACKING));
+        model.addAttribute("bulkCodes", "");
+        model.addAttribute("bulkState", "");
+        model.addAttribute("bulkError", null);
+        model.addAttribute("bulk", null);
         return "backoffice/tracking";
     }
 
@@ -272,17 +251,6 @@ public class BackofficeOrdersController {
         return orders.find(id).orElseThrow(() -> new ClientErrorException(ErrorCode.NOT_FOUND));
     }
 
-    private static OrderStatus status(String value) {
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        try {
-            return OrderStatus.valueOf(value);
-        } catch (IllegalArgumentException e) {
-            throw new RuleViolationException("Stato sconosciuto.");
-        }
-    }
-
     /** The version an approve or decline page was built on (ADR 0028): null when the form sent none, -1 when malformed. */
     private static Integer expectedVersion(String value) {
         return value == null ? null : BackofficeOrderChangesController.version(value);
@@ -291,16 +259,5 @@ public class BackofficeOrdersController {
     private static Optional<Integer> integer(String value) {
         String raw = ItalianFormats.trim(value);
         return raw.matches("^[0-9]{1,9}$") ? Optional.of(Integer.parseInt(raw)) : Optional.empty();
-    }
-
-    private static LocalDate date(String value) {
-        if (value == null || value.isEmpty()) {
-            return null;
-        }
-        try {
-            return LocalDate.parse(value);
-        } catch (DateTimeParseException e) {
-            throw new RuleViolationException("Inserisci una data valida (anno-mese-giorno).");
-        }
     }
 }

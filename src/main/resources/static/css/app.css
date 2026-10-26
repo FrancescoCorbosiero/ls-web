@@ -1287,6 +1287,55 @@ a.tile:hover {
 .delivery-day .small {
   flex-basis: 100%;
 }
+/* ADR 0035 «Oggi» on the home: three short lists of what to do now. */
+.today-grid {
+  display: grid;
+  gap: clamp(14px, 2vw, 22px);
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (min-width: 1000px) {
+  .today-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.today h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+.count-pill {
+  display: inline-flex;
+  min-width: 26px;
+  justify-content: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--paper-3);
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+.count-pill.is-attention {
+  background: #fff4e0;
+  color: #7a4200;
+}
+.today-list {
+  display: grid;
+  gap: 8px;
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.today-list li {
+  display: grid;
+  gap: 1px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: #fff;
+  overflow-wrap: anywhere;
+}
 /* A cell with several lines (name, address): one block, long values wrap on a phone card. */
 .data-table .cell-block {
   min-width: 0;

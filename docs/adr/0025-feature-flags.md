@@ -111,6 +111,11 @@ are added by stage 3 with the publisher and a test that each named event is publ
   ADR 0034): the states with their dates and the delivery day on public tracking and in the
   customer area, EML-10 at each change to TRANSITO, TERMINAL_DEST or ASSEGNATO. Flag-on tests
   `TrackingHistoryIT`, «flag off = M1» `TrackingHistoryOffIT`, E2E `m2.spec.ts`.
+* **2026-10-26 — the office tools: ENH-15 `orders.bulkTracking`, ENH-08 `admin.dashboard` and
+  `admin.exports` built** (M2.1, item 3; ADR 0035): one tracking state on a pasted list of codes,
+  checked before it is set; «Oggi» on the Panoramica and the free-text order search; the CSV of
+  «Ordini» and «Registrati», every cell as text. Flag-on tests `OfficeToolsIT`, «flag off = M1»
+  `OfficeToolsOffIT`, `OfficeToolsTest`, E2E `m2.spec.ts`.
 
 ## Consequences
 

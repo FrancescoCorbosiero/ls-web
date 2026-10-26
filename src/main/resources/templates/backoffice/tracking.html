@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «Imposta tracking» by code (ADM-06; chapter 04 §4.6 as a page, ADR 0008: approved orders only, current state preselected; ADR 0029 layout). -->
+<!-- «Imposta tracking» by code (ADM-06; chapter 04 §4.6 as a page, ADR 0008: approved orders only, current state preselected; ADR 0029 layout); with orders.bulkTracking on, «Aggiorna molte spedizioni» (ENH-15, ADR 0035): the pasted codes are checked, then the state is set on confirmation. -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.tracking.title} + ' · ' + #{layout.private.backoffice}">Tracking · Gestione</title>
@@ -52,6 +52,60 @@
         </p>
         <p class="muted small span-all mb-0" th:text="#{backoffice.tracking.mailHint}">Quando lo stato diventa «Consegnato» il cliente riceve l'e-mail di consegna.</p>
       </form>
+    </section>
+
+    <section class="panel mt-m" th:if="${bulkEnabled}" aria-labelledby="bulk-title" data-bulk>
+      <h2 id="bulk-title" th:text="#{backoffice.bulk.title}">Aggiorna molte spedizioni</h2>
+      <p class="muted" th:text="#{backoffice.bulk.lead}">Incolla i codici, uno per riga oppure separati da spazi o virgole, e scegli lo stato: prima di applicarlo controlli l'elenco.</p>
+      <th:block th:replace="~{backoffice/layout :: error(${bulkError})}"></th:block>
+      <form method="post" th:action="@{/gestione/tracking/in-blocco}" class="fields">
+        <div class="field span-all">
+          <label class="label" for="codici" th:text="#{backoffice.bulk.codes}">Codici delle spedizioni</label>
+          <textarea class="textarea input-code" id="codici" name="codici" rows="6" maxlength="20000" required th:text="${bulkCodes}"></textarea>
+          <p class="field-hint" th:text="#{backoffice.bulk.codesHint(200)}">Al massimo 200 codici per volta. Solo le spedizioni confermate.</p>
+        </div>
+        <div class="field span-all">
+          <label class="label" for="bulk-stato" th:text="#{backoffice.tracking.state}">Nuovo stato</label>
+          <select class="select" id="bulk-stato" name="stato" required>
+            <option value="" th:text="#{backoffice.bulk.choose}">Scegli lo stato</option>
+            <option th:each="s : ${states}" th:value="${s.id()}" th:selected="${bulkState == #strings.toString(s.id())}" th:text="${s.label()}">Transito</option>
+          </select>
+        </div>
+        <p class="form-actions span-all"><button type="submit" class="btn btn-light" name="action" value="preview" th:text="#{backoffice.bulk.preview}">Controlla l'elenco</button></p>
+      </form>
+
+      <div th:if="${bulk != null}" data-bulk-preview>
+        <h3 th:text="#{backoffice.bulk.found(${bulk.orders().size()})}">Spedizioni trovate</h3>
+        <div class="callout callout-warn" role="status" th:if="${!bulk.notFound().isEmpty()}" data-bulk-not-found>
+          <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+          <p><span th:text="#{backoffice.bulk.notFound}">Codici non trovati o non ancora confermati:</span> <strong th:text="${#strings.listJoin(bulk.notFound(), ', ')}">X</strong></p>
+        </div>
+        <div class="data-table-wrap" th:if="${!bulk.orders().isEmpty()}" role="region" aria-labelledby="bulk-title" tabindex="0">
+          <table class="data-table stacked" data-table="bulk">
+            <thead><tr>
+              <th scope="col" th:text="#{orders.col.code}">Codice</th>
+              <th scope="col" th:text="#{backoffice.orders.col.customer}">Cliente mittente</th>
+              <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
+              <th scope="col" th:text="#{backoffice.tracking.current}">Stato attuale</th>
+            </tr></thead>
+            <tbody>
+              <tr th:each="o : ${bulk.orders()}" th:attr="data-order=${o.code}">
+                <td class="code" th:attr="data-label=#{orders.col.code}"><a th:href="@{/gestione/ordini/{id}/(id=${o.id})}" th:text="${o.code}">CODICE</a></td>
+                <td th:attr="data-label=#{backoffice.orders.col.customer}" th:text="${o.sender.name}">Mittente</td>
+                <td th:attr="data-label=#{orders.col.recipient}"><div class="cell-block"><span th:text="${o.recipient.name}">Destinatario</span><span class="sub" th:text="${o.recipient.city} + ' (' + ${o.recipient.province} + ')'">Città</span></div></td>
+                <td th:attr="data-label=#{backoffice.tracking.current}"><span th:replace="~{layout/private :: trackingPill(${o})}">Stato</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <form method="post" th:action="@{/gestione/tracking/in-blocco}" th:if="${!bulk.orders().isEmpty()}" class="mt-s">
+          <input type="hidden" name="codici" th:value="${bulkCodes}">
+          <input type="hidden" name="stato" th:value="${bulk.state().id()}">
+          <p class="muted small" th:if="${bulk.alreadyInState() > 0}" th:text="#{backoffice.bulk.already(${bulk.alreadyInState()})}">Già in questo stato: non cambiano.</p>
+          <p class="form-actions" th:if="${bulk.toChange() > 0}"><button type="submit" class="btn" name="action" value="apply" th:text="#{backoffice.bulk.apply(${bulk.state().label()}, ${bulk.toChange()})}">Imposta lo stato</button></p>
+          <p class="muted small mb-0" th:text="#{backoffice.bulk.mailHint}">Ogni cambio di stato vale come quello fatto spedizione per spedizione, e-mail ai clienti comprese.</p>
+        </form>
+      </div>
     </section>
   </div>
 </main>

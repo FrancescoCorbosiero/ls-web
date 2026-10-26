@@ -1924,3 +1924,70 @@ la consegna.», «La spedizione è stata affidata al mezzo che effettua la conse
 (indicativa)»); «Ti scriviamo a ogni passaggio della spedizione; alla consegna ricevi la
 conferma.»; button «Traccia la spedizione». Customer area: «Consegna prevista», «Consegnata»,
 «Indicativa: dal CAP del destinatario, in giorni lavorativi dal ritiro.».
+
+## Step J — M2.1 item 3: the office tools, ENH-15 and ENH-08 (2026-10-26)
+
+The owner's item 3: «ENH-15 (flag orders.bulkTracking): set one tracking state on many codes at
+once (paste a list); a «Oggi» list on the Panoramica: to approve, to pick up, in transit for more
+than N days; free-text search on orders (recipient, city, transport document, customer); ENH-08
+exports (flag admin.exports): CSV of the order and customer lists, cells written as text.»
+ADR 0035.
+
+### What was built
+
+* `orders.bulkTracking`: «Aggiorna molte spedizioni» on «Tracking»; `POST
+  /gestione/tracking/in-blocco` with `action=preview` (the confirmed orders found and the codes
+  that name none) and `action=apply` (`OrderService.setTrackingStates`: one transaction, one time,
+  one `tracking_event` with source `BULK` per changed order, audit `order.tracking` with
+  `"source": "BULK"`, EML-09 or the ENH-05 e-mail as for a single change; at most 200 codes).
+  `setTrackingState` and the bulk change share `applyTrackingState`.
+* `admin.dashboard`: «Oggi» on the Panoramica (`BackofficeHome.today`: to approve, to pick up, on
+  the way for more than `ls.backoffice.today-transit-days` days, default 3; 8 rows each, oldest
+  first, with the totals) and the free-text search of «Ordini» in the existing `codice` field
+  (`OrderSearch.text`: codes, recipient, city, DDT, customer). `OrderFilters` holds the list's
+  filters for the list and its export.
+* `admin.exports`: «Esporta CSV» on «Ordini» (`GET /gestione/ordini/esporta`, the list's filters)
+  and «Registrati» (`GET /gestione/clienti/esporta`, the list's search); `CsvFile` (UTF-8 BOM, `;`,
+  CRLF, quoted cells, apostrophe before `=`, `+`, `-`, `@`, tab, CR); at most 10,000 rows; audit
+  `orders.export` / `customers.export` with the row count.
+* `FlagKey.built()` true for the three flags; routes in `BackofficeRoutes` and the route matrix;
+  ADR 0025 dated line.
+* Tests: `OfficeToolsTest` (8: the text-cell rule, the exact CSV bytes, the pasted-list parsing),
+  `OfficeToolsIT` (4, flags on: preview then apply with one event per changed order and the same
+  user and time, a pending order's temporary code and an unknown code reported, EML-09 only for
+  the orders that change; «Oggi» groups; the search by recipient, city, DDT and customer; both
+  exports with a `=HYPERLINK(` value kept as text and the audit rows), `OfficeToolsOffIT` (flags
+  off = M1: 404 for exports and bulk, no «Oggi», code-only search); E2E `m2.spec.ts`: the ADMIN
+  turns the flags on, a pasted list sets «Assegnato» on TEST-0002 and reports an unknown code
+  (the ENH-05 e-mail follows), «Oggi», the search by «Destinatario Due», «como» and «Ditta
+  Attiva», both CSV downloads; axe and phone width on the Panoramica, «Tracking», «Ordini» and
+  «Registrati».
+
+### New Italian texts for the owner's review
+
+«Tracking»: «Aggiorna molte spedizioni»; «Incolla i codici, uno per riga oppure separati da spazi
+o virgole, e scegli lo stato: prima di applicarlo controlli l'elenco.»; «Codici delle
+spedizioni»; «Al massimo 200 codici per volta. Solo le spedizioni confermate.»; «Scegli lo
+stato»; «Controlla l'elenco»; «Spedizioni trovate: N»; «Codici non trovati o non ancora confermati:»; «Già in questo
+stato, non cambiano: N.»; «Imposta «Stato» su N spedizioni» (N those that change; 1: «su 1
+spedizione»); «Ogni cambio
+di stato vale come quello fatto spedizione per spedizione, e-mail ai clienti comprese.»; after
+the change «Tracking «Stato» impostato su N spedizioni. N erano già in questo stato. Codici non
+trovati o non ancora confermati: …»; errors «Incolla almeno un codice di spedizione.», «Al
+massimo 200 codici per volta.», «Scegli il nuovo stato di tracking.», «Nessun codice dell'elenco
+è di una spedizione confermata.», «Un ordine dell'elenco non è più confermato: ricontrolla i
+codici.».
+
+Panoramica: «Oggi»; «Le cose da fare adesso, le più vecchie in alto.»; «Da approvare»; «Da
+ritirare» with «Confermati, ancora in «Presa in carico».»; «In viaggio da più di N giorni» with
+«In transito, al terminal o in consegna, confermati prima del gg/mm/aaaa.»; «Niente.»; «e altri
+N»; «dal gg/mm/aaaa».
+
+«Ordini»: the field «Cerca» with «Codice, destinatario, città, DDT o cliente». «Ordini» and
+«Registrati»: «Esporta CSV» (tooltip «Il file contiene tutte le righe dei filtri scelti, non solo
+la pagina.»). CSV headers — orders: ID, Codice, Codice provvisorio, Inviato il, Confermato il,
+Cliente mittente, Codice Doc. Trasporto, Numero colli, Destinatario, Indirizzo, Città,
+Provincia, Cap, Telefono, Email destinatario, Peso (kg), Volume (m³), Importo, Ser. Accessorio,
+Stato, Tracking, Tracking aggiornato il; customers: ID, Ragione sociale, Email, Indirizzo,
+Provincia, Città, Cap, Telefono, Partita IVA, Codice fiscale, Email confermata, Stato,
+Registrato il.
