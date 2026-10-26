@@ -11,6 +11,19 @@
 body {
   background: var(--paper-2);
 }
+/* The back office at a glance (ADR 0045): a teal-tinted page and a teal line on top of the
+   header, so a «Gestione» tab never looks like the customer area. The header names its area
+   (data-area of layout/private :: siteHeader), sign-in pages included. */
+body:has(.site-header[data-area="staff"]) {
+  background: #e4f1f4;
+}
+.site-header[data-area="staff"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--teal-500);
+}
 .app-main {
   padding-block: clamp(20px, 3vw, 36px) clamp(48px, 7vw, 88px);
 }
@@ -1052,6 +1065,31 @@ body {
 }
 
 /* ---------- Feedback ---------- */
+/* «Usa l'area clienti come un'app» (ADR 0047): the FAQ card of main.css, shown on a touch screen
+   only and never inside the installed app. */
+.app-install {
+  display: none;
+  margin-top: 28px;
+}
+@media (pointer: coarse) {
+  .app-install {
+    display: grid;
+  }
+}
+@media (display-mode: standalone) {
+  .app-install {
+    display: none;
+  }
+}
+.app-install .faq-q {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-install .faq-q .icon {
+  flex: none;
+  color: var(--teal-600);
+}
 .flash {
   display: flex;
   align-items: flex-start;

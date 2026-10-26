@@ -148,6 +148,7 @@ class LayoutIT extends AbstractPostgresIT {
         "/icon-192.png, image/png, 'public, max-age=604800'",
         "/apple-touch-icon.png, image/png, 'public, max-age=604800'",
         "/site.webmanifest, application/manifest+json, no-cache",
+        "/area-clienti.webmanifest, application/manifest+json, no-cache",
         "/robots.txt, text/plain, no-cache",
         "/.well-known/security.txt, text/plain, no-cache"
     })

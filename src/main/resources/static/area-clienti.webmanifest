@@ -1,0 +1,18 @@
+{
+  "id": "/area-clienti/",
+  "name": "Logistica Sanchez – Area clienti",
+  "short_name": "LS Clienti",
+  "description": "Invia gli ordini e segui le tue spedizioni con Logistica Sanchez.",
+  "lang": "it",
+  "dir": "ltr",
+  "start_url": "/area-clienti/",
+  "scope": "/area-clienti/",
+  "display": "standalone",
+  "background_color": "#f4f7fa",
+  "theme_color": "#04233b",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

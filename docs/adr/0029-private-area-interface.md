@@ -1,6 +1,6 @@
 # 0029 · Private-area interface: one design layer for the customer area and the back office, the one-page order form
 
-* **Status:** Accepted
+* **Status:** Accepted (the back office has its own tint since ADR 0045)
 * **Date:** 2026-10-25
 * **Requirement IDs:** CUS-03, CUS-04, CUS-05, CUS-06, CUS-07, ADM-01…ADM-12, NFR-01, NFR-02 (chapter 09) · **Questions:** Q-12, Q-24, Q-35 · **Findings:** OP-01…OP-07, OP-16 (chapter 03 §10), CMS-15…CMS-19 (chapter 04 §8)
 

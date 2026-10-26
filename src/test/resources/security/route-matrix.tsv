@@ -140,6 +140,7 @@ GET	/gestione/verifica	404	404	404	404
 POST	/gestione/verifica	403	403	403	403
 GET	/js/config.js	200	200	200	200
 GET	/site.webmanifest	200	200	200	200
+GET	/area-clienti.webmanifest	200	200	200	200
 # site module (ADR 0012, 0013, 0014): the public pages of chapter 06 §3.1, the generated files, the form endpoint.
 GET	/	200	200	200	200
 GET	/servizi/	200	200	200	200

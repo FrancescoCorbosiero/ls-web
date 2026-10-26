@@ -2363,3 +2363,108 @@ l'ordine {0}: …», «Modificato dal cliente {0}», «Il cliente l'ha chiesta d
 «Hai annullato questo ordine {0}.», «Il centro logistico ha annullato questo ordine {0}. …», «Hai
 chiesto di cambiare questi dati {0}: …», «Aggiornato {0}»; columns «Inviato», «Registrato»,
 «Richiesta», «Arrivata»; the words «oggi alle», «ieri», «domani», «il … alle».
+
+## Step T — One sign-in per browser; the back office tinted (2026-10-26)
+
+Owner observation: with the admin and a customer in two tabs of the same browser, each sign-in
+logs the other out, «Resta connesso» notwithstanding; is that expected, and can it happen to the
+customers in production? Owner request: a slight visual difference between the back office and
+the customer area. ADR 0045.
+
+### What was found
+
+* Reproduced on the local app with Playwright: in one browser context the customer's sign-in
+  ends the staff session (`/gestione/` shows «Login», `/gestione/ordini/` answers 403) and the
+  staff sign-in hides the customer (`/area-clienti/ordini/` 403 while the staff session lives);
+  after «Esci» from the back office the remember cookie opens the customer area again without a
+  new sign-in. Two contexts (two devices) stay signed in side by side through every sign-in and
+  «Esci»; `localhost` and `127.0.0.1` in one browser too (cookies are per host).
+* Cause: both areas share the site's one session cookie (path `/`) on one host, a session holds
+  one principal and every sign-in starts a new session. Kept as is: customers use their own
+  devices with a customer account only, so they never meet it.
+
+### What was built
+
+* `data-area` on `layout/private :: siteHeader`; `app.css` tints every page whose header is the
+  staff one (`#e4f1f4`, a 3-pixel `--teal-500` line on top of the header), login pages included.
+  The customer area does not change.
+* Tests: `SignInPerBrowserRealServerIT` (ADM-01, CUS-01, NFR-02: one cookie jar per browser; the
+  ended session's id opens nothing; the remembered device after the staff «Esci»; four browsers
+  side by side; the header marks), `e2e/tests/areas.spec.ts` (two tabs, two contexts, the computed
+  background and line, axe on the tinted pages). The whole E2E suite (127) and `verify` green.
+
+### Found on the way (proposed to the owner, not built)
+
+A session that ends under an open form — a restart of the app (sessions live in memory), 60
+minutes idle for a customer, 30 for staff — makes the next submit fail with «Operazione non
+consentita» (403 `csrf_rejected`) and what was typed is lost: the remembered device opens a new
+session with a new CSRF token before the CSRF check (ADR 0031), and staff have no remembered
+device at all. Reproduced on the local app (order form open, app restarted, submit → 403;
+reloading the form → 200). Proposed: sessions kept in the database (Spring Session JDBC), so a
+deploy signs nobody out and breaks no open form, and a draft of the order form kept in the
+browser for the idle case.
+
+### New Italian texts for the owner's review
+
+None.
+
+## Step U — A plan for API v1, ready for a mobile client (2026-10-26)
+
+Owner questions: can the back end and the front end be decoupled, and what could an iOS/Android
+app reuse? Then the request: «scrivi l'ADR con il piano per l'API v1. E' tutto solo teorico ma
+facciamo bene a prepararci in vista di un eventuale client per mobile». ADR 0046 (Proposed).
+
+### What was written
+
+* ADR 0046: `/api/v1/**` next to the HTML pages over the same module services (module `api`, flag
+  `api.v1` off), bearer tokens of `auth` modelled on `remembered_sign_in` (hashed, 15-minute access
+  tokens, refresh tokens rotated at every use, revoked by `endAllSessions`), a stateless chain that
+  ignores the session cookie (the web chain ignores bearer tokens), the contract (UTF-8 JSON, UTC
+  instants, money as decimal strings, `ApiError` with an optional `fields` map, `ETag`/`If-Match`
+  → 409 `stale_data`, `Idempotency-Key` on new orders, paging, flags and minimum app version in
+  `meta`, additive v1, OpenAPI snapshot in CI), the resources of v1, the mobile items (links that
+  open the app, push, offline, account deletion) and the order of work: seams in the services
+  first (`submit` with a key and an `OrderContent`, the order groups in `OrderService`, a version
+  exception of its own), then tokens, reading, writing, the client.
+* Chapter 11: Q-57 (which client), Q-58 (push processors), Q-59 (store accounts), Q-60 (how long
+  the app stays signed in), Q-61 (account deletion from the app), each with its default.
+* Nothing built: no code, migration or flag seed.
+
+### New Italian texts for the owner's review
+
+None.
+
+## Step V — The customer area installs on a phone as an app (2026-10-26)
+
+Owner request: «Rendi l'area clienti installabile sul telefono» (Q-57 for customers). ADR 0047.
+
+### What was built
+
+* `/area-clienti.webmanifest` (public, `application/manifest+json`, route matrix): `id`,
+  `start_url` and `scope` `/area-clienti/`, `display: standalone`, «Logistica Sanchez – Area
+  clienti» / «LS Clienti», theme `#04233b`, background `#f4f7fa`, the site's icons (192, 512,
+  maskable 512).
+* `customerArea` (`PlatformModelAttributes`): the customer-area pages link the manifest with the
+  iPhone metas from `layout/private :: htmlHead`; the back office and the public site do not.
+* «Usa l'area clienti come un'app» (`layout/private :: installHint`) at the bottom of «I miei
+  ordini»: the FAQ card, on touch screens only, hidden inside the installed app, no JavaScript;
+  iPhone and Android steps, the password line and «Imposta la password» when none is set; icon
+  `i-smartphone` (Lucide).
+* No service worker: not needed to install; the offline page and push come with it later (Q-58).
+* Checked on the local app: Chromium's manifest parser (DevTools `Page.getAppManifest`) reads the
+  customer manifest without errors (standalone, 3 icons, id `/area-clienti/`) from the customer
+  pages only. `Page.getInstallabilityErrors` answers an empty list even for a page without a
+  manifest in current Chromium, so the tests do not rely on it.
+* Tests: `InstallableCustomerAreaIT` (NFR-01: the manifest, the icons at their declared sizes, the
+  links and metas per area, the card on the orders page), `LayoutIT` and the route matrix (the new
+  static resource), `e2e/tests/install.spec.ts` (Chromium's manifest parser on the three areas; the
+  card on a Pixel 7, not on a desktop).
+
+### New Italian texts for the owner's review
+
+App name «LS Clienti» and «Logistica Sanchez – Area clienti»; description «Invia gli ordini e
+segui le tue spedizioni con Logistica Sanchez.»; the card: «Usa l'area clienti come un'app»,
+«Aggiungila alla schermata Home del telefono: si apre a tutto schermo, con la sua icona, come
+un'app.», «iPhone: in Safari tocca Condividi, poi «Aggiungi alla schermata Home».», «Android: in
+Chrome apri il menu con i tre puntini e tocca «Installa app» o «Aggiungi a schermata Home».»,
+«Nell'app accedi con la tua e-mail e la password.», «Imposta la password».
