@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- «Impostazioni», ADMIN only: the M2 feature flags (ADR 0025), the report recipients allow-list (ADR 0016), links to staff users and privacy tools. -->
+<!-- «Impostazioni», ADMIN only: the M2 feature flags with what each does and whether it is built (built first; only those can be turned on; ADR 0025), the report recipients allow-list (ADR 0016), links to staff users and privacy tools. -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.settings.title} + ' · ' + #{layout.private.backoffice}">Impostazioni · Gestione</title>
@@ -51,21 +51,23 @@
       <p class="form-actions span-all"><button type="submit" class="btn" th:text="#{backoffice.settings.recipientAdd}">Aggiungi destinatario</button></p>
     </form>
 
-    <h2 class="mt-m" th:text="#{backoffice.settings.flags}">Funzionalità in prova</h2>
+    <h2 class="mt-m" id="flags-title" th:text="#{backoffice.settings.flags}">Funzionalità in prova</h2>
     <p class="muted" th:text="#{backoffice.settings.flagsHint}">Tutte spente: il sito si comporta come il sistema attuale. Attivane una solo quando l'ufficio è pronto a usarla.</p>
-    <div class="data-table-wrap">
+    <!-- Focusable: on a phone the table scrolls, and its toggles may all be disabled (axe scrollable-region-focusable). -->
+    <div class="data-table-wrap" role="region" aria-labelledby="flags-title" tabindex="0">
       <table class="data-table" data-table="flags">
-        <thead><tr><th scope="col" th:text="#{backoffice.settings.flagKey}">Chiave</th><th scope="col" th:text="#{backoffice.settings.flagRequirement}">Requisito</th><th scope="col" th:text="#{backoffice.settings.flagState}">Stato</th><th scope="col" th:text="#{backoffice.col.actions}">Azioni</th></tr></thead>
+        <thead><tr><th scope="col" th:text="#{backoffice.settings.flagFeature}">Funzionalità</th><th scope="col" th:text="#{backoffice.settings.flagRequirement}">Requisito</th><th scope="col" th:text="#{backoffice.settings.flagBuiltState}">Sviluppo</th><th scope="col" th:text="#{backoffice.settings.flagState}">Stato</th><th scope="col" th:text="#{backoffice.col.actions}">Azioni</th></tr></thead>
         <tbody>
-          <tr th:each="f : ${flags}" th:attr="data-flag=${f.key.key()}">
-            <td><code th:text="${f.key.key()}">chiave</code></td>
+          <tr th:each="f : ${flags}" th:attr="data-flag=${f.key.key()}, data-built=${f.built()}">
+            <td><span th:text="#{${'backoffice.settings.flag.' + f.key.key()}}">Che cosa fa</span><br><code class="small" th:text="${f.key.key()}">chiave</code></td>
             <td th:text="${f.key.requirementId()}">ENH-01</td>
-            <td><span class="pill" th:classappend="${f.value} ? 'pill-active' : 'pill-neutral'" th:text="${f.value} ? #{backoffice.settings.flagOn} : #{backoffice.settings.flagOff}">spenta</span></td>
+            <td><span class="pill" th:classappend="${f.built()} ? 'pill-track' : 'pill-neutral'" th:text="${f.built()} ? #{backoffice.settings.flagBuilt} : #{backoffice.settings.flagNotBuilt}">Non ancora sviluppata</span></td>
+            <td><span class="pill" th:classappend="${f.enabled} ? 'pill-active' : 'pill-neutral'" th:text="${f.enabled} ? #{backoffice.settings.flagOn} : #{backoffice.settings.flagOff}">spenta</span></td>
             <td>
               <form method="post" th:action="@{/gestione/impostazioni/flag}">
                 <input type="hidden" name="chiave" th:value="${f.key.key()}">
-                <input type="hidden" name="attiva" th:value="${f.value} ? '0' : '1'">
-                <button type="submit" class="btn btn-light btn-xs" th:text="${f.value} ? #{backoffice.settings.flagTurnOff} : #{backoffice.settings.flagTurnOn}">Attiva</button>
+                <input type="hidden" name="attiva" th:value="${f.enabled} ? '0' : '1'">
+                <button type="submit" class="btn btn-light btn-xs" th:disabled="${!f.toggleable()}" th:attr="title=${f.toggleable()} ? null : #{backoffice.settings.flagNotBuiltHint}" th:text="${f.enabled} ? #{backoffice.settings.flagTurnOff} : #{backoffice.settings.flagTurnOn}">Attiva</button>
               </form>
             </td>
           </tr>

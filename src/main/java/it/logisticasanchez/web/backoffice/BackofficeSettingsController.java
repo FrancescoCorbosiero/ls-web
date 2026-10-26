@@ -9,7 +9,9 @@ import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.privacy.PrivacyService;
 import it.logisticasanchez.web.reports.ReportRecipientService;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -26,8 +28,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
- * «Impostazioni», ADMIN only (chapter 10 §2; ADR 0025, 0016, 0024): the M2 feature flags (all
- * off; one form per flag), the report recipients allow-list, the staff accounts (creation sends
+ * «Impostazioni», ADMIN only (chapter 10 §2; ADR 0025, 0016, 0024): the M2 feature flags (one
+ * form per flag, each with what it does and whether it is built: built flags first, and only
+ * those can be turned on), the report recipients allow-list, the staff accounts (creation sends
  * the set-password link, EML-S1) and the privacy tools of NFR-03 (export as JSON, erasure by
  * anonymisation behind a confirmation page). Every action is audited by the service it calls.
  */
@@ -64,6 +67,11 @@ public class BackofficeSettingsController {
         FlagKey flag = FlagKey.ofKey(key == null ? "" : key)
                 .orElseThrow(() -> new RuleViolationException("Funzionalità sconosciuta."));
         boolean on = "1".equals(enabled) || "true".equals(enabled);
+        if (on && !flag.built()) {
+            redirect.addFlashAttribute(
+                    "flashError", "La funzionalità «" + flag.key() + "» non è ancora sviluppata: non si può attivare.");
+            return "redirect:" + BackofficeRoutes.SETTINGS;
+        }
         flags.toggle(flag, on, StaffSession.of(authentication).requireId());
         redirect.addFlashAttribute(
                 "flash", "Funzionalità «" + flag.key() + "» " + (on ? "attivata" : "disattivata") + ".");
@@ -200,13 +208,34 @@ public class BackofficeSettingsController {
     }
 
     private String settingsPage(Model model, String email, String label, String error) {
-        model.addAttribute("flags", flags.all());
+        model.addAttribute("flags", flagRows(flags.all()));
         model.addAttribute("recipients", recipients.list());
         model.addAttribute("configuredRecipients", recipients.configured());
         model.addAttribute("email", email);
         model.addAttribute("descrizione", label);
         model.addAttribute("error", error);
         return "backoffice/settings";
+    }
+
+    /** The flags table: built flags first, then the others, each group in requirement order. */
+    static List<FlagRow> flagRows(Map<FlagKey, Boolean> values) {
+        return values.entrySet().stream()
+                .map(e -> new FlagRow(e.getKey(), e.getValue()))
+                .sorted(Comparator.comparing((FlagRow row) -> !row.built())
+                        .thenComparing(row -> row.key().ordinal()))
+                .toList();
+    }
+
+    /** One row of the flags table; a flag not built yet can only be turned off (should it be on). */
+    public record FlagRow(FlagKey key, boolean enabled) {
+
+        public boolean built() {
+            return key.built();
+        }
+
+        public boolean toggleable() {
+            return key.built() || enabled;
+        }
     }
 
     private String staffUsersPage(Model model, Map<String, String> values, String error) {

@@ -92,6 +92,18 @@ M1 notifications are not routed through the events (they are written to the outb
 services themselves, so an e-mail is never lost to a missing listener). The event classes
 are added by stage 3 with the publisher and a test that each named event is published once.
 
+### Flag groups built (dated lines, Phase 5 rule 6)
+
+* **2026-10-26 — the settings screen (M2.1, item 0).** `/gestione/impostazioni/` shows for
+  every flag a one-line Italian description of what it does (`backoffice.settings.flag.<key>`
+  in the bundle, `FlagDescriptionsTest`) and whether it is built: `FlagKey.built()` is set in
+  the code by the change that builds the feature, «Disponibile» when true, «Non ancora
+  sviluppata» otherwise. Built flags come first, each group in ENH order. An ADMIN can turn on
+  only a built flag: the screen disables the toggle and `BackofficeSettingsController` refuses
+  a crafted request with a message, so the table never shows on a flag that changes nothing; a
+  flag left on (by hand in the database) can always be turned off. The service contract above
+  is unchanged (`FeatureFlagService.toggle` and the overrides still accept any key).
+
 ## Consequences
 
 * M1 ships with the complete flag table so the owner sees the whole M2 menu off from day
@@ -109,4 +121,6 @@ are added by stage 3 with the publisher and a test that each named event is publ
   Q-14/Q-32/Q-33/Q-34/Q-44 row.
 * ADR 0020 (table conventions), ADR 0002 (ADMIN-only routes), ADR 0026 (pricing, M2).
 * `V008__feature_flags_and_audit.sql`, `V009__seeds.sql`; `platform.flags.FeatureFlag`,
-  `FeatureFlagRepository`; `FeatureFlagSeedIT`, `PhaseOneEntitiesIT`.
+  `FeatureFlagRepository`; `FeatureFlagSeedIT`, `PhaseOneEntitiesIT`; the screen:
+  `BackofficeSettingsController`, `backoffice/settings.html`, `BackofficeSettingsIT`,
+  `FlagDescriptionsTest`.

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import it.logisticasanchez.web.auth.StaffRole;
@@ -15,7 +16,10 @@ import it.logisticasanchez.web.platform.flags.FeatureFlagService;
 import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.support.AbstractPostgresIT;
 import it.logisticasanchez.web.support.StaffTestData;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,15 +28,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.MessageSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.util.HtmlUtils;
 
 /**
  * «Impostazioni» (ADMIN only; ADR 0025, 0016, 0003): the home shows the section for an ADMIN and
- * not for an OPERATOR, who gets 403 on every settings route; a flag toggle writes the row and the
- * audit entry; the report recipients allow-list is added to and removed from with audit; a staff
- * account created here gets its set-password link through the outbox (EML-S1) and never a password.
+ * not for an OPERATOR, who gets 403 on every settings route; the flags table says what each flag
+ * does and whether it is built (built ones first; one not built cannot be turned on, one left on
+ * can be turned off), and a toggle writes the row and the audit entry; the report recipients
+ * allow-list is added to and removed from with audit; a staff account created here gets its
+ * set-password link through the outbox (EML-S1) and never a password.
  */
 @Tag("ADM-01")
 @Tag("ADM-09")
@@ -55,6 +63,9 @@ class BackofficeSettingsIT extends AbstractPostgresIT {
 
     @Autowired
     private JdbcTemplate jdbc;
+
+    @Autowired
+    private MessageSource messages;
 
     private StaffUser admin;
     private MockHttpSession adminSession;
@@ -111,20 +122,83 @@ class BackofficeSettingsIT extends AbstractPostgresIT {
     }
 
     @Test
-    void anAdminTogglesAFlagAndTheChangeIsAudited() throws Exception {
-        FlagKey key = FlagKey.ofKey("admin.dashboard").orElseThrow();
+    void theFlagsScreenSaysWhatEachFlagDoesAndListsTheBuiltOnesFirst() throws Exception {
         String page = mvc.perform(get("/gestione/impostazioni/").session(adminSession))
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
-        assertThat(page).contains("data-flag=\"admin.dashboard\"").doesNotContain(">Attiva</span>");
+        String text = HtmlUtils.htmlUnescape(page);
+        List<Integer> builtRows = new ArrayList<>();
+        List<Integer> otherRows = new ArrayList<>();
+        for (FlagKey key : FlagKey.values()) {
+            String row = "data-flag=\"" + key.key() + "\" data-built=\"" + key.built() + "\"";
+            assertThat(page).as("row of %s", key.key()).contains(row);
+            assertThat(text)
+                    .as("description of %s", key.key())
+                    .contains(messages.getMessage("backoffice.settings.flag." + key.key(), null, Locale.ITALIAN));
+            (key.built() ? builtRows : otherRows).add(page.indexOf(row));
+        }
+        if (!builtRows.isEmpty() && !otherRows.isEmpty()) {
+            assertThat(builtRows.stream().max(Integer::compare).orElseThrow())
+                    .as("built flags come first")
+                    .isLessThan(otherRows.stream().min(Integer::compare).orElseThrow());
+        }
+        assertThat(page).as("every flag is off").doesNotContain(">Attiva</span>");
+        FlagKey notBuilt = Arrays.stream(FlagKey.values())
+                .filter(k -> !k.built())
+                .findFirst()
+                .orElseThrow();
+        String rowHtml = page.substring(page.indexOf("data-flag=\"" + notBuilt.key() + "\""));
+        rowHtml = rowHtml.substring(0, rowHtml.indexOf("</tr>"));
+        assertThat(rowHtml).contains("Non ancora sviluppata").contains("disabled");
+        for (FlagKey key : FlagKey.values()) {
+            if (key.built()) {
+                String built = page.substring(page.indexOf("data-flag=\"" + key.key() + "\""));
+                assertThat(built.substring(0, built.indexOf("</tr>")))
+                        .contains(">Disponibile<")
+                        .doesNotContain("disabled");
+            }
+        }
+    }
+
+    @Test
+    void aFlagNotBuiltYetCannotBeTurnedOnButOneLeftOnCanBeTurnedOffWithAudit() throws Exception {
+        FlagKey key = Arrays.stream(FlagKey.values())
+                .filter(k -> !k.built())
+                .findFirst()
+                .orElseThrow();
+        // The audit log is append-only and outlives the test database's earlier runs: count from here.
+        String toggles = "select count(*) from audit_log where action = 'flag.toggle' and entity_ref = ?";
+        long before = jdbc.queryForObject(toggles, Long.class, key.key());
         mvc.perform(post("/gestione/impostazioni/flag")
                         .session(adminSession)
                         .with(csrf())
                         .param("chiave", key.key())
                         .param("attiva", "1"))
-                .andExpect(status().is3xxRedirection());
-        assertThat(flags.isEnabled(key)).isTrue();
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute(
+                                "flashError", org.hamcrest.Matchers.containsString("non è ancora sviluppata")));
+        assertThat(flags.isEnabled(key)).isFalse();
+        assertThat(jdbc.queryForObject(toggles, Long.class, key.key())).isEqualTo(before);
+
+        // A flag turned on before it could be refused (or by hand in the database) can still be turned off.
+        jdbc.update("update feature_flag set enabled = true where key = ?", key.key());
+        flags.evictCache();
+        String page = mvc.perform(get("/gestione/impostazioni/").session(adminSession))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String row = page.substring(page.indexOf("data-flag=\"" + key.key() + "\""));
+        assertThat(row.substring(0, row.indexOf("</tr>"))).contains(">Spegni<").doesNotContain("disabled");
+        mvc.perform(post("/gestione/impostazioni/flag")
+                        .session(adminSession)
+                        .with(csrf())
+                        .param("chiave", key.key())
+                        .param("attiva", "0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("flash", org.hamcrest.Matchers.containsString("disattivata")));
+        assertThat(flags.isEnabled(key)).isFalse();
         assertThat(jdbc.queryForObject("select updated_by from feature_flag where key = ?", Long.class, key.key()))
                 .isEqualTo(admin.getId());
         assertThat(jdbc.queryForObject(
@@ -132,14 +206,15 @@ class BackofficeSettingsIT extends AbstractPostgresIT {
                         Long.class,
                         admin.getId(),
                         key.key()))
+                .as("the admin of this test is new: only its turning off is logged")
                 .isEqualTo(1);
+        assertThat(jdbc.queryForObject(toggles, Long.class, key.key())).isEqualTo(before + 1);
         mvc.perform(post("/gestione/impostazioni/flag")
                         .session(adminSession)
                         .with(csrf())
-                        .param("chiave", key.key())
-                        .param("attiva", "0"))
-                .andExpect(status().is3xxRedirection());
-        assertThat(flags.isEnabled(key)).isFalse();
+                        .param("chiave", "pricing.typo")
+                        .param("attiva", "1"))
+                .andExpect(status().is4xxClientError());
     }
 
     @Test
