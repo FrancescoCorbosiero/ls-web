@@ -1264,6 +1264,29 @@ a.tile:hover {
 .input-group > .select {
   flex: 1 1 220px;
 }
+/* ENH-05: the tracking states with their dates and the delivery day, under the steps. */
+.tracking-history {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+.delivery-day {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 12px;
+}
+.delivery-day .label {
+  color: var(--mute);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.delivery-day .small {
+  flex-basis: 100%;
+}
 /* A cell with several lines (name, address): one block, long values wrap on a phone card. */
 .data-table .cell-block {
   min-width: 0;

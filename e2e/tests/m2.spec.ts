@@ -4,7 +4,7 @@ import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
 /**
- * M2.1 end to end (ADR 0025, 0033): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2.1 end to end (ADR 0025, 0033, 0034): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -182,11 +182,53 @@ test("[ENH-07] the staff use the customer's address book for an order by phone",
   await expect(staffPage.getByLabel('Salva il destinatario nella rubrica del cliente')).toBeVisible();
 });
 
-test('[NFR-01] the address book screens pass axe and fit a phone', async () => {
+test('[ENH-05] the admin turns on the tracking history and the e-mails at every change', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  for (const key of ['tracking.history', 'tracking.notifyCustomer']) {
+    await expect(staffPage.locator(`tr[data-flag="${key}"]`)).toContainText('Disponibile');
+    await setFlag(key, true);
+  }
+});
+
+test('[ENH-05] a tracking change e-mails the customer and shows in the order timeline', async () => {
+  await staffPage.goto('/gestione/ordini/?codice=TEST-0002');
+  const row = staffPage.locator('tr', { hasText: 'TEST-0002' });
+  await row.getByRole('link', { name: 'Dettaglio' }).click();
+  await staffPage.locator('#stato').selectOption('2');
+  await staffPage.getByRole('button', { name: 'Imposta stato' }).click();
+  await expect(staffPage.locator('#tracking')).toContainText('Transito');
+
+  const mail = await waitForMail({ to: seedCustomer.email, subject: /Aggiornamento spedizione N\. TEST-0002: In transito/ });
+  expect(mail.body).toContain('Consegna prevista (indicativa)');
+
+  await customerPage.goto('/area-clienti/ordini/TEST-0002/');
+  const timeline = customerPage.locator('[data-tracking-timeline]');
+  await expect(timeline).toContainText('Presa in carico');
+  await expect(timeline).toContainText('In transito');
+  await expect(customerPage.locator('[data-delivery-day]')).toContainText('Consegna prevista');
+});
+
+test('[ENH-05] public tracking shows the states with their dates and the delivery day, nothing personal', async ({ request }) => {
+  const api = await request.post('/mono/api/order/trace/state', { data: { codice: 'TEST-0002' } });
+  const answer = await api.json();
+  expect(Object.keys(answer).sort()).toEqual(['eta', 'events', 'status', 'updatedAt']);
+  expect(answer.status).toBe('Transito');
+  expect(answer.events[0]).toMatchObject({ status: 'Transito' });
+  expect(JSON.stringify(answer)).not.toContain('Destinatario Due');
+
+  await customerPage.goto('/tracking/?code=TEST-0002');
+  const result = customerPage.locator('[data-track-result]');
+  await expect(result).toContainText('In transito');
+  await expect(result).toContainText('Consegna prevista');
+  await expect(result.locator('ol.events li')).toHaveCount(2);
+});
+
+test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
     [customerPage, '/area-clienti/profilo/rubrica/nuovo'],
     [customerPage, '/area-clienti/ordini/nuovo/'],
+    [customerPage, '/area-clienti/ordini/TEST-0002/'],
     [staffPage, '/gestione/ordini/nuovo'],
   ];
   for (const [page, path] of screens) {

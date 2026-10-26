@@ -9,6 +9,7 @@ import it.logisticasanchez.web.platform.flags.FeatureFlags;
 import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
+import it.logisticasanchez.web.tracking.DeliveryEstimate;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import it.logisticasanchez.web.tracking.TrackingState;
 import java.util.List;
@@ -28,7 +29,9 @@ import org.springframework.web.bind.annotation.RequestParam;
  * tracking, amount once approved) filtered by those groups, and the detail page by code or
  * temporary code with the tracking steps and, while the order is pending, «Modifica» and
  * «Annulla» (CUS-07); another customer's code is a 404. A pending or declined customer sees its
- * status here and no «Nuovo ordine» (CUS-03).
+ * status here and no «Nuovo ordine» (CUS-03). With {@code tracking.history} on (ENH-05, ADR 0034)
+ * the detail of a confirmed order also lists its tracking states with their dates and the
+ * delivery day: the indicative estimate from the recipient's CAP, or the day it was delivered.
  */
 @Controller
 public class CustomerOrdersController {
@@ -45,18 +48,21 @@ public class CustomerOrdersController {
     private final TrackingCatalog catalog;
     private final CustomerPasswordService passwords;
     private final FeatureFlags flags;
+    private final DeliveryEstimate estimates;
 
     public CustomerOrdersController(
             OrderService orders,
             CustomerService customers,
             TrackingCatalog catalog,
             CustomerPasswordService passwords,
-            FeatureFlags flags) {
+            FeatureFlags flags,
+            DeliveryEstimate estimates) {
         this.orders = orders;
         this.customers = customers;
         this.catalog = catalog;
         this.passwords = passwords;
         this.flags = flags;
+        this.estimates = estimates;
     }
 
     @GetMapping(OrderRoutes.LIST)
@@ -99,6 +105,21 @@ public class CustomerOrdersController {
         model.addAttribute("order", order);
         model.addAttribute("selfService", orders.customerSelfService());
         model.addAttribute("repeatEnabled", flags.isEnabled(FlagKey.ORDERS_REPEAT)); // ENH-07
+        // ENH-05: the tracking timeline and the delivery day, null while the flag is off
+        boolean history = flags.isEnabled(FlagKey.TRACKING_HISTORY) && order.isApproved();
+        model.addAttribute("trackingTimeline", history ? orders.trackingHistory(order.id()) : null);
+        model.addAttribute(
+                "deliveryDay",
+                history
+                        ? estimates
+                                .deliveryDay(
+                                        order.trackingStateId(),
+                                        order.recipient().postalCode(),
+                                        order.approvedAt(),
+                                        order.trackingUpdatedAt())
+                                .orElse(null)
+                        : null);
+        model.addAttribute("delivered", order.trackingStateId() == TrackingState.CONSEGNATO);
         model.addAttribute(
                 "steps",
                 catalog.states().stream()

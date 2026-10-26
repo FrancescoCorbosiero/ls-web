@@ -1883,3 +1883,44 @@ rubrica.», «Il destinatario non è stato salvato nella rubrica: ha già il num
 documento di trasporto e controlla il resto.». Back office: «Ripeti ordine», «Mostra la rubrica
 del cliente», «Salva il destinatario nella rubrica del cliente», «La rubrica del cliente è vuota:
 spunta «Salva il destinatario nella rubrica del cliente» per ritrovarlo la prossima volta.».
+
+## Step I — M2.1 item 2: ENH-05, tracking e-mails, timeline and delivery day (2026-10-26)
+
+The owner's item 2: «an e-mail to the customer at every tracking state change (through the
+outbox, once per transition; PRESA is already covered by the approval e-mail and CONSEGNATO by
+EML-09); a timeline with dates in the customer's order detail and on public tracking, within the
+TRK-03 limits; an indicative estimated delivery date from the recipient's CAP, using the
+DeliveryZones dataset and working days from pickup.» ADR 0034.
+
+### What was built
+
+* `tracking.notifyCustomer`: `orders.TrackingUpdateNotice` decides, `OrderService.setTrackingState`
+  queues EML-10 «Aggiornamento spedizione N. {codice}: {stato}» in the event's transaction for
+  TRANSITO, TERMINAL_DEST and ASSEGNATO (not PRESA, CONSEGNATO, NON_GESTITO; nothing when a state
+  is set again). Migration `V017__tracking_update_email.sql` (`ck_email_outbox_kind` accepts
+  `EML-10`).
+* `tracking.history`: the public answer adds `eta` and `events` `{time, status, location}`,
+  newest first (`TrackingLookupService.history`, `CompatApiController`); the customer's order
+  detail shows under «Dove si trova» the delivery day and the states with their dates.
+* `tracking.DeliveryEstimate`: zone 1/2/3 of the CAP widget's dataset as 1/2/3 working days after
+  the Europe/Rome day of the approval (Monday–Friday, Italian national holidays with Easter
+  Monday); none for minor islands, the Venice lagoon or an unknown CAP; the day of delivery once
+  CONSEGNATO. `ItalianFormats.formatLongDate` («martedì 4 marzo 2025»).
+* `FlagKey.built()` true for both flags; ADR 0025 dated line; notes in ADR 0010 and 0015.
+* Tests: `DeliveryEstimateTest` (26), `TrackingHistoryIT` (4, flags on: allow-list and no
+  personal data, delivery day, timeline, one e-mail per change), `TrackingHistoryOffIT` (flag off
+  = M1), schema counts (17 migrations); E2E `m2.spec.ts`: the ADMIN turns the flags on, a change
+  to «In transito» e-mails the seeded customer, the order detail and `/tracking/` show the
+  history and the delivery day, axe on the order detail.
+
+### New Italian texts for the owner's review
+
+E-mail EML-10: subject «Aggiornamento spedizione N. {codice}: In transito» (or «Arrivata al
+terminal di destinazione», «Affidata al mezzo per la consegna»); title «Aggiornamento sulla
+spedizione N. {codice}: {stato}»; «La spedizione è in viaggio verso il terminal della zona di
+destinazione.», «La spedizione è arrivata al terminal più vicino al destinatario ed è pronta per
+la consegna.», «La spedizione è stata affidata al mezzo che effettua la consegna.»; table
+«Spedizione» (Codice, Stato, Destinatario, Città, Codice documento trasporto, «Consegna prevista
+(indicativa)»); «Ti scriviamo a ogni passaggio della spedizione; alla consegna ricevi la
+conferma.»; button «Traccia la spedizione». Customer area: «Consegna prevista», «Consegnata»,
+«Indicativa: dal CAP del destinatario, in giorni lavorativi dal ritiro.».

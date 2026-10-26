@@ -23,6 +23,7 @@ feature flags: `docs/adr/0025-feature-flags.md`.
 | `V014__remembered_sign_in.sql` | `remembered_sign_in`: the devices on which a customer stays signed in for 60 days after a sign-in link (owner decision of 2026-10-25, ADR 0031) |
 | `V015__customer_password.sql` | `customer_user.password_hash`, `password_changed_at`: customers may sign in with e-mail and password (owner decision of 2026-10-25, ADR 0032) |
 | `V016__customer_address_book.sql` | `customer_address`: the address book of saved recipients (ENH-07, flag `customers.addressBook`; ADR 0033) |
+| `V017__tracking_update_email.sql` | `email_outbox.kind` also accepts `EML-10`, the tracking update e-mail (ENH-05, flag `tracking.notifyCustomer`; ADR 0034) |
 
 Rules for the next migration: no `legacy_*`, `*_raw` or `data_quality` column (owner
 decision Q-55, no data migration); no `INSERT` into `staff_user`, `customer` or

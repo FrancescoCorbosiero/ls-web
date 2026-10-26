@@ -107,6 +107,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
   0033): the address book of saved recipients (profile, customer and staff order forms) and
   «Ordina di nuovo» / «Ripeti ordine». Flag-on tests `AddressBookIT`, «flag off = M1»
   `AddressBookOffIT`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-05, `tracking.history` and `tracking.notifyCustomer` built** (M2.1, item 2;
+  ADR 0034): the states with their dates and the delivery day on public tracking and in the
+  customer area, EML-10 at each change to TRANSITO, TERMINAL_DEST or ASSEGNATO. Flag-on tests
+  `TrackingHistoryIT`, «flag off = M1» `TrackingHistoryOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 

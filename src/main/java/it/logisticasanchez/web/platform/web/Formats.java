@@ -15,6 +15,11 @@ public final class Formats {
         return ItalianFormats.formatDateTime(instant);
     }
 
+    /** A day written out, «giovedì 29 ottobre 2026» (ENH-05). */
+    public String longDate(java.time.LocalDate day) {
+        return ItalianFormats.formatLongDate(day);
+    }
+
     public String number(BigDecimal value, int decimals) {
         return ItalianFormats.formatNumber(value, decimals);
     }

@@ -27,7 +27,8 @@ personal data (TRK-03).
   the state has changed at least once. Nothing else in M1: the TRK-03 allow-list is
   `{status, updatedAt}` today, `eta`, origin/destination city and `events {time, status,
   location}` may follow with ENH-05; names, addresses, phones, notes, DDT and document links
-  never (`CompatApiIT` checks the keys and the absence of the synthetic order's data).
+  never (`CompatApiIT` checks the keys and the absence of the synthetic order's data). *2026-10-26:*
+  ENH-05 adds `eta` and `events` with `tracking.history` on (ADR 0034, `TrackingHistoryIT`).
 * **Matching** (`ShipmentCode`, `TrackingLookupService`): every whitespace removed from the input
   and from the stored code (`regexp_replace(code, '\s', '', 'g')`), then compared
   case-insensitively by default — the Q-03 seam is `ls.tracking.match.case-insensitive`.
