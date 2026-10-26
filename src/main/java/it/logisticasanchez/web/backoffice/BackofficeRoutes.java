@@ -2,7 +2,7 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
 
-/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12). */
+/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035). */
 public final class BackofficeRoutes {
 
     public static final String HOME = AuthRoutes.BACKOFFICE;
@@ -14,6 +14,8 @@ public final class BackofficeRoutes {
     public static final String CUSTOMER_APPROVE = CUSTOMER + "approva";
     public static final String CUSTOMER_DECLINE = CUSTOMER + "rifiuta";
     public static final String CUSTOMER_EDIT = CUSTOMER + "modifica";
+    /** ENH-08 (admin.exports, ADR 0035): the list as a CSV file. */
+    public static final String CUSTOMERS_EXPORT = CUSTOMERS + "esporta";
 
     public static final String ORDERS = HOME + "ordini/";
     public static final String ORDERS_PENDING = ORDERS + "in-approvazione/";
@@ -25,8 +27,12 @@ public final class BackofficeRoutes {
     public static final String ORDER_NOTE = ORDER + "note";
     public static final String ORDER_EDIT = ORDER + "modifica";
     public static final String ORDER_CANCEL = ORDER + "annulla";
+    /** ENH-08 (admin.exports, ADR 0035): the list as a CSV file, with the same filters. */
+    public static final String ORDERS_EXPORT = ORDERS + "esporta";
 
     public static final String TRACKING = HOME + "tracking/";
+    /** ENH-15 (orders.bulkTracking, ADR 0035): one state on many codes. */
+    public static final String TRACKING_BULK = TRACKING + "in-blocco";
 
     public static final String REPORTS = HOME + "report/";
 

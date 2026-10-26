@@ -3,6 +3,8 @@ package it.logisticasanchez.web.backoffice;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
 import it.logisticasanchez.web.orders.OrderService;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
@@ -31,10 +33,12 @@ public class BackofficeCustomersController {
 
     private final CustomerService customers;
     private final OrderService orders;
+    private final FeatureFlags flags;
 
-    public BackofficeCustomersController(CustomerService customers, OrderService orders) {
+    public BackofficeCustomersController(CustomerService customers, OrderService orders, FeatureFlags flags) {
         this.customers = customers;
         this.orders = orders;
+        this.flags = flags;
     }
 
     @GetMapping(BackofficeRoutes.CUSTOMERS_PENDING)
@@ -52,6 +56,7 @@ public class BackofficeCustomersController {
         Page<CustomerView> result = customers.search(query, page, PAGE_SIZE);
         model.addAttribute("q", query == null ? "" : query.strip());
         model.addAttribute("page", result);
+        model.addAttribute("exportEnabled", flags.isEnabled(FlagKey.ADMIN_EXPORTS)); // ENH-08, ADR 0035
         return "backoffice/customers";
     }
 

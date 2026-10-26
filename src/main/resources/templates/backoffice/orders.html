@@ -3,7 +3,9 @@
   «Ordini» (ADM-05; chapter 04 §3.5 columns; fixes CMS-26: server-side pagination, filters by state,
   tracking state, customer and submission dates, search by code; no six-month window; ADR 0029: the
   states as tabs, the other filters in one compact form, rows as cards on a phone). The row
-  fragments orderColumns/orderCells are shared with orders-pending.html.
+  fragments orderColumns/orderCells are shared with orders-pending.html. ADR 0035: with
+  admin.dashboard on the text field searches codes, recipient, city, DDT and customer; with
+  admin.exports on, «Esporta CSV» downloads the filtered list.
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -21,6 +23,7 @@
         <p class="lede" th:text="#{backoffice.orders.lead}">Cerca per codice, filtra per stato, tracking, cliente e date.</p>
       </div>
       <div class="page-actions">
+        <a class="btn btn-light" th:if="${exportEnabled}" data-export th:title="#{backoffice.export.hint}" th:href="@{/gestione/ordini/esporta(stato=${filters['stato']}, tracking=${filters['tracking']}, cliente=${filters['cliente']}, da=${filters['da']}, a=${filters['a']}, codice=${filters['codice']})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg><span th:text="#{backoffice.export.csv}">Esporta CSV</span></a>
         <a class="btn" href="/gestione/ordini/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.orders.new}">Nuovo ordine</span></a>
       </div>
     </div>
@@ -39,8 +42,8 @@
       <input type="hidden" name="stato" th:value="${filters['stato']}">
       <div class="fields">
         <div class="field span-2">
-          <label class="label" for="codice" th:text="#{backoffice.orders.filter.code}">Codice</label>
-          <input class="input" id="codice" name="codice" type="search" maxlength="64" th:value="${filters['codice']}" th:placeholder="#{backoffice.orders.filter.codeHint}">
+          <label class="label" for="codice" th:text="${freeSearch} ? #{backoffice.orders.filter.search} : #{backoffice.orders.filter.code}">Codice</label>
+          <input class="input" id="codice" name="codice" type="search" maxlength="64" th:value="${filters['codice']}" th:placeholder="${freeSearch} ? #{backoffice.orders.filter.searchHint} : #{backoffice.orders.filter.codeHint}">
         </div>
         <div class="field">
           <label class="label" for="tracking" th:text="#{backoffice.orders.filter.tracking}">Tracking</label>

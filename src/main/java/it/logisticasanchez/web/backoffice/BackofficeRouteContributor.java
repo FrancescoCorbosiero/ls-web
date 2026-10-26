@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 /**
  * Routes of the back office (ADR 0002, 0017, 0028): customers, orders (their creation, change and
  * cancellation included; an approved order only by an ADMIN, checked by the service), tracking and
- * reports for every staff session; settings, staff users and the privacy tools for ADMIN only.
+ * reports for every staff session, with the office tools of ADR 0035 (CSV exports, bulk tracking;
+ * 404 while their flag is off); settings, staff users and the privacy tools for ADMIN only.
  * Every one is a line of {@code route-matrix.tsv}.
  */
 @Component
@@ -34,7 +35,9 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.ORDER_EDIT,
                         BackofficeRoutes.ORDER_CANCEL,
                         BackofficeRoutes.TRACKING,
-                        BackofficeRoutes.REPORTS)
+                        BackofficeRoutes.REPORTS,
+                        BackofficeRoutes.CUSTOMERS_EXPORT,
+                        BackofficeRoutes.ORDERS_EXPORT)
                 .staff(
                         HttpMethod.POST,
                         BackofficeRoutes.CUSTOMER_NEW,
@@ -49,7 +52,8 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.ORDER_EDIT,
                         BackofficeRoutes.ORDER_CANCEL,
                         BackofficeRoutes.TRACKING,
-                        BackofficeRoutes.REPORTS)
+                        BackofficeRoutes.REPORTS,
+                        BackofficeRoutes.TRACKING_BULK)
                 .admin(
                         HttpMethod.GET,
                         BackofficeRoutes.SETTINGS,

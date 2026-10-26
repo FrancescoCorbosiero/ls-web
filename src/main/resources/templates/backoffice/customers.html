@@ -16,6 +16,7 @@
         <p class="lede" th:text="#{backoffice.customers.lead}">Tutti i clienti, i più recenti in alto.</p>
       </div>
       <div class="page-actions">
+        <a class="btn btn-light" th:if="${exportEnabled}" data-export th:title="#{backoffice.export.hint}" th:href="@{/gestione/clienti/esporta(q=${q})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg><span th:text="#{backoffice.export.csv}">Esporta CSV</span></a>
         <a class="btn" href="/gestione/clienti/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-plus"/></svg><span th:text="#{backoffice.customers.new}">Nuovo cliente</span></a>
       </div>
     </div>

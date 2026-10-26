@@ -44,6 +44,8 @@ GET	/gestione/	200	200	200	200
 GET	/gestione/clienti/	302	403	200	200
 GET	/gestione/clienti/in-approvazione/	302	403	200	200
 GET	/gestione/clienti/nuovo	302	403	200	200
+# ADR 0035 office tools: 404 for staff while admin.exports / orders.bulkTracking are off, as in this run.
+GET	/gestione/clienti/esporta	302	403	404	404
 POST	/gestione/clienti/nuovo	403	403	403	403
 GET	/gestione/clienti/{id}/	302	403	404|200	404|200
 GET	/gestione/clienti/{id}/approva	302	403	404|200	404|200
@@ -57,6 +59,7 @@ POST	/gestione/clienti/{id}/modifica	403	403	403	403
 GET	/gestione/ordini/	302	403	200	200
 GET	/gestione/ordini/in-approvazione/	302	403	200	200
 GET	/gestione/ordini/nuovo	302	403	200	200
+GET	/gestione/ordini/esporta	302	403	404	404
 POST	/gestione/ordini/nuovo	403	403	403	403
 GET	/gestione/ordini/{id}/	302	403	404|200	404|200
 GET	/gestione/ordini/{id}/approva	302	403	404|200	404|200
@@ -71,6 +74,7 @@ GET	/gestione/ordini/{id}/annulla	302	403	404|200|302	404|200|302
 POST	/gestione/ordini/{id}/annulla	403	403	403	403
 GET	/gestione/tracking/	302	403	200	200
 POST	/gestione/tracking/	403	403	403	403
+POST	/gestione/tracking/in-blocco	403	403	403	403
 GET	/gestione/report/	302	403	200	200
 POST	/gestione/report/	403	403	403	403
 GET	/gestione/impostazioni/	302	403	403	200
