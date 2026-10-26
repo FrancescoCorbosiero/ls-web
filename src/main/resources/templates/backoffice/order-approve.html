@@ -68,6 +68,7 @@
             <label class="label" for="importo" th:text="#{backoffice.orderApprove.amount}">Importo Totale (per cliente)</label>
             <input class="input" id="importo" name="importo" type="text" inputmode="decimal" maxlength="20" required autocomplete="off" th:value="${values['importo']}">
             <p class="field-hint" th:text="#{backoffice.orderApprove.amountHint}">In euro, con la virgola: per esempio 180,50.</p>
+            <p class="field-hint" th:if="${quote != null}" data-quote-amount th:text="#{backoffice.quote.amountFromQuote(${quote.code()}, ${quote.amountText()})}">Importo del preventivo PRV-00001: 180,50 €.</p>
           </div>
           <p class="form-actions span-all">
             <button type="submit" class="btn"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{backoffice.confirm.yes}">Conferma</span></button>

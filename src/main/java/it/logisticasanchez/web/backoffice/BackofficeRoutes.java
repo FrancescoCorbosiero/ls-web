@@ -2,7 +2,7 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
 
-/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036). */
+/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037). */
 public final class BackofficeRoutes {
 
     public static final String HOME = AuthRoutes.BACKOFFICE;
@@ -42,6 +42,13 @@ public final class BackofficeRoutes {
     public static final String LEAD = LEADS + "{id}/";
     public static final String LEAD_STATUS = LEAD + "stato";
     public static final String LEAD_LINK = LEAD + "collega";
+    /** ENH-20 (quotes.saved, ADR 0037): a saved quote prepared from a request. */
+    public static final String LEAD_QUOTE = LEAD + "preventivo";
+
+    public static final String QUOTES = HOME + "preventivi/";
+    public static final String QUOTE = QUOTES + "{id}/";
+    public static final String QUOTE_WITHDRAW = QUOTE + "ritira";
+    public static final String QUOTE_PDF = QUOTE + "pdf";
 
     public static final String SETTINGS = HOME + "impostazioni/";
     public static final String SETTINGS_FLAG = SETTINGS + "flag";

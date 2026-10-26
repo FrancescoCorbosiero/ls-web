@@ -3,7 +3,8 @@
   «I miei ordini» (CUS-05; ADR 0029): the home of the customer area. The status of a pending or
   declined customer (CUS-03; legacy «pendingFormText»), the counts of the orders waiting for the
   office, travelling and delivered, the list filtered by those groups (a table, cards on a phone)
-  and, while an order is pending, «Modifica» (CUS-07).
+  and, while an order is pending, «Modifica» (CUS-07). ENH-20 (ADR 0037): `openQuotes`, set by
+  quotes.QuoteNotices while quotes.saved is on, lists the saved quotes the customer can still order.
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -25,6 +26,16 @@
       </div>
     </div>
     <th:block th:replace="~{layout/private :: flash}"></th:block>
+
+    <div th:if="${openQuotes != null and !openQuotes.isEmpty()}" class="callout callout-info" role="status" data-open-quotes>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg>
+      <div>
+        <p class="strong" th:text="#{quotes.open.title}">Hai un preventivo da ordinare</p>
+        <ul class="plain-list">
+          <li th:each="q : ${openQuotes}" th:attr="data-quote=${q.code()}"><a th:href="@{/area-clienti/preventivi/{id}/ordina(id=${q.id})}" th:text="#{quotes.open.item(${q.code()}, ${q.amountText()}, ${q.validUntilText()})}">PRV-00001: 180,50 €, valido fino al 31/12/2026</a></li>
+        </ul>
+      </div>
+    </div>
 
     <div th:if="${passwordMissing}" class="callout callout-info" role="status" data-password-missing>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-info"/></svg>

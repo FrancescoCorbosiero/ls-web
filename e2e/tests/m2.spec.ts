@@ -5,7 +5,7 @@ import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
 /**
- * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036, 0037): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -332,6 +332,67 @@ test('[ENH-06] a quote request from the website becomes a customer and then an o
   await staffPage.locator('#transportDocumentCode').fill(`DDT-RICHIESTA-${stamp}`);
   await staffPage.getByRole('button', { name: "Inserisci l'ordine" }).click();
   await expect(staffPage.locator('[data-flash]')).toContainText('La richiesta del sito è segnata come vinta');
+});
+
+test('[ENH-20] the admin turns on the saved quotes', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="quotes.saved"]')).toContainText('Disponibile');
+  await setFlag('quotes.saved', true);
+});
+
+test('[ENH-20] a quote prepared from a request reaches the customer, who orders it', async ({ request, baseURL }) => {
+  // a quote request sent from the site with the seeded customer's e-mail
+  const sent = await request.post('/api/form', {
+    headers: { Origin: baseURL!, Accept: 'application/json' },
+    form: {
+      'form-name': 'preventivo',
+      servizio: 'pallet',
+      ritiro_cap: '20831',
+      ritiro_localita: 'Seregno',
+      consegna_cap: '10121',
+      consegna_localita: 'Torino',
+      destinatario: 'azienda',
+      tipo_pallet: 'eur',
+      numero: '1',
+      peso: '400',
+      altezza: '160',
+      nome: 'Referente Ditta Attiva',
+      azienda: 'Ditta Attiva S.r.l.',
+      email: seedCustomer.email,
+      telefono: '+39 333 000 0003',
+      contatto_preferito: 'email',
+      privacy: 'accettata',
+    },
+  });
+  expect(sent.status()).toBe(200);
+
+  await staffPage.goto('/gestione/richieste/?q=cliente.attivo');
+  await staffPage.locator('tr[data-lead]', { hasText: 'Referente Ditta Attiva' }).first().getByRole('link').first().click();
+  await staffPage.getByRole('button', { name: 'Collega la richiesta al cliente' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Richiesta collegata al cliente');
+  await staffPage.getByRole('link', { name: 'Prepara preventivo' }).click();
+  await expect(staffPage.locator('[name="line.0.heightCm"]')).toHaveValue('160');
+  await staffPage.locator('#amount').fill('145,00');
+  await staffPage.locator('#note').fill('IVA esclusa.');
+  await expectAccessible(staffPage);
+  await staffPage.getByRole('button', { name: 'Invia il preventivo' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Preventivo PRV-');
+  await expect(staffPage.locator('[data-section="quotes"]')).toContainText('Inviato');
+
+  const mail = await waitForMail({ to: seedCustomer.email, subject: /Il tuo preventivo PRV-/ });
+  await customerPage.goto(linkIn(mail, '/preventivi/'));
+  await expect(customerPage.locator('[data-quote-amount]')).toContainText('145,00');
+  await expectAccessible(customerPage);
+  await customerPage.getByRole('link', { name: 'Ordina il preventivo' }).click();
+  await expect(customerPage.locator('#city')).toHaveValue('Torino');
+  await expectAccessible(customerPage);
+  await customerPage.locator('#transportDocumentCode').fill(`DDT-PREVENTIVO-${stamp}`);
+  await customerPage.locator('#name').fill('Ricevente Torino S.r.l.');
+  await customerPage.locator('#addressLine').fill('Corso Francia 10');
+  await customerPage.locator('#province').fill('TO');
+  await customerPage.getByRole('button', { name: "Invia l'ordine" }).click();
+  await expect(customerPage).toHaveURL(/\/area-clienti\/ordini\/TEMP-[A-Za-z0-9]+\/$/);
+  await expect(customerPage.locator('[data-flash]')).toContainText('dal preventivo PRV-');
 });
 
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {

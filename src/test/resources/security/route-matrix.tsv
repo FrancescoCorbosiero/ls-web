@@ -39,6 +39,11 @@ GET	/area-clienti/ordini/{codice}/annulla	302	404	403	403
 POST	/area-clienti/ordini/{codice}/annulla	403	403	403	403
 # ENH-07 «Ordina di nuovo» (ADR 0033): 404 while orders.repeat is off; without a CSRF token every POST is 403.
 POST	/area-clienti/ordini/{codice}/ripeti	403	403	403	403
+# ENH-20 saved quotes (ADR 0037): the link's page and PDF are public, the order form needs a customer session; 404 while quotes.saved is off.
+GET	/preventivi/{token}	404	404	404	404
+GET	/preventivi/{token}/pdf	404	404	404	404
+GET	/area-clienti/preventivi/{id}/ordina	302	404	403	403
+POST	/area-clienti/preventivi/{id}/ordina	403	403	403	403
 GET	/gestione/	200	200	200	200
 # backoffice module (ADM-02…ADM-09, ADM-11, ADM-12, NFR-03; ADR 0017, 0028): staff screens, record editing; settings, staff users and privacy tools for ADMIN only.
 GET	/gestione/clienti/	302	403	200	200
@@ -82,6 +87,11 @@ GET	/gestione/richieste/	302	403	404	404
 GET	/gestione/richieste/{id}/	302	403	404	404
 POST	/gestione/richieste/{id}/stato	403	403	403	403
 POST	/gestione/richieste/{id}/collega	403	403	403	403
+# ADR 0037 saved quotes: 404 for staff while quotes.saved is off, as in this run.
+GET	/gestione/richieste/{id}/preventivo	302	403	404	404
+POST	/gestione/richieste/{id}/preventivo	403	403	403	403
+POST	/gestione/preventivi/{id}/ritira	403	403	403	403
+GET	/gestione/preventivi/{id}/pdf	302	403	404	404
 GET	/gestione/impostazioni/	302	403	403	200
 POST	/gestione/impostazioni/flag	403	403	403	403
 POST	/gestione/impostazioni/destinatari	403	403	403	403

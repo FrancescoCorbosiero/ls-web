@@ -340,6 +340,47 @@ public class OrderForm {
         return new Submission(content, model(kept, form.values(), Map.of()));
     }
 
+    /**
+     * ENH-20 (ADR 0037): only the lines, checked as {@link #validate} checks them — for a saved
+     * quote, which has no transport document nor recipient. {@code lines} is null when a row is
+     * refused or there is none; the model then carries the errors.
+     */
+    public LinesSubmission validateLines(Model form) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        List<Map<String, String>> kept = new ArrayList<>();
+        for (Row row : form.rows()) {
+            if (!row.isBlank()) {
+                kept.add(row.values());
+            }
+        }
+        List<OrderDraft.Line> lines = new ArrayList<>();
+        for (int i = 0; i < kept.size(); i++) {
+            OrderValidator.LineResult result = validator.line(kept.get(i));
+            if (result.valid()) {
+                OrderDraft.Line l = result.line();
+                lines.add(new OrderDraft.Line(
+                        i + 1L, l.kind(), l.heightCm(), l.lengthCm(), l.widthCm(), l.weightKg(), l.quantity()));
+            } else {
+                for (Map.Entry<String, String> e : result.errors().entrySet()) {
+                    errors.put("line." + i + "." + e.getKey(), e.getValue());
+                }
+            }
+        }
+        if (kept.isEmpty()) {
+            errors.put("lines", "orders.error.noLines");
+        }
+        List<Map<String, String>> rows = kept.isEmpty() ? new ArrayList<>(List.of(emptyRowValues())) : kept;
+        Model checked = model(rows, form.values(), errors);
+        return new LinesSubmission(errors.isEmpty() ? List.copyOf(lines) : null, checked);
+    }
+
+    /** The lines of {@link #validateLines}: null when refused. */
+    public record LinesSubmission(List<OrderDraft.Line> lines, Model model) {
+        public boolean valid() {
+            return lines != null;
+        }
+    }
+
     private Model model(List<Map<String, String>> rowValues, Map<String, String> values, Map<String, String> errors) {
         List<Row> rows = new ArrayList<>();
         BigDecimal weight = BigDecimal.ZERO.setScale(2);

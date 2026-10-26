@@ -121,6 +121,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
   ordine» filled from a request, the request WON when its order is saved. Flag-on tests
   `LeadsInboxIT`, «flag off = M1» `LeadsInboxOffIT`, `LeadStatusTest`, `LeadDraftsTest`, E2E
   `m2.spec.ts`.
+* **2026-10-26 — ENH-20, `quotes.saved` built** (ADR 0037; V018): «Prepara preventivo» on a
+  request linked to an active customer, EML-11 with the link (public page and PDF), «Ordina il
+  preventivo» in the customer area making a pending order with the quote's lines. Flag-on tests
+  `SavedQuotesIT`, «flag off = M1» `SavedQuotesOffIT`, `QuoteTokensTest`, E2E `m2.spec.ts`.
 
 ## Consequences
 

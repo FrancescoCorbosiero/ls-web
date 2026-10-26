@@ -10,6 +10,8 @@ import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
+import it.logisticasanchez.web.quotes.QuoteService;
+import it.logisticasanchez.web.quotes.QuoteView;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import java.util.Map;
 import java.util.Optional;
@@ -45,13 +47,19 @@ public class BackofficeOrdersController {
     private final TrackingCatalog catalog;
 
     private final FeatureFlags flags;
+    private final QuoteService quotes;
 
     public BackofficeOrdersController(
-            OrderService orders, CustomerService customers, TrackingCatalog catalog, FeatureFlags flags) {
+            OrderService orders,
+            CustomerService customers,
+            TrackingCatalog catalog,
+            FeatureFlags flags,
+            QuoteService quotes) {
         this.orders = orders;
         this.customers = customers;
         this.catalog = catalog;
         this.flags = flags;
+        this.quotes = quotes;
     }
 
     @GetMapping(BackofficeRoutes.ORDERS_PENDING)
@@ -86,7 +94,12 @@ public class BackofficeOrdersController {
 
     @GetMapping(BackofficeRoutes.ORDER_APPROVE)
     public String approvePage(@PathVariable("id") long id, Model model) {
-        return approveForm(model, order(id), Map.of(), null);
+        OrderView order = order(id);
+        // ENH-20 (ADR 0037): the amount of the quote the order was made from, to confirm or correct
+        Map<String, String> values = quoteOf(order)
+                .map(q -> Map.of("codice", "", "importo", ItalianFormats.formatNumber(q.amount(), 2)))
+                .orElse(Map.of());
+        return approveForm(model, order, values, null);
     }
 
     @PostMapping(BackofficeRoutes.ORDER_APPROVE)
@@ -237,10 +250,17 @@ public class BackofficeOrdersController {
         model.addAttribute("trackingError", trackingError);
         model.addAttribute("noteError", noteError);
         model.addAttribute("repeatEnabled", flags.isEnabled(FlagKey.ORDERS_REPEAT)); // ENH-07
+        model.addAttribute("quote", quoteOf(order).orElse(null)); // ENH-20
         return "backoffice/order";
     }
 
+    /** ENH-20: the saved quote the order was made from, while {@code quotes.saved} is on. */
+    private Optional<QuoteView> quoteOf(OrderView order) {
+        return flags.isEnabled(FlagKey.QUOTES_SAVED) ? quotes.forOrder(order.id()) : Optional.empty();
+    }
+
     private String approveForm(Model model, OrderView order, Map<String, String> values, String error) {
+        model.addAttribute("quote", quoteOf(order).orElse(null));
         model.addAttribute("order", order);
         model.addAttribute("values", values);
         model.addAttribute("error", error);
