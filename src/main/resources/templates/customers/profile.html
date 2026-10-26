@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Profile (CUS-06): read-only company data, «chiedi una modifica» to the office, login e-mail change by link, the password (ADR 0032). -->
+<!-- Profile (CUS-06): read-only company data, «chiedi una modifica» to the office, login e-mail change by link, the password (ADR 0032); with customers.addressBook on, the saved recipients (ENH-07, ADR 0033). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{customers.profile.title} + ' · ' + ${business.brandName}">Il tuo profilo · Logistica Sanchez</title>
@@ -15,6 +15,7 @@
         <h1 th:text="#{customers.profile.title}">Il tuo profilo</h1>
       </div>
     </div>
+    <th:block th:replace="~{layout/private :: flash}"></th:block>
     <p class="callout callout-info" role="status" th:if="${emailSent}" th:text="#{auth.customer.request.sent}">Ti abbiamo inviato un'email: segui il link per continuare</p>
     <p class="callout" role="alert" th:if="${emailInvalid}" th:text="#{customers.error.email}">Inserisci un indirizzo e-mail valido.</p>
     <div class="table-wrap">
@@ -35,6 +36,36 @@
     </div>
     <p th:text="#{customers.profile.changeHint}">I dati dell'azienda vengono modificati dal nostro ufficio: scrivici indicando cosa cambiare.</p>
     <p><a class="btn btn-light" th:href="'mailto:' + ${business.officeEmail} + '?subject=' + #{customers.profile.changeSubject(${customer.email})}" th:text="#{customers.profile.changeAction}">Chiedi una modifica</a></p>
+
+    <th:block th:if="${addresses != null}">
+      <h2 id="rubrica" th:text="#{customers.addressBook.title}">Rubrica dei destinatari</h2>
+      <p class="muted" th:text="#{customers.addressBook.lead}">I destinatari a cui spedisci più spesso: li scegli nel modulo d'ordine senza riscriverli.</p>
+      <p class="muted" th:if="${addresses.isEmpty()}" th:text="#{customers.addressBook.empty}">La rubrica è vuota. Aggiungi un destinatario qui, oppure spunta «Salva il destinatario nella rubrica» quando invii un ordine.</p>
+      <div class="data-table-wrap" th:if="${!addresses.isEmpty()}">
+        <table class="data-table stacked" data-table="address-book">
+          <thead>
+            <tr>
+              <th scope="col" th:text="#{orders.col.recipient}">Destinatario</th>
+              <th scope="col" th:text="#{customers.addressBook.contacts}">Contatti</th>
+              <th scope="col"><span class="visually-hidden" th:text="#{orders.line.actions}">Azioni</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="a : ${addresses}" th:attr="data-address=${a.id}">
+              <td th:attr="data-label=#{orders.col.recipient}"><div class="cell-block"><span class="strong" th:text="${a.name}">Destinatario</span><span class="sub" th:text="${a.addressOneLine()}">Via, CAP Città (PR)</span></div></td>
+              <td th:attr="data-label=#{customers.addressBook.contacts}"><div class="cell-block"><span th:text="${a.phone ?: '-'}">-</span><span class="sub" th:if="${a.email != null}" th:text="${a.email}">email</span></div></td>
+              <td class="row-actions">
+                <a class="btn btn-light btn-xs" th:href="@{/area-clienti/profilo/rubrica/{id}(id=${a.id})}" th:attr="aria-label=#{customers.addressBook.editNamed(${a.name})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+                <form class="inline-form" method="post" th:action="@{/area-clienti/profilo/rubrica/{id}/elimina(id=${a.id})}">
+                  <button type="submit" class="btn btn-light btn-xs" th:attr="aria-label=#{customers.addressBook.deleteNamed(${a.name})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-trash"/></svg><span th:text="#{customers.addressBook.delete}">Elimina</span></button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="form-actions mt-s" th:if="${addresses.size() < addressBookMax}"><a class="btn btn-light" href="/area-clienti/profilo/rubrica/nuovo"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{customers.addressBook.add}">Aggiungi destinatario</span></a></p>
+    </th:block>
 
     <h2 th:text="#{customers.profile.emailHeading}">Cambia l'indirizzo e-mail di accesso</h2>
     <p class="muted" th:text="#{customers.profile.emailLead}">Ti inviamo un link al nuovo indirizzo: il cambio avviene solo quando lo confermi da lì. L'indirizzo attuale riceve un avviso.</p>

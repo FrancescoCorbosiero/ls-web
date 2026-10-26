@@ -5,6 +5,8 @@ import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
@@ -42,16 +44,19 @@ public class CustomerOrdersController {
     private final CustomerService customers;
     private final TrackingCatalog catalog;
     private final CustomerPasswordService passwords;
+    private final FeatureFlags flags;
 
     public CustomerOrdersController(
             OrderService orders,
             CustomerService customers,
             TrackingCatalog catalog,
-            CustomerPasswordService passwords) {
+            CustomerPasswordService passwords,
+            FeatureFlags flags) {
         this.orders = orders;
         this.customers = customers;
         this.catalog = catalog;
         this.passwords = passwords;
+        this.flags = flags;
     }
 
     @GetMapping(OrderRoutes.LIST)
@@ -93,6 +98,7 @@ public class CustomerOrdersController {
         model.addAttribute("customer", customer);
         model.addAttribute("order", order);
         model.addAttribute("selfService", orders.customerSelfService());
+        model.addAttribute("repeatEnabled", flags.isEnabled(FlagKey.ORDERS_REPEAT)); // ENH-07
         model.addAttribute(
                 "steps",
                 catalog.states().stream()

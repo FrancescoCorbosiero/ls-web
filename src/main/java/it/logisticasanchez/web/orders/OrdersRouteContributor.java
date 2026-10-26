@@ -5,7 +5,7 @@ import it.logisticasanchez.web.platform.security.SecurityRoutes;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
-/** Routes of the orders module: the customer's list, detail, order form and its changes (CUS-07), all behind a customer session. */
+/** Routes of the orders module: the customer's list, detail, order form, its changes (CUS-07) and «Ordina di nuovo» (ENH-07), all behind a customer session. */
 @Component
 public class OrdersRouteContributor implements SecurityRouteContributor {
 
@@ -18,6 +18,11 @@ public class OrdersRouteContributor implements SecurityRouteContributor {
                         OrderRoutes.DETAIL,
                         OrderRoutes.EDIT,
                         OrderRoutes.CANCEL)
-                .customer(HttpMethod.POST, OrderRoutes.NEW + "**", OrderRoutes.EDIT, OrderRoutes.CANCEL);
+                .customer(
+                        HttpMethod.POST,
+                        OrderRoutes.NEW + "**",
+                        OrderRoutes.EDIT,
+                        OrderRoutes.CANCEL,
+                        OrderRoutes.REPEAT);
     }
 }

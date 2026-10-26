@@ -1829,3 +1829,57 @@ solo quando l'ufficio è pronto a usarle; le altre non sono ancora sviluppate.»
 «Sviluppo», «Disponibile», «Non ancora sviluppata», «Non ancora sviluppata: non si può
 attivare.», «La funzionalità «{chiave}» non è ancora sviluppata: non si può attivare.», and the
 25 one-line descriptions under `backoffice.settings.flag.*` in `messages.properties`.
+
+## Step H — M2.1 item 1: ENH-07, saved recipients and «Ordina di nuovo» (2026-10-26)
+
+The owner's item 1: «saved recipients per customer: pick one in the order form, "save this
+recipient", manage the list in the profile; staff can use the customer's address book when
+entering an order by phone (ADM-11); «Ordina di nuovo» on an order: opens the order form
+prefilled with lines, service, recipient and notes; a new transport document code is still
+required.» ADR 0033.
+
+### What was built
+
+* Migration `V016__customer_address_book.sql`: `customer_address` (the recipient fields of an
+  order, one entry per name, street and CAP, at most 200 per customer), in the `customers` module:
+  `CustomerAddress`, `AddressBookService` (list, find, create, update, delete, `remember` from an
+  order, `erase`), audit `address.create` / `.update` / `.delete` on the customer.
+* Profile: «Rubrica dei destinatari» (list, «Modifica», «Elimina», «Aggiungi destinatario»;
+  `AddressBookController`, `/area-clienti/profilo/rubrica/nuovo`, `/{id}`, `/{id}/elimina`).
+* Order forms (`orders.OrderAddressBook`): «Scegli dalla rubrica» + «Usa questo destinatario»
+  (server round trip; `/js/app.js` fills the fields at once), «Salva il destinatario nella
+  rubrica» (saved at the confirmation of a new order, or when a change is saved; the summary says
+  so). Staff: «Mostra la rubrica del cliente» after choosing the customer, «Salva il destinatario
+  nella rubrica del cliente».
+* «Ordina di nuovo» on the customer's order detail (`POST /area-clienti/ordini/{codice}/ripeti`,
+  any state, while the customer can order) and «Ripeti ordine» on the back-office order page
+  (`/gestione/ordini/nuovo?ripeti={id}`): lines, accessory service, notes and recipient copied,
+  transport document and «Numero colli» left empty.
+* Privacy: the export lists `rubricaDestinatari` when there are entries; the anonymisation
+  deletes them (and the audit details go with the customer's).
+* `FlagKey.built()` true for `customers.addressBook` and `orders.repeat`; ADR 0025 dated line.
+* Tests: `AddressBookIT` (6, flags on), `AddressBookOffIT` (2, flag off = M1),
+  `AddressBookServiceTest`, `BackofficeSettingsIT` (a built flag on and off with audit), schema
+  files, route matrix, `MigrationsIT`/`ApplicationContextIT` (16 migrations); E2E
+  `e2e/tests/m2.spec.ts` (the ADMIN turns the flags on from «Impostazioni», the customer and the
+  staff use the book and «Ordina di nuovo», axe at desktop and phone width, flags off again).
+  `PhaseOneEntitiesIT.emailOutboxRoundTrip` no longer depends on how many e-mails other classes
+  leave queued. `tools/parity-matrix.py` lists the ENH rows that have tests.
+
+### New Italian texts for the owner's review
+
+Profile: «Rubrica dei destinatari», «I destinatari a cui spedisci più spesso: nel modulo d'ordine
+li scegli senza riscriverli.», «La rubrica è vuota. Aggiungi un destinatario qui, oppure spunta
+«Salva il destinatario nella rubrica» quando invii un ordine.», «Contatti», «Aggiungi
+destinatario», «Elimina», «Nuovo destinatario», «Modifica il destinatario», «Torna alla rubrica»,
+«Salva il destinatario», «Questo destinatario è già nella rubrica.», «Destinatario «…» salvato
+nella rubrica.», «… aggiornato.», «… eliminato dalla rubrica.», «La rubrica può contenere al
+massimo 200 destinatari: eliminane qualcuno.». Order form: «Scegli dalla rubrica», «Destinatari
+salvati», «Usa questo destinatario», «Scegli un destinatario della rubrica.», «La rubrica è vuota:
+spunta «Salva il destinatario nella rubrica» qui sotto per ritrovarlo la prossima volta.», «Salva
+il destinatario nella rubrica», «Quando invii l'ordine, il destinatario viene salvato nella
+rubrica.», «Il destinatario non è stato salvato nella rubrica: ha già il numero massimo di voci
+(200).». «Ordina di nuovo», «Il modulo riporta i dati dell'ordine {codice}: inserisci il nuovo
+documento di trasporto e controlla il resto.». Back office: «Ripeti ordine», «Mostra la rubrica
+del cliente», «Salva il destinatario nella rubrica del cliente», «La rubrica del cliente è vuota:
+spunta «Salva il destinatario nella rubrica del cliente» per ritrovarlo la prossima volta.».

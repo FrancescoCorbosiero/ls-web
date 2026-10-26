@@ -46,6 +46,17 @@ customer source varchar NOT NULL
 customer created_at timestamptz NOT NULL
 customer updated_at timestamptz NOT NULL
 customer version int4 NOT NULL
+customer_address id int8 NOT NULL
+customer_address customer_id int8 NOT NULL
+customer_address name varchar NOT NULL
+customer_address address_line varchar NOT NULL
+customer_address city varchar NOT NULL
+customer_address province varchar NOT NULL
+customer_address postal_code varchar NOT NULL
+customer_address phone varchar NULL
+customer_address email varchar NULL
+customer_address created_at timestamptz NOT NULL
+customer_address updated_at timestamptz NOT NULL
 customer_pending_registration customer_id int8 NOT NULL
 customer_pending_registration company_name varchar NOT NULL
 customer_pending_registration address_line varchar NOT NULL

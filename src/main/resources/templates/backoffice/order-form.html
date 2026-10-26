@@ -3,7 +3,9 @@
   Staff order form (ADM-11; ADR 0028, 0029): «Nuovo ordine» for an ACTIVE customer (the sender is
   chosen here; the form key makes a double submission harmless) or «Modifica» of an order on the
   version it showed; for a confirmed order (ADMIN only) also the definitive code and the amount.
-  The sections and totals are the customer's form (orders/form.html).
+  The sections and totals are the customer's form (orders/form.html). ENH-07 (ADR 0033): with
+  customers.addressBook on, «Mostra la rubrica del cliente» reloads the page with the chosen
+  customer's saved recipients; «Ripeti ordine» arrives here filled (orders.repeat).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -22,6 +24,7 @@
         <p class="lede" th:text="${order == null} ? #{backoffice.orderForm.newLead} : (${order.isApproved()} ? #{backoffice.orderForm.approvedLead} : #{backoffice.orderForm.pendingLead})">Inserisci un ordine per conto di un cliente.</p>
       </div>
     </div>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
     <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
     <div class="callout callout-error" role="alert" th:if="${form.hasErrors() or customerError != null}" data-form-errors>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
@@ -46,6 +49,7 @@
               </select>
               <p class="field-error" th:if="${customerError != null}" th:text="#{${customerError}}">Errore</p>
               <p class="field-hint" th:text="#{backoffice.orderForm.customerHint}">Solo i clienti attivi. Il ritiro avviene all'indirizzo registrato del cliente.</p>
+              <p class="form-actions" th:if="${addressBookEnabled}"><button type="submit" class="btn btn-light btn-sm" name="action" value="showAddressBook" formnovalidate th:text="#{backoffice.orderForm.showAddressBook}">Mostra la rubrica del cliente</button></p>
             </div>
           </div>
           <dl class="facts" th:if="${order != null}">

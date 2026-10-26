@@ -200,7 +200,10 @@ public class BackofficeSettingsController {
                     "Dati anonimizzati: "
                             + (outcome.customerId() == null ? "nessun cliente" : "cliente n. " + outcome.customerId())
                             + ", " + outcome.leads() + " richieste dal sito, " + outcome.outboxRows() + " e-mail, "
-                            + outcome.notes() + " note interne.");
+                            + outcome.notes() + " note interne"
+                            + (outcome.addresses() > 0
+                                    ? ", " + outcome.addresses() + " destinatari in rubrica."
+                                    : "."));
         } catch (RuleViolationException e) {
             return privacyPage(model, ItalianFormats.trim(email), null, e.detail());
         }

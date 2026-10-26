@@ -21,6 +21,10 @@ import org.springframework.stereotype.Component;
  * empty are ignored; the rules are {@link OrderValidator}'s (OP-R4…R8, Q-24, Q-35), the totals
  * {@link OrderTotals}' (OP-R5). Errors are keyed by input name ({@code line.2.heightCm},
  * {@code transportDocumentCode}, {@code lines} for the list as a whole) with message keys as values.
+ * With {@code customers.addressBook} on (ENH-07, ADR 0033) the recipient section also carries the
+ * address-book choice ({@code addressId}, «Usa questo destinatario» = {@code action=useAddress})
+ * and «Salva il destinatario nella rubrica» ({@code saveRecipient=1}); they round-trip like every
+ * other field and mean nothing while the flag is off.
  */
 @Component
 public class OrderForm {
@@ -33,6 +37,8 @@ public class OrderForm {
             List.of("transportDocumentCode", "packageCount", "accessoryServiceId", "notes");
     static final List<String> RECIPIENT_FIELDS =
             List.of("name", "addressLine", "province", "city", "postalCode", "phone", "email");
+    /** ENH-07: the address-book choice and «Salva il destinatario nella rubrica». */
+    static final List<String> BOOK_FIELDS = List.of("addressId", "saveRecipient");
 
     private static final Pattern LINE_KEY = Pattern.compile("^line\\.([0-9]{1,3})\\.([A-Za-z]+)$");
     private static final Pattern REMOVE_ACTION = Pattern.compile("^removeLine\\.([0-9]{1,3})$");
@@ -49,7 +55,11 @@ public class OrderForm {
     public enum Action {
         SAVE,
         ADD_LINE,
-        REMOVE_LINE
+        REMOVE_LINE,
+        /** ENH-07 «Usa questo destinatario»: read only while {@code customers.addressBook} is on. */
+        USE_ADDRESS,
+        /** ENH-07 «Mostra la rubrica» of the staff form, after choosing the customer: the page again, as typed. */
+        SHOW_ADDRESS_BOOK
     }
 
     /** One row as typed, with its totals when the row is valid («–» otherwise). */
@@ -121,6 +131,12 @@ public class OrderForm {
         if ("addLine".equals(action)) {
             return Action.ADD_LINE;
         }
+        if ("useAddress".equals(action)) {
+            return Action.USE_ADDRESS;
+        }
+        if ("showAddressBook".equals(action)) {
+            return Action.SHOW_ADDRESS_BOOK;
+        }
         return REMOVE_ACTION.matcher(action).matches() ? Action.REMOVE_LINE : Action.SAVE;
     }
 
@@ -155,6 +171,7 @@ public class OrderForm {
                         : draft.accessoryServiceId().toString());
         values.put("notes", draft.notes());
         recipientValues(values, draft.recipient());
+        values.put("saveRecipient", draft.saveRecipient() ? "1" : "");
         return model(rows.isEmpty() ? List.of(emptyRowValues()) : rows, values, Map.of());
     }
 
@@ -205,7 +222,38 @@ public class OrderForm {
         for (String field : RECIPIENT_FIELDS) {
             values.put(field, ItalianFormats.trim(form.get(field)));
         }
+        for (String field : BOOK_FIELDS) {
+            values.put(field, ItalianFormats.trim(form.get(field)));
+        }
         return model(rows, values, Map.of());
+    }
+
+    /** ENH-07 «Usa questo destinatario»: the form as typed with the recipient fields of the chosen entry. */
+    public Model withRecipient(Model form, OrderDraft.Recipient recipient) {
+        Map<String, String> values = new LinkedHashMap<>(form.values());
+        for (String field : RECIPIENT_FIELDS) {
+            values.put(field, "");
+        }
+        recipientValues(values, recipient);
+        return model(rowValues(form), values, Map.of());
+    }
+
+    /** The form as typed with one refused field (input name → message key). */
+    public Model withError(Model form, String field, String messageKey) {
+        return model(rowValues(form), form.values(), Map.of(field, messageKey));
+    }
+
+    /**
+     * ENH-07 «Ordina di nuovo» (back office): a stored order as a new one — its lines, accessory
+     * service, notes and recipient; the transport document and the number of packages left empty,
+     * since every shipment has its own (Q-24).
+     */
+    public Model repeat(OrderView order) {
+        Model stored = of(order);
+        Map<String, String> values = new LinkedHashMap<>(stored.values());
+        values.put("transportDocumentCode", "");
+        values.put("packageCount", "");
+        return model(rowValues(stored), values, Map.of());
     }
 
     public Model withRowAdded(Model form) {
@@ -342,6 +390,9 @@ public class OrderForm {
             values.put(field, "");
         }
         for (String field : RECIPIENT_FIELDS) {
+            values.put(field, "");
+        }
+        for (String field : BOOK_FIELDS) {
             values.put(field, "");
         }
         return values;

@@ -5,6 +5,8 @@ import it.logisticasanchez.web.orders.OrderSearch;
 import it.logisticasanchez.web.orders.OrderService;
 import it.logisticasanchez.web.orders.OrderStatus;
 import it.logisticasanchez.web.orders.OrderView;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
@@ -47,10 +49,14 @@ public class BackofficeOrdersController {
     private final CustomerService customers;
     private final TrackingCatalog catalog;
 
-    public BackofficeOrdersController(OrderService orders, CustomerService customers, TrackingCatalog catalog) {
+    private final FeatureFlags flags;
+
+    public BackofficeOrdersController(
+            OrderService orders, CustomerService customers, TrackingCatalog catalog, FeatureFlags flags) {
         this.orders = orders;
         this.customers = customers;
         this.catalog = catalog;
+        this.flags = flags;
     }
 
     @GetMapping(BackofficeRoutes.ORDERS_PENDING)
@@ -251,6 +257,7 @@ public class BackofficeOrdersController {
         model.addAttribute("states", catalog.states());
         model.addAttribute("trackingError", trackingError);
         model.addAttribute("noteError", noteError);
+        model.addAttribute("repeatEnabled", flags.isEnabled(FlagKey.ORDERS_REPEAT)); // ENH-07
         return "backoffice/order";
     }
 

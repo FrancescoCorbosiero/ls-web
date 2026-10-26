@@ -82,6 +82,7 @@
               <div><dt th:text="#{orders.field.phone}">Telefono</dt><dd th:text="${draft.recipient().phone() ?: '-'}">-</dd></div>
               <div><dt th:text="#{orders.field.email}">Email</dt><dd th:text="${draft.recipient().email() ?: '-'}">-</dd></div>
             </dl>
+            <p class="muted small mb-0" th:if="${saveRecipient}" data-save-recipient th:text="#{orders.addressBook.willSave}">Quando invii l'ordine, il destinatario viene salvato nella rubrica.</p>
           </section>
         </div>
       </div>

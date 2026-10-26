@@ -103,6 +103,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
   a crafted request with a message, so the table never shows on a flag that changes nothing; a
   flag left on (by hand in the database) can always be turned off. The service contract above
   is unchanged (`FeatureFlagService.toggle` and the overrides still accept any key).
+* **2026-10-26 — ENH-07, `customers.addressBook` and `orders.repeat` built** (M2.1, item 1; ADR
+  0033): the address book of saved recipients (profile, customer and staff order forms) and
+  «Ordina di nuovo» / «Ripeti ordine». Flag-on tests `AddressBookIT`, «flag off = M1»
+  `AddressBookOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 

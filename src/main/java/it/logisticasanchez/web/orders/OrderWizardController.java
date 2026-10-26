@@ -2,8 +2,13 @@ package it.logisticasanchez.web.orders;
 
 import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
+import it.logisticasanchez.web.customers.AddressBookService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
+import it.logisticasanchez.web.platform.web.error.ClientErrorException;
+import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
@@ -12,6 +17,7 @@ import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -23,6 +29,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * without it), then the summary («Controlla i dati inseriti») and the final screen with the
  * legacy wording («Logistica Sanchez», Q-37). The draft lives in the session; its idempotency
  * key makes a repeated confirmation harmless (OP-02). Only an ACTIVE customer gets in (CUS-03).
+ * ENH-07 (ADR 0033): with {@code customers.addressBook} on, the recipient comes from the address
+ * book and can be saved there when the order is sent ({@link OrderAddressBook}); with
+ * {@code orders.repeat} on, «Ordina di nuovo» fills the form from one of the customer's orders.
  */
 @Controller
 public class OrderWizardController {
@@ -34,18 +43,24 @@ public class OrderWizardController {
     private final OrderForm forms;
     private final CustomerService customers;
     private final TrackingCatalog catalog;
+    private final OrderAddressBook addressBook;
+    private final FeatureFlags flags;
 
     public OrderWizardController(
             OrderService orders,
             OrderValidator validator,
             OrderForm forms,
             CustomerService customers,
-            TrackingCatalog catalog) {
+            TrackingCatalog catalog,
+            OrderAddressBook addressBook,
+            FeatureFlags flags) {
         this.orders = orders;
         this.validator = validator;
         this.forms = forms;
         this.customers = customers;
         this.catalog = catalog;
+        this.addressBook = addressBook;
+        this.flags = flags;
     }
 
     @GetMapping(OrderRoutes.NEW)
@@ -53,10 +68,11 @@ public class OrderWizardController {
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             HttpSession session,
             Model model) {
-        if (customerOrNull(authentication, model) == null) {
+        CustomerView customer = customerOrNull(authentication, model);
+        if (customer == null) {
             return "redirect:" + OrderRoutes.LIST;
         }
-        return formPage(model, forms.of(draft(session)));
+        return formPage(model, forms.of(draft(session)), customer);
     }
 
     /** The form's buttons: «Aggiungi riga», «Elimina» (answered with the page, everything typed kept) and «Continua». */
@@ -66,23 +82,32 @@ public class OrderWizardController {
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             HttpSession session,
             Model model) {
-        if (customerOrNull(authentication, model) == null) {
+        CustomerView customer = customerOrNull(authentication, model);
+        if (customer == null) {
             return "redirect:" + OrderRoutes.LIST;
         }
         OrderForm.Model typed = forms.read(form);
-        switch (forms.action(form)) {
+        switch (addressBook.action(form)) {
             case ADD_LINE -> {
-                return formPage(model, forms.withRowAdded(typed));
+                return formPage(model, forms.withRowAdded(typed), customer);
             }
             case REMOVE_LINE -> {
-                return formPage(model, forms.withRowRemoved(typed, forms.removedIndex(form)));
+                return formPage(model, forms.withRowRemoved(typed, forms.removedIndex(form)), customer);
+            }
+            case USE_ADDRESS -> {
+                return formPage(model, addressBook.use(customer.id(), typed), customer);
+            }
+            case SHOW_ADDRESS_BOOK -> {
+                return formPage(model, typed, customer);
             }
             default -> {
                 OrderForm.Submission submission = forms.validate(typed);
                 if (!submission.valid()) {
-                    return formPage(model, submission.model());
+                    return formPage(model, submission.model(), customer);
                 }
-                draft(session).replace(submission.content());
+                OrderDraft draft = draft(session);
+                draft.replace(submission.content());
+                draft.setSaveRecipient(addressBook.asked(typed));
                 return "redirect:" + OrderRoutes.NEW_REVIEW;
             }
         }
@@ -107,6 +132,7 @@ public class OrderWizardController {
                 "units",
                 draft.lines().stream().mapToInt(OrderDraft.Line::quantity).sum());
         model.addAttribute("selfService", orders.customerSelfService());
+        model.addAttribute("saveRecipient", draft.saveRecipient() && addressBook.enabled());
         return "orders/wizard-review";
     }
 
@@ -127,6 +153,15 @@ public class OrderWizardController {
         OrderView order = orders.submit(principal.customerId(), principal.customerUserId(), draft);
         session.removeAttribute(OrderDraft.SESSION_KEY);
         redirect.addFlashAttribute(SUBMITTED_CODE, order.displayCode());
+        String notSaved = draft.saveRecipient()
+                ? addressBook.remember(
+                        principal.customerId(),
+                        AddressBookService.Actor.customer(principal.customerUserId()),
+                        draft.recipient())
+                : null;
+        if (notSaved != null) {
+            redirect.addFlashAttribute("flashError", notSaved);
+        }
         return "redirect:" + OrderRoutes.NEW_DONE;
     }
 
@@ -141,7 +176,37 @@ public class OrderWizardController {
         return "orders/wizard-done";
     }
 
-    private String formPage(Model model, OrderForm.Model form) {
+    /**
+     * ENH-07 «Ordina di nuovo» (flag {@code orders.repeat}; a 404 while it is off): the order form
+     * filled from one of the customer's orders, whatever its state — lines, accessory service,
+     * notes and recipient — with the transport document left to type; a new draft, so a new order.
+     */
+    @PostMapping(OrderRoutes.REPEAT)
+    public String repeat(
+            @PathVariable("codice") String code,
+            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirect) {
+        if (!flags.isEnabled(FlagKey.ORDERS_REPEAT)) {
+            throw new ClientErrorException(ErrorCode.NOT_FOUND);
+        }
+        CustomerPrincipal principal = CustomerSessionService.require(authentication);
+        OrderView order = orders.findForCustomer(principal.customerId(), code)
+                .orElseThrow(() -> new ClientErrorException(ErrorCode.NOT_FOUND));
+        if (customerOrNull(authentication, model) == null) {
+            return "redirect:" + OrderRoutes.LIST;
+        }
+        session.setAttribute(OrderDraft.SESSION_KEY, OrderDraft.repeatOf(order));
+        redirect.addFlashAttribute(
+                "flash",
+                "Il modulo riporta i dati dell'ordine " + order.displayCode()
+                        + ": inserisci il nuovo documento di trasporto e controlla il resto.");
+        return "redirect:" + OrderRoutes.NEW;
+    }
+
+    private String formPage(Model model, OrderForm.Model form, CustomerView customer) {
+        model.addAttribute("addressBook", addressBook.entries(customer.id()));
         model.addAttribute("form", form);
         model.addAttribute("services", catalog.activeServices());
         model.addAttribute("kinds", LineKind.values());

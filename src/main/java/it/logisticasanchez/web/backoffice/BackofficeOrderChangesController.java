@@ -1,11 +1,15 @@
 package it.logisticasanchez.web.backoffice;
 
+import it.logisticasanchez.web.customers.AddressBookService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
 import it.logisticasanchez.web.orders.LineKind;
+import it.logisticasanchez.web.orders.OrderAddressBook;
 import it.logisticasanchez.web.orders.OrderForm;
 import it.logisticasanchez.web.orders.OrderService;
 import it.logisticasanchez.web.orders.OrderView;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
@@ -13,6 +17,7 @@ import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
@@ -31,7 +36,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * the definitive code and the amount — and cancel one («Annulla ordine», with an optional
  * reason). Every page carries the version of the order it showed: a change meanwhile (the
  * customer, a colleague) brings the current data back with a message. Rules, audit and the
- * absence of e-mails live in {@link OrderService}.
+ * absence of e-mails live in {@link OrderService}. ENH-07 (ADR 0033): with
+ * {@code customers.addressBook} on, the form offers the chosen customer's address book and can
+ * save the recipient there; with {@code orders.repeat} on, «Ripeti ordine» opens «Nuovo ordine»
+ * filled from an existing order ({@code ?ripeti=<id>}).
  */
 @Controller
 public class BackofficeOrderChangesController {
@@ -43,21 +51,44 @@ public class BackofficeOrderChangesController {
     private final OrderForm forms;
     private final CustomerService customers;
     private final TrackingCatalog catalog;
+    private final OrderAddressBook addressBook;
+    private final FeatureFlags flags;
 
     public BackofficeOrderChangesController(
-            OrderService orders, OrderForm forms, CustomerService customers, TrackingCatalog catalog) {
+            OrderService orders,
+            OrderForm forms,
+            CustomerService customers,
+            TrackingCatalog catalog,
+            OrderAddressBook addressBook,
+            FeatureFlags flags) {
         this.orders = orders;
         this.forms = forms;
         this.customers = customers;
         this.catalog = catalog;
+        this.addressBook = addressBook;
+        this.flags = flags;
     }
 
     @GetMapping(BackofficeRoutes.ORDER_NEW)
-    public String newOrder(@RequestParam(name = "cliente", required = false) String customer, Model model) {
+    public String newOrder(
+            @RequestParam(name = "cliente", required = false) String customer,
+            @RequestParam(name = "ripeti", required = false) String repeat,
+            Model model) {
         Map<String, String> extra = new LinkedHashMap<>();
         extra.put("cliente", id(customer) == null ? "" : id(customer).toString());
-        return formPage(
-                model, null, forms.blank(), extra, null, UUID.randomUUID().toString(), null);
+        OrderForm.Model form = forms.blank();
+        // ENH-07 «Ripeti ordine»: the same customer and data, a new transport document to type
+        Long repeated = flags.isEnabled(FlagKey.ORDERS_REPEAT) ? id(repeat) : null;
+        Optional<OrderView> source = repeated == null ? Optional.empty() : orders.find(repeated);
+        if (source.isPresent()) {
+            form = forms.repeat(source.get());
+            extra.put("cliente", Long.toString(source.get().customerId()));
+            model.addAttribute(
+                    "flash",
+                    "Il modulo riporta i dati dell'ordine " + source.get().displayCode()
+                            + ": inserisci il nuovo documento di trasporto e controlla il resto.");
+        }
+        return formPage(model, null, form, extra, null, UUID.randomUUID().toString(), null);
     }
 
     @PostMapping(BackofficeRoutes.ORDER_NEW)
@@ -69,13 +100,19 @@ public class BackofficeOrderChangesController {
         Map<String, String> extra = Map.of("cliente", ItalianFormats.trim(form.get("cliente")));
         String key = formKey(form);
         OrderForm.Model typed = forms.read(form);
-        switch (forms.action(form)) {
+        switch (addressBook.action(form)) {
             case ADD_LINE -> {
                 return formPage(model, null, forms.withRowAdded(typed), extra, null, key, null);
             }
             case REMOVE_LINE -> {
                 return formPage(
                         model, null, forms.withRowRemoved(typed, forms.removedIndex(form)), extra, null, key, null);
+            }
+            case USE_ADDRESS -> {
+                return formPage(model, null, addressBook.use(id(extra.get("cliente")), typed), extra, null, key, null);
+            }
+            case SHOW_ADDRESS_BOOK -> {
+                return formPage(model, null, typed, extra, null, key, null);
             }
             default -> {
                 OrderForm.Submission submission = forms.validate(typed);
@@ -99,6 +136,7 @@ public class BackofficeOrderChangesController {
                         "flash",
                         "Ordine inserito con il codice provvisorio " + created.tempCode()
                                 + ": controlla i dati e approvalo con codice e importo.");
+                rememberIfAsked(typed, customerId, authentication, submission, redirect);
                 return "redirect:" + BackofficeRoutes.order(created.id());
             }
         }
@@ -134,9 +172,15 @@ public class BackofficeOrderChangesController {
         Map<String, String> extra = Map.of(
                 "codice", ItalianFormats.trim(form.get("codice")), "importo", ItalianFormats.trim(form.get("importo")));
         OrderForm.Model typed = forms.read(form);
-        switch (forms.action(form)) {
+        switch (addressBook.action(form)) {
             case ADD_LINE -> {
                 return formPage(model, order, forms.withRowAdded(typed), extra, version, null, null);
+            }
+            case USE_ADDRESS -> {
+                return formPage(model, order, addressBook.use(order.customerId(), typed), extra, version, null, null);
+            }
+            case SHOW_ADDRESS_BOOK -> {
+                return formPage(model, order, typed, extra, version, null, null);
             }
             case REMOVE_LINE -> {
                 return formPage(
@@ -181,6 +225,7 @@ public class BackofficeOrderChangesController {
                     return formPage(model, current, submission.model(), extra, version, null, e.detail());
                 }
                 redirect.addFlashAttribute("flash", "Ordine aggiornato.");
+                rememberIfAsked(typed, order.customerId(), authentication, submission, redirect);
                 return "redirect:" + BackofficeRoutes.order(order.id());
             }
         }
@@ -245,6 +290,10 @@ public class BackofficeOrderChangesController {
         }
         model.addAttribute("services", catalog.activeServices());
         model.addAttribute("kinds", LineKind.values());
+        Long bookOwner = order == null ? id(extra.get("cliente")) : Long.valueOf(order.customerId());
+        model.addAttribute("addressBook", addressBook.entries(bookOwner));
+        model.addAttribute("addressBookForStaff", true);
+        model.addAttribute("addressBookEnabled", addressBook.enabled());
         if (order == null) {
             model.addAttribute(
                     "customers",
@@ -253,6 +302,25 @@ public class BackofficeOrderChangesController {
             model.addAttribute("customer", customers.find(order.customerId()).orElse(null));
         }
         return "backoffice/order-form";
+    }
+
+    /** ENH-07 «Salva il destinatario nella rubrica del cliente», after the order was saved. */
+    private void rememberIfAsked(
+            OrderForm.Model typed,
+            long customerId,
+            Authentication authentication,
+            OrderForm.Submission submission,
+            RedirectAttributes redirect) {
+        if (!addressBook.asked(typed)) {
+            return;
+        }
+        String notSaved = addressBook.remember(
+                customerId,
+                AddressBookService.Actor.staff(StaffSession.of(authentication).requireId()),
+                submission.content().recipient());
+        if (notSaved != null) {
+            redirect.addFlashAttribute("flashError", notSaved);
+        }
     }
 
     private String cancelForm(Model model, OrderView order, String reason, String error) {
