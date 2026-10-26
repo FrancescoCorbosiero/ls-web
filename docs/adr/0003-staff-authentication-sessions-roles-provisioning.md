@@ -84,7 +84,8 @@ and §4 the hashing (bcrypt/argon2). Legacy staff accounts are not migrated (Q-5
   encrypted (`token_ciphertext`, no `login_token` reference) and wiped after delivery; the
   action is audited (`staff.create`). An ADMIN may issue a fresh link for an existing account.
 * TOTP for staff stays an M2 seam (`ls.security.staff.totp.enabled=false`, flag
-  `security.adminTotp`, ENH-09).
+  `security.adminTotp`, ENH-09). *2026-10-26: built behind the flag alone (ADR 0039); the
+  `ls.security.staff.totp.enabled` setting, never read, was removed.*
 
 ## Consequences
 

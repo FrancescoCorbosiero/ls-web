@@ -77,6 +77,7 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.SETTINGS_RECIPIENTS,
                         BackofficeRoutes.SETTINGS_RECIPIENT_REMOVE,
                         BackofficeRoutes.STAFF_USERS,
+                        BackofficeRoutes.STAFF_USER_TWO_FACTOR_RESET,
                         BackofficeRoutes.PRIVACY_LOOKUP,
                         BackofficeRoutes.PRIVACY_EXPORT,
                         BackofficeRoutes.PRIVACY_ANONYMISE);

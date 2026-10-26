@@ -27,9 +27,15 @@ public class AuthRouteContributor implements SecurityRouteContributor {
                         AuthRoutes.CUSTOMER_LINK,
                         AuthRoutes.CUSTOMER_CHANGE_EMAIL)
                 .customer(HttpMethod.POST, AuthRoutes.CUSTOMER_LOGOUT)
-                // Back office (ADM-01): login page and form, set-password link, logout.
-                .permitGet(AuthRoutes.BACKOFFICE, AuthRoutes.STAFF_SET_PASSWORD)
-                .permit(HttpMethod.POST, AuthRoutes.STAFF_LOGIN, AuthRoutes.STAFF_SET_PASSWORD)
+                // Back office (ADM-01): login page and form, set-password link, logout; the code
+                // after the password (ENH-09: the controller checks the pending login, 404 while
+                // security.adminTotp is off).
+                .permitGet(AuthRoutes.BACKOFFICE, AuthRoutes.STAFF_SET_PASSWORD, AuthRoutes.STAFF_TWO_FACTOR)
+                .permit(
+                        HttpMethod.POST,
+                        AuthRoutes.STAFF_LOGIN,
+                        AuthRoutes.STAFF_SET_PASSWORD,
+                        AuthRoutes.STAFF_TWO_FACTOR)
                 .staff(HttpMethod.POST, AuthRoutes.STAFF_LOGOUT);
     }
 }

@@ -2151,3 +2151,45 @@ dati:», «Valgono per i prossimi ordini: quelli già inviati restano con i dati
 «Modifica dei dati non accettata» («La modifica dei tuoi dati non è stata accettata», «Il nostro
 ufficio non ha accettato la modifica di ragione sociale, partita IVA o codice fiscale che hai
 chiesto: i tuoi dati restano quelli di prima.», «Motivo: …»), button «Vai al tuo profilo».
+
+## Step N — M2: ENH-09, two-factor login for staff (2026-10-26)
+
+Fourth of the M2 items of the owner's request «procedi con quelli che puoi fare ora». ADR 0039.
+
+### What was built
+
+* Migration `V020__staff_two_factor.sql` (`staff_user.totp_enabled_at`, `totp_last_step`, check
+  `ck_staff_user_totp_complete`); in `auth`: `Totp` (RFC 6238), `TotpQr` (ZXing core 3.5.3, a new
+  dependency, the QR code as one inline SVG path), `TotpSecrets` (AES-256-GCM, key derived from
+  `LS_TOKEN_ENCRYPTION_KEY`), `StaffTwoFactorService`, `PendingStaffLogin`, `StaffSignIn`,
+  `StaffTwoFactorController` (`/gestione/verifica`, a sign-in entry of `RouteRegistry`),
+  `ResetStaffTotpCommand` (`reset-staff-totp`, dispatched by `Application.main`); the success
+  handler holds a staff login for the code while the flag is on.
+* «Utenti della gestione»: the two-factor state of each account and «Azzera»
+  (`BackofficeSettingsController`); `StaffAccountService.StaffUserView.twoFactor`.
+* The unused setting `ls.security.staff.totp.enabled` (ADR 0003) is removed; ADR 0001 lists
+  ZXing; the deploy runbook names the reset command.
+* Tests: `TotpTest` (RFC 6238 vectors, Base32, window and replay, QR), `StaffTwoFactorIT` (5),
+  `StaffTwoFactorOffIT`, schema expectations and migration counts (20), route matrix,
+  `PhaseOneEntitiesIT` and `SettingsDefaultsIT` adjusted; E2E `m2.spec.ts`: the seeded ADMIN sets
+  the app up in a second browser (axe), a wrong code, the right one, then a second login with the
+  code only (axe), «Attiva» on «Utenti della gestione» (axe).
+
+### New Italian texts for the owner's review
+
+«Verifica in due passaggi», «Inserisci il codice di 6 cifre che vedi nell'app di autenticazione
+del tuo telefono.»; «Configura la verifica in due passaggi», «Per entrare nella gestione ora serve
+anche un codice dal tuo telefono. Configuralo una volta sola: ci vuole un minuto.», «1. Collega
+l'app», «Apri l'app di autenticazione del telefono (per esempio Google Authenticator o Microsoft
+Authenticator), aggiungi un account e inquadra il codice QR.», «Codice QR da inquadrare con l'app
+di autenticazione», «Non riesci a inquadrarlo? Scegli «Inserisci una chiave» nell'app e scrivi
+questa chiave:», «2. Conferma con il primo codice», «Codice», «Le 6 cifre dell'app: cambiano ogni
+30 secondi.», «Verifica», «Il codice non è corretto o è scaduto: riprova con quello che vedi
+ora.», «Torna al login»; login page «La verifica non è riuscita o è scaduta: accedi di nuovo.».
+«Utenti della gestione»: «Verifica in due passaggi» («Attiva», «Da configurare al prossimo
+accesso», «Azzera», «Azzera la verifica in due passaggi di …»), «Chi entra nella gestione inserisce
+anche il codice dell'app del telefono. Se un utente cambia o perde il telefono, azzera la sua
+verifica: al prossimo accesso la configura di nuovo.», flash «Verifica in due passaggi di «…»
+azzerata: al prossimo accesso la configura di nuovo.». Command: «Verifica in due passaggi
+azzerata per …: al prossimo accesso la configura di nuovo.», «Nessun utente con username …»,
+«Uso: reset-staff-totp --username=<username>».

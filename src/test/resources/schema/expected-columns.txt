@@ -264,6 +264,8 @@ staff_user failed_logins int4 NOT NULL
 staff_user locked_until timestamptz NULL
 staff_user last_login_at timestamptz NULL
 staff_user totp_secret bytea NULL
+staff_user totp_enabled_at timestamptz NULL
+staff_user totp_last_step int8 NULL
 staff_user created_at timestamptz NOT NULL
 staff_user updated_at timestamptz NOT NULL
 tracking_event id int8 NOT NULL

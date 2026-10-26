@@ -129,6 +129,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
   an ACTIVE customer, address and phone at once, company name, VAT number and tax code after the
   office's approval (EML-12 to the customer). Flag-on tests `ProfileEditIT`, «flag off = M1»
   `ProfileEditOffIT`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-09, `security.adminTotp` built** (ADR 0039; V020): every staff login asks the
+  code of an authenticator app after the password, set up on the same page (QR code, key); ADMIN
+  «Azzera» and `reset-staff-totp` for a lost phone. Flag-on tests `StaffTwoFactorIT`, «flag off =
+  M1» `StaffTwoFactorOffIT`, `TotpTest`, E2E `m2.spec.ts`.
 
 ## Consequences
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Staff accounts, ADMIN only (ADM-01, ADR 0003): the list and the creation form; the set-password link goes by e-mail (EML-S1). -->
+<!-- Staff accounts, ADMIN only (ADM-01, ADR 0003): the list and the creation form; the set-password link goes by e-mail (EML-S1); with security.adminTotp on, the two-factor state of each account and «Azzera» (ENH-09, ADR 0039). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{backoffice.staffUsers.title} + ' · ' + #{layout.private.backoffice}">Utenti · Gestione</title>
@@ -25,6 +25,7 @@
           <th scope="col" th:text="#{backoffice.staffUsers.role}">Ruolo</th>
           <th scope="col" th:text="#{backoffice.staffUsers.state}">Stato</th>
           <th scope="col" th:text="#{backoffice.staffUsers.lastLogin}">Ultimo accesso</th>
+          <th scope="col" th:if="${twoFactor}" th:text="#{backoffice.staffUsers.twoFactor}">Verifica in due passaggi</th>
         </tr></thead>
         <tbody>
           <tr th:each="u : ${users}" th:attr="data-user=${u.username}">
@@ -34,10 +35,17 @@
             <td th:text="#{'backoffice.staffUsers.role.' + ${u.role.name()}}">Amministratore</td>
             <td th:text="${!u.active} ? #{backoffice.staffUsers.disabled} : (${u.passwordSet} ? #{backoffice.staffUsers.active} : #{backoffice.staffUsers.passwordPending})">Attivo</td>
             <td th:text="${u.lastLoginAt != null} ? ${fmt.dateTime(u.lastLoginAt)} : '-'">-</td>
+            <td th:if="${twoFactor}" data-two-factor>
+              <span th:text="${u.twoFactor} ? #{backoffice.staffUsers.twoFactor.on} : #{backoffice.staffUsers.twoFactor.off}">Attiva</span>
+              <form class="inline-form" method="post" th:if="${u.twoFactor}" th:action="@{/gestione/impostazioni/utenti/{id}/doppia-verifica(id=${u.id})}">
+                <button type="submit" class="btn btn-light btn-xs" th:attr="aria-label=#{backoffice.staffUsers.twoFactor.resetNamed(${u.username})}" th:text="#{backoffice.staffUsers.twoFactor.reset}">Azzera</button>
+              </form>
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
+    <p class="muted small mt-s" th:if="${twoFactor}" th:text="#{backoffice.staffUsers.twoFactorHint}">Chi entra nella gestione inserisce anche il codice dell'app del telefono. Se un utente cambia o perde il telefono, azzera la sua verifica: al prossimo accesso la configura di nuovo.</p>
     <h2 class="mt-m" th:text="#{backoffice.staffUsers.create}">Nuovo utente</h2>
     <p class="muted" th:text="#{backoffice.staffUsers.createHint}">L'utente riceve per e-mail un link, valido 24 ore, con cui sceglie la sua password. Nessuna password passa di qui.</p>
     <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>

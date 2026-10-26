@@ -55,7 +55,6 @@ class SettingsDefaultsIT extends AbstractPostgresIT {
         assertThat(security.tokens().registration()).isEqualTo(Duration.ofHours(24));
         assertThat(security.staff().lockout().threshold()).isEqualTo(10);
         assertThat(security.staff().lockout().duration()).isEqualTo(Duration.ofMinutes(15));
-        assertThat(security.staff().totp().enabled()).isFalse();
     }
 
     @Test

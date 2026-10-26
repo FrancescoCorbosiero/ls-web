@@ -17,6 +17,7 @@
     <p class="callout callout-info" th:if="${passwordSet}" th:text="#{auth.staff.login.passwordSet}">Password impostata. Ora puoi accedere.</p>
     <p class="callout callout-info" th:if="${loggedOut}" th:text="#{auth.staff.login.loggedOut}">Sei uscito dalla gestione.</p>
     <p class="callout callout-error" role="alert" th:if="${loginError}" th:text="#{auth.staff.login.error}">Username o password errate.</p>
+    <p class="callout callout-error" role="alert" th:if="${twoFactorFailed}" data-two-factor-failed th:text="#{auth.staff.twoFactor.restart}">La verifica non è riuscita o è scaduta: accedi di nuovo.</p>
     <form method="post" th:action="@{/gestione/login}" class="fields">
       <div class="field">
         <label class="label" for="username" th:text="#{auth.staff.login.username}">Username</label>

@@ -2,9 +2,12 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.StaffAccountService;
 import it.logisticasanchez.web.auth.StaffRole;
+import it.logisticasanchez.web.auth.StaffTwoFactorService;
 import it.logisticasanchez.web.platform.flags.FeatureFlagService;
 import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
+import it.logisticasanchez.web.platform.web.error.ClientErrorException;
+import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
 import it.logisticasanchez.web.privacy.PrivacyService;
 import it.logisticasanchez.web.reports.ReportRecipientService;
@@ -31,8 +34,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * «Impostazioni», ADMIN only (chapter 10 §2; ADR 0025, 0016, 0024): the M2 feature flags (one
  * form per flag, each with what it does and whether it is built: built flags first, and only
  * those can be turned on), the report recipients allow-list, the staff accounts (creation sends
- * the set-password link, EML-S1) and the privacy tools of NFR-03 (export as JSON, erasure by
- * anonymisation behind a confirmation page). Every action is audited by the service it calls.
+ * the set-password link, EML-S1; with {@code security.adminTotp} on, whether each has two-factor
+ * set up and «Azzera» for a lost phone, ENH-09) and the privacy tools of NFR-03 (export as JSON,
+ * erasure by anonymisation behind a confirmation page). Every action is audited by the service it
+ * calls.
  */
 @Controller
 public class BackofficeSettingsController {
@@ -40,16 +45,19 @@ public class BackofficeSettingsController {
     private final FeatureFlagService flags;
     private final ReportRecipientService recipients;
     private final StaffAccountService staffAccounts;
+    private final StaffTwoFactorService twoFactor;
     private final PrivacyService privacy;
 
     public BackofficeSettingsController(
             FeatureFlagService flags,
             ReportRecipientService recipients,
             StaffAccountService staffAccounts,
+            StaffTwoFactorService twoFactor,
             PrivacyService privacy) {
         this.flags = flags;
         this.recipients = recipients;
         this.staffAccounts = staffAccounts;
+        this.twoFactor = twoFactor;
         this.privacy = privacy;
     }
 
@@ -156,6 +164,26 @@ public class BackofficeSettingsController {
         return "redirect:" + BackofficeRoutes.STAFF_USERS;
     }
 
+    @PostMapping(BackofficeRoutes.STAFF_USER_TWO_FACTOR_RESET)
+    public String resetTwoFactor(
+            @PathVariable("id") long id,
+            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
+            RedirectAttributes redirect) {
+        if (!twoFactor.required()) {
+            throw new ClientErrorException(ErrorCode.NOT_FOUND);
+        }
+        StaffAccountService.StaffUserView user = staffAccounts.listAll().stream()
+                .filter(u -> u.id() == id)
+                .findFirst()
+                .orElseThrow(() -> new ClientErrorException(ErrorCode.NOT_FOUND));
+        twoFactor.reset(StaffSession.of(authentication).requireId(), user.id());
+        redirect.addFlashAttribute(
+                "flash",
+                "Verifica in due passaggi di «" + user.username()
+                        + "» azzerata: al prossimo accesso la configura di nuovo.");
+        return "redirect:" + BackofficeRoutes.STAFF_USERS;
+    }
+
     @GetMapping(BackofficeRoutes.PRIVACY)
     public String privacy(Model model) {
         return privacyPage(model, "", null, null);
@@ -249,6 +277,7 @@ public class BackofficeSettingsController {
         model.addAttribute("values", values);
         model.addAttribute("roles", StaffRole.values());
         model.addAttribute("error", error);
+        model.addAttribute("twoFactor", twoFactor.required()); // ENH-09: false = the M1 page
         return "backoffice/staff-users";
     }
 
