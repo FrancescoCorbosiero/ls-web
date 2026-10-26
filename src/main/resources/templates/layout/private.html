@@ -13,6 +13,7 @@
       <th:block th:replace="~{layout/private :: siteFooter}"/>
     </body>
   siteHeader(area, user, logoutUrl): area is 'customer' or 'staff'; user and logoutUrl may be null (sign-in pages).
+  The header carries the area as data-area: app.css gives the back office its own tint (ADR 0045).
   Pages with the order form add ~{layout/private :: appScript} (the only script of the private areas).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
@@ -37,7 +38,7 @@
 
 <th:block th:fragment="siteHeader(area, user, logoutUrl)">
 <a class="skip-link" href="#main" th:text="#{layout.skip}">Vai al contenuto</a>
-<header class="site-header" data-header>
+<header class="site-header" data-header th:attr="data-area=${area}">
   <div class="container header-row">
     <a class="brand" th:href="${area == 'staff' ? '/gestione/' : '/area-clienti/'}">
       <img class="brand-mark" src="/img/brand/mark.svg" width="46" height="46" alt="">

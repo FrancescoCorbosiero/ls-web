@@ -2363,3 +2363,47 @@ l'ordine {0}: …», «Modificato dal cliente {0}», «Il cliente l'ha chiesta d
 «Hai annullato questo ordine {0}.», «Il centro logistico ha annullato questo ordine {0}. …», «Hai
 chiesto di cambiare questi dati {0}: …», «Aggiornato {0}»; columns «Inviato», «Registrato»,
 «Richiesta», «Arrivata»; the words «oggi alle», «ieri», «domani», «il … alle».
+
+## Step T — One sign-in per browser; the back office tinted (2026-10-26)
+
+Owner observation: with the admin and a customer in two tabs of the same browser, each sign-in
+logs the other out, «Resta connesso» notwithstanding; is that expected, and can it happen to the
+customers in production? Owner request: a slight visual difference between the back office and
+the customer area. ADR 0045.
+
+### What was found
+
+* Reproduced on the local app with Playwright: in one browser context the customer's sign-in
+  ends the staff session (`/gestione/` shows «Login», `/gestione/ordini/` answers 403) and the
+  staff sign-in hides the customer (`/area-clienti/ordini/` 403 while the staff session lives);
+  after «Esci» from the back office the remember cookie opens the customer area again without a
+  new sign-in. Two contexts (two devices) stay signed in side by side through every sign-in and
+  «Esci»; `localhost` and `127.0.0.1` in one browser too (cookies are per host).
+* Cause: both areas share the site's one session cookie (path `/`) on one host, a session holds
+  one principal and every sign-in starts a new session. Kept as is: customers use their own
+  devices with a customer account only, so they never meet it.
+
+### What was built
+
+* `data-area` on `layout/private :: siteHeader`; `app.css` tints every page whose header is the
+  staff one (`#e4f1f4`, a 3-pixel `--teal-500` line on top of the header), login pages included.
+  The customer area does not change.
+* Tests: `SignInPerBrowserRealServerIT` (ADM-01, CUS-01, NFR-02: one cookie jar per browser; the
+  ended session's id opens nothing; the remembered device after the staff «Esci»; four browsers
+  side by side; the header marks), `e2e/tests/areas.spec.ts` (two tabs, two contexts, the computed
+  background and line, axe on the tinted pages). The whole E2E suite (127) and `verify` green.
+
+### Found on the way (proposed to the owner, not built)
+
+A session that ends under an open form — a restart of the app (sessions live in memory), 60
+minutes idle for a customer, 30 for staff — makes the next submit fail with «Operazione non
+consentita» (403 `csrf_rejected`) and what was typed is lost: the remembered device opens a new
+session with a new CSRF token before the CSRF check (ADR 0031), and staff have no remembered
+device at all. Reproduced on the local app (order form open, app restarted, submit → 403;
+reloading the form → 200). Proposed: sessions kept in the database (Spring Session JDBC), so a
+deploy signs nobody out and breaks no open form, and a draft of the order form kept in the
+browser for the idle case.
+
+### New Italian texts for the owner's review
+
+None.
