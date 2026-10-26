@@ -1252,6 +1252,23 @@ a.tile:hover {
 .inline-form {
   display: inline;
 }
+/* ENH-07: the address book above the recipient fields of the order form. */
+.address-book {
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--line);
+}
+.address-book .field-hint {
+  margin-top: 0;
+}
+.input-group > .select {
+  flex: 1 1 220px;
+}
+/* A cell with several lines (name, address): one block, long values wrap on a phone card. */
+.data-table .cell-block {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .sep-dot::before {
   content: "·";
   margin-right: 14px;

@@ -5,6 +5,8 @@ import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
 import it.logisticasanchez.web.auth.PasswordPolicy;
 import it.logisticasanchez.web.auth.RememberedSignInService;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.security.ClientIpResolver;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import jakarta.servlet.http.HttpServletRequest;
@@ -26,7 +28,8 @@ import org.springframework.web.bind.annotation.RequestParam;
  * same way whatever the address (an address already in use gets nothing). The password section
  * (ADR 0032) sets or changes the password: the current one is asked unless the session was opened
  * by an e-mailed link (the «password dimenticata» path); a change ends the other sessions and
- * remembered devices, this one goes on.
+ * remembered devices, this one goes on. With {@code customers.addressBook} on, the page also lists
+ * the saved recipients (ENH-07, ADR 0033; {@link AddressBookController} adds, changes, deletes).
  */
 @Controller
 public class ProfileController {
@@ -43,18 +46,24 @@ public class ProfileController {
     private final CustomerSessionService sessions;
     private final RememberedSignInService remembered;
     private final ClientIpResolver clientIp;
+    private final AddressBookService addressBook;
+    private final FeatureFlags flags;
 
     public ProfileController(
             CustomerService customers,
             CustomerPasswordService passwords,
             CustomerSessionService sessions,
             RememberedSignInService remembered,
-            ClientIpResolver clientIp) {
+            ClientIpResolver clientIp,
+            AddressBookService addressBook,
+            FeatureFlags flags) {
         this.customers = customers;
         this.passwords = passwords;
         this.sessions = sessions;
         this.remembered = remembered;
         this.clientIp = clientIp;
+        this.addressBook = addressBook;
+        this.flags = flags;
     }
 
     @GetMapping(CustomerRoutes.PROFILE)
@@ -78,6 +87,11 @@ public class ProfileController {
         model.addAttribute("passwordMinLength", passwords.minLength());
         model.addAttribute("passwordSaved", passwordSaved != null);
         model.addAttribute("passwordErrorKey", passwordError == null ? null : PASSWORD_ERRORS.get(passwordError));
+        // ENH-07: null while the flag is off, so the page is the M1 one
+        model.addAttribute(
+                "addresses",
+                flags.isEnabled(FlagKey.CUSTOMERS_ADDRESS_BOOK) ? addressBook.list(principal.customerId()) : null);
+        model.addAttribute("addressBookMax", AddressBookService.MAX_ENTRIES);
         return "customers/profile";
     }
 

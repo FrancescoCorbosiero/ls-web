@@ -24,6 +24,7 @@ public final class OrderDraft implements Serializable {
     private Integer accessoryServiceId;
     private String notes = "";
     private Recipient recipient;
+    private boolean saveRecipient;
 
     public UUID idempotencyKey() {
         return idempotencyKey;
@@ -87,6 +88,34 @@ public final class OrderDraft implements Serializable {
 
     public void setRecipient(Recipient recipient) {
         this.recipient = recipient;
+    }
+
+    /** ENH-07: «Salva il destinatario nella rubrica» ticked on the form (acted upon at the confirmation). */
+    public boolean saveRecipient() {
+        return saveRecipient;
+    }
+
+    public void setSaveRecipient(boolean saveRecipient) {
+        this.saveRecipient = saveRecipient;
+    }
+
+    /**
+     * ENH-07 «Ordina di nuovo»: a new draft (its own idempotency key) with the lines, accessory
+     * service, notes and recipient of a stored order; the transport document and the number of
+     * packages stay empty, since every shipment has its own (Q-24).
+     */
+    public static OrderDraft repeatOf(OrderView order) {
+        OrderDraft draft = new OrderDraft();
+        for (OrderView.Line line : order.lines()) {
+            draft.addLine(
+                    line.kind(), line.heightCm(), line.lengthCm(), line.widthCm(), line.weightKg(), line.quantity());
+        }
+        draft.setDetails(
+                "", "", order.accessoryServiceId(), order.customerNotes() == null ? "" : order.customerNotes());
+        ShipmentOrder.Party r = order.recipient();
+        draft.setRecipient(
+                new Recipient(r.name(), r.addressLine(), r.province(), r.city(), r.postalCode(), r.phone(), r.email()));
+        return draft;
     }
 
     /** True when every page has been completed, so the summary can be shown. */

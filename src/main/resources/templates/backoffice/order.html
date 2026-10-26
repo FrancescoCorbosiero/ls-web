@@ -4,7 +4,8 @@
   units grouped into lines; ADM-06 «Imposta tracking» with the current state preselected and its
   history; ADM-07 «Aggiorna note»: the internal note apart from the customer's read-only note;
   ADR 0029 layout) with the actions of its state: «Approva ordine» and «Rifiuta» while pending,
-  «Modifica» and «Annulla ordine» (ADM-11: a confirmed order only for an ADMIN).
+  «Modifica» and «Annulla ordine» (ADM-11: a confirmed order only for an ADMIN); with orders.repeat
+  on, «Ripeti ordine» (ENH-07: «Nuovo ordine» filled from this one).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -32,6 +33,7 @@
         <a class="btn btn-danger" th:if="${order.isPending()}" th:href="@{/gestione/ordini/{id}/rifiuta(id=${order.id})}" th:text="#{backoffice.orders.decline}">Rifiuta</a>
         <a class="btn btn-light" th:if="${changeable}" th:href="@{/gestione/ordini/{id}/modifica(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
         <a class="btn btn-light" th:if="${changeable}" th:href="@{/gestione/ordini/{id}/annulla(id=${order.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{backoffice.order.cancel}">Annulla ordine</span></a>
+        <a class="btn btn-light" th:if="${repeatEnabled}" th:href="@{/gestione/ordini/nuovo(ripeti=${order.id})}" data-repeat><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.order.repeat}">Ripeti ordine</span></a>
       </div>
     </div>
     <th:block th:replace="~{backoffice/layout :: flash}"></th:block>

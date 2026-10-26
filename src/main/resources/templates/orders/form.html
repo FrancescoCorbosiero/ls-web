@@ -7,6 +7,10 @@
   OP-R5 beside them. `f` is an OrderForm.Model. Without JavaScript «Aggiungi riga» and «Elimina»
   are submit buttons answered by the server; /js/app.js does the same in place and keeps the
   totals live. The first, visually hidden button makes Enter mean «continue», never «delete».
+  ENH-07 (ADR 0033): when the model holds `addressBook` (flag customers.addressBook on, customer
+  known), the recipient section offers the saved recipients — «Usa questo destinatario» is a
+  submit button the server answers, /js/app.js fills the fields as soon as one is chosen — and
+  «Salva il destinatario nella rubrica» (`addressBookForStaff`: «… del cliente»).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head><title>fragments</title></head>
@@ -98,6 +102,21 @@
 <section th:fragment="recipient(f, step)" class="panel" id="destinatario" aria-labelledby="destinatario-title">
   <div class="form-step"><span class="form-step-num" aria-hidden="true" th:text="${step}">3</span><h2 id="destinatario-title" th:text="#{orders.form.recipientTitle}">Destinatario</h2></div>
   <p class="form-step-hint" th:text="#{orders.form.recipientHint}">Dove consegniamo la merce.</p>
+  <div class="address-book" th:if="${addressBook != null}" data-address-book>
+    <div class="field" th:if="${!addressBook.isEmpty()}">
+      <label class="label" for="addressId" th:text="#{orders.addressBook.choose}">Scegli dalla rubrica</label>
+      <div class="input-group">
+        <select class="select" id="addressId" name="addressId" th:attr="aria-invalid=${f.error('addressId') != null}">
+          <option value="" th:text="#{orders.addressBook.chooseOption}">Destinatari salvati</option>
+          <option th:each="a : ${addressBook}" th:value="${a.id}" th:selected="${f.value('addressId') == #strings.toString(a.id)}" th:text="${a.label()}"
+                  th:attr="data-name=${a.name}, data-address-line=${a.addressLine}, data-city=${a.city}, data-province=${a.province}, data-postal-code=${a.postalCode}, data-phone=${a.phone ?: ''}, data-email=${a.email ?: ''}">Destinatario – Città (PR)</option>
+        </select>
+        <button type="submit" class="btn btn-light" name="action" value="useAddress" formnovalidate th:text="#{orders.addressBook.use}">Usa questo destinatario</button>
+      </div>
+      <p class="field-error" th:if="${f.error('addressId') != null}" th:text="#{${f.error('addressId')}}">Errore</p>
+    </div>
+    <p class="field-hint" th:if="${addressBook.isEmpty()}" th:text="${addressBookForStaff} ? #{orders.addressBook.emptyForStaff} : #{orders.addressBook.empty}">La rubrica è vuota: spunta «Salva il destinatario nella rubrica» qui sotto per ritrovarlo la prossima volta.</p>
+  </div>
   <div class="fields cols-3">
     <div class="field span-all">
       <label class="label" for="name" th:text="#{orders.field.name}">Ragione Sociale/Nominativo</label>
@@ -134,6 +153,7 @@
       <input class="input" id="email" name="email" type="email" maxlength="254" autocomplete="off" th:value="${f.value('email')}" th:attr="aria-invalid=${f.error('email') != null}">
       <p class="field-error" th:if="${f.error('email') != null}" th:text="#{${f.error('email')}}">Errore</p>
     </div>
+    <label class="check-field span-all" th:if="${addressBook != null}"><input type="checkbox" name="saveRecipient" value="1" th:checked="${f.value('saveRecipient') == '1'}"> <span th:text="${addressBookForStaff} ? #{orders.addressBook.saveForCustomer} : #{orders.addressBook.save}">Salva il destinatario nella rubrica</span></label>
   </div>
 </section>
 

@@ -19,6 +19,12 @@ POST	/area-clienti/registrazione/	403	403	403	403
 GET	/area-clienti/profilo/	302	200	403	403
 POST	/area-clienti/profilo/email	403	403	403	403
 POST	/area-clienti/profilo/password	403	403	403	403
+# ENH-07 address book in the profile (ADR 0033): 404 for a customer while customers.addressBook is off, as in this run.
+GET	/area-clienti/profilo/rubrica/nuovo	302	404	403	403
+POST	/area-clienti/profilo/rubrica/nuovo	403	403	403	403
+GET	/area-clienti/profilo/rubrica/{id}	302	404	403	403
+POST	/area-clienti/profilo/rubrica/{id}	403	403	403	403
+POST	/area-clienti/profilo/rubrica/{id}/elimina	403	403	403	403
 # orders module (CUS-04, CUS-05, CUS-07): list, detail, the new-order form and the changes to a pending order behind a customer session.
 GET	/area-clienti/ordini/	302	200	403	403
 GET	/area-clienti/ordini/{codice}/	302	404	403	403
@@ -31,6 +37,8 @@ GET	/area-clienti/ordini/{codice}/modifica	302	404	403	403
 POST	/area-clienti/ordini/{codice}/modifica	403	403	403	403
 GET	/area-clienti/ordini/{codice}/annulla	302	404	403	403
 POST	/area-clienti/ordini/{codice}/annulla	403	403	403	403
+# ENH-07 «Ordina di nuovo» (ADR 0033): 404 while orders.repeat is off; without a CSRF token every POST is 403.
+POST	/area-clienti/ordini/{codice}/ripeti	403	403	403	403
 GET	/gestione/	200	200	200	200
 # backoffice module (ADM-02…ADM-09, ADM-11, ADM-12, NFR-03; ADR 0017, 0028): staff screens, record editing; settings, staff users and privacy tools for ADMIN only.
 GET	/gestione/clienti/	302	403	200	200

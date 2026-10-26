@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- An entry of the address book (ENH-07, ADR 0033): add («Nuovo destinatario») or change one; the recipient fields of the order form, the same rules (OP-R7). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${address == null} ? #{customers.addressBook.newTitle} : #{customers.addressBook.editTitle}) + ' · ' + ${business.brandName}">Nuovo destinatario · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<th:block th:replace="~{layout/private :: customerNav('profile', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/area-clienti/profilo/#rubrica"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{customers.addressBook.back}">Torna alla rubrica</span></a>
+        <h1 th:text="${address == null} ? #{customers.addressBook.newTitle} : #{customers.addressBook.editTitle}">Nuovo destinatario</h1>
+      </div>
+    </div>
+    <th:block th:replace="~{layout/private :: error(${error})}"></th:block>
+    <div class="callout callout-error" role="alert" th:if="${!errors.isEmpty()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" class="panel" novalidate th:action="${address == null} ? @{/area-clienti/profilo/rubrica/nuovo} : @{/area-clienti/profilo/rubrica/{id}(id=${address.id})}">
+      <div class="fields cols-3">
+        <div class="field span-all">
+          <label class="label" for="name" th:text="#{orders.field.name}">Ragione Sociale/Nominativo</label>
+          <input class="input" id="name" name="name" type="text" maxlength="200" autocomplete="off" th:value="${values['name']}" th:attr="aria-invalid=${errors['name'] != null}">
+          <p class="field-error" th:if="${errors['name'] != null}" th:text="#{${errors['name']}}">Errore</p>
+        </div>
+        <div class="field span-all">
+          <label class="label" for="addressLine" th:text="#{orders.field.addressLine}">Via</label>
+          <input class="input" id="addressLine" name="addressLine" type="text" maxlength="200" autocomplete="off" th:value="${values['addressLine']}" th:attr="aria-invalid=${errors['addressLine'] != null}">
+          <p class="field-error" th:if="${errors['addressLine'] != null}" th:text="#{${errors['addressLine']}}">Errore</p>
+        </div>
+        <div class="field">
+          <label class="label" for="city" th:text="#{orders.field.city}">Città</label>
+          <input class="input" id="city" name="city" type="text" maxlength="100" autocomplete="off" th:value="${values['city']}" th:attr="aria-invalid=${errors['city'] != null}">
+          <p class="field-error" th:if="${errors['city'] != null}" th:text="#{${errors['city']}}">Errore</p>
+        </div>
+        <div class="field">
+          <label class="label" for="province" th:text="#{orders.field.province}">Provincia</label>
+          <input class="input" id="province" name="province" type="text" maxlength="60" autocomplete="off" th:value="${values['province']}" th:attr="aria-invalid=${errors['province'] != null}">
+          <p class="field-error" th:if="${errors['province'] != null}" th:text="#{${errors['province']}}">Errore</p>
+        </div>
+        <div class="field">
+          <label class="label" for="postalCode" th:text="#{orders.field.postalCode}">CAP</label>
+          <input class="input" id="postalCode" name="postalCode" type="text" inputmode="numeric" maxlength="10" autocomplete="off" th:value="${values['postalCode']}" th:attr="aria-invalid=${errors['postalCode'] != null}">
+          <p class="field-error" th:if="${errors['postalCode'] != null}" th:text="#{${errors['postalCode']}}">Errore</p>
+        </div>
+        <div class="field">
+          <label class="label" for="phone" th:text="#{orders.field.phoneOptional}">Telefono (facoltativo)</label>
+          <input class="input" id="phone" name="phone" type="tel" maxlength="30" autocomplete="off" th:value="${values['phone']}" th:attr="aria-invalid=${errors['phone'] != null}">
+          <p class="field-error" th:if="${errors['phone'] != null}" th:text="#{${errors['phone']}}">Errore</p>
+        </div>
+        <div class="field span-2">
+          <label class="label" for="email" th:text="#{orders.field.emailOptional}">Email del destinatario (facoltativo)</label>
+          <input class="input" id="email" name="email" type="email" maxlength="254" autocomplete="off" th:value="${values['email']}" th:attr="aria-invalid=${errors['email'] != null}">
+          <p class="field-error" th:if="${errors['email'] != null}" th:text="#{${errors['email']}}">Errore</p>
+        </div>
+      </div>
+      <p class="form-actions">
+        <button type="submit" class="btn" th:text="#{customers.addressBook.save}">Salva il destinatario</button>
+        <a class="btn btn-light" href="/area-clienti/profilo/#rubrica" th:text="#{orders.form.cancel}">Annulla</a>
+      </p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

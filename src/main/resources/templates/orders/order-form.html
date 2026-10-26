@@ -26,6 +26,7 @@
       </div>
     </div>
 
+    <th:block th:replace="~{layout/private :: flash}"></th:block>
     <th:block th:replace="~{layout/private :: error(${error})}"></th:block>
     <div class="callout callout-error" role="alert" th:if="${form.hasErrors()}" data-form-errors>
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>

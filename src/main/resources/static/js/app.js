@@ -4,7 +4,9 @@
  * «Elimina» are submit buttons the server answers. Here they act in place, the row and order
  * totals follow every keystroke with the server's rules (OrderTotals: weight = peso × quantità;
  * volume = round½↑(h × l × w / 1 000 000 × quantità, 2) per line), and choosing «Epal» fills
- * the standard 120 × 80 cm base when length and width are still empty.
+ * the standard 120 × 80 cm base when length and width are still empty. With the address book
+ * (ENH-07, ADR 0033) choosing a saved recipient fills the recipient fields at once; without
+ * JavaScript «Usa questo destinatario» asks the server to do it.
  */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -143,4 +145,21 @@ function initOrderForm(form) {
   update();
 }
 
-for (const form of $$('form[data-order-form]')) initOrderForm(form);
+/** ENH-07: the recipient fields follow the saved recipient chosen in the address book. */
+function initAddressBook(form) {
+  const select = $('[data-address-book] select[name="addressId"]', form);
+  if (!select) return;
+  select.addEventListener('change', () => {
+    const option = select.selectedOptions[0];
+    if (!option?.value) return;
+    for (const field of ['name', 'addressLine', 'city', 'province', 'postalCode', 'phone', 'email']) {
+      const input = form.elements.namedItem(field);
+      if (input instanceof HTMLInputElement) input.value = option.dataset[field] ?? '';
+    }
+  });
+}
+
+for (const form of $$('form[data-order-form]')) {
+  initOrderForm(form);
+  initAddressBook(form);
+}

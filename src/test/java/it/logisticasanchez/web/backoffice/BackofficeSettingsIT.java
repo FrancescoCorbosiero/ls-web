@@ -163,6 +163,45 @@ class BackofficeSettingsIT extends AbstractPostgresIT {
     }
 
     @Test
+    void anAdminTurnsABuiltFlagOnAndOffAndEachChangeIsAudited() throws Exception {
+        FlagKey key = Arrays.stream(FlagKey.values())
+                .filter(FlagKey::built)
+                .findFirst()
+                .orElseThrow();
+        String page = mvc.perform(get("/gestione/impostazioni/").session(adminSession))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+        String row = page.substring(page.indexOf("data-flag=\"" + key.key() + "\""));
+        assertThat(row.substring(0, row.indexOf("</tr>")))
+                .contains(">Disponibile<")
+                .contains(">Attiva</button>");
+        mvc.perform(post("/gestione/impostazioni/flag")
+                        .session(adminSession)
+                        .with(csrf())
+                        .param("chiave", key.key())
+                        .param("attiva", "1"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(flash().attribute("flash", org.hamcrest.Matchers.containsString("attivata")));
+        assertThat(flags.isEnabled(key)).isTrue();
+        assertThat(jdbc.queryForObject("select updated_by from feature_flag where key = ?", Long.class, key.key()))
+                .isEqualTo(admin.getId());
+        mvc.perform(post("/gestione/impostazioni/flag")
+                        .session(adminSession)
+                        .with(csrf())
+                        .param("chiave", key.key())
+                        .param("attiva", "0"))
+                .andExpect(status().is3xxRedirection());
+        assertThat(flags.isEnabled(key)).isFalse();
+        assertThat(jdbc.queryForObject(
+                        "select count(*) from audit_log where action = 'flag.toggle' and actor_id = ? and entity_ref = ?",
+                        Long.class,
+                        admin.getId(),
+                        key.key()))
+                .isEqualTo(2);
+    }
+
+    @Test
     void aFlagNotBuiltYetCannotBeTurnedOnButOneLeftOnCanBeTurnedOffWithAudit() throws Exception {
         FlagKey key = Arrays.stream(FlagKey.values())
                 .filter(k -> !k.built())

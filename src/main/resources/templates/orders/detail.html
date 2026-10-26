@@ -3,7 +3,8 @@
   Order detail (CUS-05; ADR 0029): state and tracking steps, lines grouped (not per unit) with the
   recomputed totals, shipment data, recipient and sender, the dates of the order's life; while it
   is pending, «Modifica» and «Annulla l'ordine» (CUS-07), or the office's contacts when changes
-  stay with the office (Q-12 seam).
+  stay with the office (Q-12 seam); with orders.repeat on, «Ordina di nuovo» (ENH-07: the order
+  form filled from this order).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -25,9 +26,12 @@
           <span th:text="#{orders.detail.submittedAt(${fmt.dateTime(order.submittedAt)})}">Inviato il</span>
         </p>
       </div>
-      <div class="page-actions" th:if="${selfService and order.editableByCustomer()}">
-        <a class="btn" th:href="@{/area-clienti/ordini/{c}/modifica(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
-        <a class="btn btn-danger" th:href="@{/area-clienti/ordini/{c}/annulla(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{orders.action.cancel}">Annulla l'ordine</span></a>
+      <div class="page-actions" th:if="${(selfService and order.editableByCustomer()) or (repeatEnabled and customer.canOrder())}">
+        <a class="btn" th:if="${selfService and order.editableByCustomer()}" th:href="@{/area-clienti/ordini/{c}/modifica(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{orders.action.edit}">Modifica</span></a>
+        <a class="btn btn-danger" th:if="${selfService and order.editableByCustomer()}" th:href="@{/area-clienti/ordini/{c}/annulla(c=${order.displayCode()})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-ban"/></svg><span th:text="#{orders.action.cancel}">Annulla l'ordine</span></a>
+        <form class="inline-form" method="post" th:if="${repeatEnabled and customer.canOrder()}" th:action="@{/area-clienti/ordini/{c}/ripeti(c=${order.displayCode()})}" data-repeat>
+          <button type="submit" class="btn btn-light"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{orders.action.repeat}">Ordina di nuovo</span></button>
+        </form>
       </div>
     </div>
     <th:block th:replace="~{layout/private :: flash}"></th:block>

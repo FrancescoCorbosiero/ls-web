@@ -2,6 +2,7 @@ package it.logisticasanchez.web.orders;
 
 import it.logisticasanchez.web.auth.CustomerPrincipal;
 import it.logisticasanchez.web.auth.CustomerSessionService;
+import it.logisticasanchez.web.customers.AddressBookService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
@@ -25,7 +26,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * withdraws it after a confirmation page («Annulla l'ordine»). Each page carries the version of
  * the order it showed; a change meanwhile (the office, another tab) sends the customer back to
  * the current data. An order of another customer is a 404; one that is no longer pending, or a
- * setting that keeps changes with the office, leads back to the detail page.
+ * setting that keeps changes with the office, leads back to the detail page. With
+ * {@code customers.addressBook} on (ENH-07) the form also offers the address book.
  */
 @Controller
 public class CustomerOrderChangesController {
@@ -36,13 +38,19 @@ public class CustomerOrderChangesController {
     private final OrderForm forms;
     private final CustomerService customers;
     private final TrackingCatalog catalog;
+    private final OrderAddressBook addressBook;
 
     public CustomerOrderChangesController(
-            OrderService orders, OrderForm forms, CustomerService customers, TrackingCatalog catalog) {
+            OrderService orders,
+            OrderForm forms,
+            CustomerService customers,
+            TrackingCatalog catalog,
+            OrderAddressBook addressBook) {
         this.orders = orders;
         this.forms = forms;
         this.customers = customers;
         this.catalog = catalog;
+        this.addressBook = addressBook;
     }
 
     @GetMapping(OrderRoutes.EDIT)
@@ -73,12 +81,18 @@ public class CustomerOrderChangesController {
         }
         int version = version(form);
         OrderForm.Model typed = forms.read(form);
-        switch (forms.action(form)) {
+        switch (addressBook.action(form)) {
             case ADD_LINE -> {
                 return editPage(model, order, forms.withRowAdded(typed), version);
             }
             case REMOVE_LINE -> {
                 return editPage(model, order, forms.withRowRemoved(typed, forms.removedIndex(form)), version);
+            }
+            case USE_ADDRESS -> {
+                return editPage(model, order, addressBook.use(principal.customerId(), typed), version);
+            }
+            case SHOW_ADDRESS_BOOK -> {
+                return editPage(model, order, typed, version);
             }
             default -> {
                 OrderForm.Submission submission = forms.validate(typed);
@@ -102,6 +116,15 @@ public class CustomerOrderChangesController {
                 }
                 redirect.addFlashAttribute(
                         "flash", "Modifiche salvate: il centro logistico vede già l'ordine aggiornato.");
+                String notSaved = addressBook.asked(typed)
+                        ? addressBook.remember(
+                                principal.customerId(),
+                                AddressBookService.Actor.customer(principal.customerUserId()),
+                                submission.content().recipient())
+                        : null;
+                if (notSaved != null) {
+                    redirect.addFlashAttribute("flashError", notSaved);
+                }
                 return "redirect:" + OrderRoutes.detail(order.displayCode());
             }
         }
@@ -156,6 +179,7 @@ public class CustomerOrderChangesController {
     }
 
     private String editPage(Model model, OrderView order, OrderForm.Model form, Integer version) {
+        model.addAttribute("addressBook", addressBook.entries(order.customerId()));
         model.addAttribute("order", order);
         model.addAttribute("form", form);
         model.addAttribute("version", version == null ? order.version() : version);

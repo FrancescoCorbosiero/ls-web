@@ -180,7 +180,8 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
         queued.attachToken(insertSyntheticRegisterToken(), new byte[] {9, 9});
         flushAndClear();
 
-        assertThat(outbox.findDue(Instant.now().plus(1, ChronoUnit.MINUTES), PageRequest.of(0, 10)))
+        // a page wide enough for the rows other test classes leave queued (the worker is off in tests)
+        assertThat(outbox.findDue(Instant.now().plus(1, ChronoUnit.MINUTES), PageRequest.of(0, 1000)))
                 .extracting(EmailOutbox::getId)
                 .contains(queued.getId());
         EmailOutbox found = outbox.findById(queued.getId()).orElseThrow();
