@@ -30,6 +30,9 @@ import org.springframework.web.bind.annotation.RequestParam;
  * by an e-mailed link (the «password dimenticata» path); a change ends the other sessions and
  * remembered devices, this one goes on. With {@code customers.addressBook} on, the page also lists
  * the saved recipients (ENH-07, ADR 0033; {@link AddressBookController} adds, changes, deletes).
+ * With {@code customers.profileEdit} on, an ACTIVE customer gets «Modifica i dati» in place of
+ * «Chiedi una modifica» and sees the change waiting for approval (ENH-16, ADR 0038;
+ * {@link ProfileEditController}).
  */
 @Controller
 public class ProfileController {
@@ -47,6 +50,7 @@ public class ProfileController {
     private final RememberedSignInService remembered;
     private final ClientIpResolver clientIp;
     private final AddressBookService addressBook;
+    private final CustomerChangeService changes;
     private final FeatureFlags flags;
 
     public ProfileController(
@@ -56,6 +60,7 @@ public class ProfileController {
             RememberedSignInService remembered,
             ClientIpResolver clientIp,
             AddressBookService addressBook,
+            CustomerChangeService changes,
             FeatureFlags flags) {
         this.customers = customers;
         this.passwords = passwords;
@@ -63,6 +68,7 @@ public class ProfileController {
         this.remembered = remembered;
         this.clientIp = clientIp;
         this.addressBook = addressBook;
+        this.changes = changes;
         this.flags = flags;
     }
 
@@ -92,6 +98,11 @@ public class ProfileController {
                 "addresses",
                 flags.isEnabled(FlagKey.CUSTOMERS_ADDRESS_BOOK) ? addressBook.list(principal.customerId()) : null);
         model.addAttribute("addressBookMax", AddressBookService.MAX_ENTRIES);
+        // ENH-16: false and null while the flag is off (or the customer is not ACTIVE): the M1 page
+        boolean profileEdit = flags.isEnabled(FlagKey.CUSTOMERS_PROFILE_EDIT) && customer.canOrder();
+        model.addAttribute("profileEdit", profileEdit);
+        model.addAttribute(
+                "pendingChange", profileEdit ? changes.pending(customer.id()).orElse(null) : null);
         return "customers/profile";
     }
 

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<!--
+  «Modifica i tuoi dati» (ENH-16, customers.profileEdit, ADR 0038): the registration fields of
+  CUS-02 with their rules, on the version the page showed. Address and phone change at once;
+  company name, VAT number and tax code after the office's approval. While a change waits, those
+  fields show the values asked for, with the present ones under them.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{customers.profileForm.title} + ' · ' + ${business.brandName}">Modifica i tuoi dati · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<th:block th:replace="~{layout/private :: customerNav('profile', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/area-clienti/profilo/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{customers.profileForm.back}">Torna al profilo</span></a>
+        <h1 th:text="#{customers.profileForm.title}">Modifica i tuoi dati</h1>
+        <p class="lede" th:text="#{customers.profileForm.lead}">Indirizzo e telefono cambiano subito. Ragione sociale, partita IVA e codice fiscale cambiano quando il nostro ufficio approva la modifica.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{layout/private :: error(${error})}"></th:block>
+    <div class="callout callout-error" role="alert" th:if="${!errors.isEmpty()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{customers.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" novalidate th:action="@{/area-clienti/profilo/dati}" data-profile-form>
+      <input type="hidden" name="versione" th:value="${version}">
+      <section class="panel mb-m" aria-labelledby="identita-title" data-identity>
+        <h2 id="identita-title" th:text="#{customers.profileForm.identity}">Ragione sociale e dati fiscali</h2>
+        <p class="muted small" th:text="#{customers.profileForm.identityHint}">Cambiano dopo l'approvazione del nostro ufficio: ti avvisiamo via e-mail.</p>
+        <div class="fields">
+          <th:block th:each="f : ${ {'companyName','vatNumber','taxCode'} }">
+            <div class="field" th:classappend="${f == 'companyName'} ? 'span-all'">
+              <label class="label" th:for="${f}" th:text="#{'customers.field.' + ${f}}">Campo</label>
+              <input class="input" type="text" th:id="${f}" th:name="${f}" th:value="${values.get(f)}"
+                     th:maxlength="${f == 'companyName'} ? 200 : 16"
+                     th:autocomplete="${f == 'companyName'} ? 'organization' : 'off'"
+                     th:required="${f == 'companyName'}"
+                     th:attr="aria-invalid=${errors.get(f) != null}, aria-describedby=${pendingFields.get(f) != null} ? ${f} + '-pending' : null">
+              <p class="field-hint" th:if="${pendingFields.get(f) != null}" th:id="${f} + '-pending'" data-pending-field th:text="#{customers.profileForm.pending(${pendingFields.get(f).current})}">In attesa di approvazione. Ora: Ditta S.r.l.</p>
+              <p class="field-error" th:if="${errors.get(f) != null}" th:text="#{${errors.get(f)}}">Errore</p>
+            </div>
+          </th:block>
+        </div>
+      </section>
+      <section class="panel mb-m" aria-labelledby="contatti-title">
+        <h2 id="contatti-title" th:text="#{customers.profileForm.contacts}">Indirizzo e telefono</h2>
+        <p class="muted small" th:text="#{customers.profileForm.contactsHint}">È l'indirizzo del ritiro: vale per i prossimi ordini, quelli già inviati restano con i dati di allora.</p>
+        <div class="fields">
+          <th:block th:each="f : ${ {'addressLine','city','province','postalCode','phone'} }">
+            <div class="field" th:classappend="${f == 'addressLine'} ? 'span-all'">
+              <label class="label" th:for="${f}" th:text="#{'customers.field.' + ${f}}">Campo</label>
+              <input class="input" type="text" th:id="${f}" th:name="${f}" th:value="${values.get(f)}"
+                     th:maxlength="${f == 'postalCode'} ? 5 : (${f == 'phone'} ? 30 : (${f == 'province'} ? 60 : (${f == 'city'} ? 100 : 200)))"
+                     th:inputmode="${f == 'postalCode' or f == 'phone'} ? 'numeric' : null"
+                     th:autocomplete="${f == 'addressLine'} ? 'street-address' : (${f == 'city'} ? 'address-level2' : (${f == 'province'} ? 'address-level1' : (${f == 'postalCode'} ? 'postal-code' : 'tel')))"
+                     required
+                     th:attr="aria-invalid=${errors.get(f) != null}">
+              <p class="field-hint" th:if="${f == 'postalCode'}" th:text="#{customers.hint.cap}">Cinque cifre, per esempio 20831.</p>
+              <p class="field-hint" th:if="${f == 'phone'}" th:text="#{customers.hint.phone}">Con il prefisso, per esempio 0362 123456 o +39 329 1234567.</p>
+              <p class="field-error" th:if="${errors.get(f) != null}" th:text="#{${errors.get(f)}}">Errore</p>
+            </div>
+          </th:block>
+        </div>
+      </section>
+      <p class="form-actions">
+        <button type="submit" class="btn" data-save-profile><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{customers.profileForm.save}">Salva i dati</span></button>
+        <a class="btn btn-light" href="/area-clienti/profilo/" th:text="#{orders.form.cancel}">Annulla</a>
+      </p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

@@ -34,6 +34,7 @@ class SchemaConformanceIT extends AbstractPostgresIT {
             "customer_pending_registration",
             "customer_user",
             "customer_address",
+            "customer_change_request",
             "quote",
             "quote_line",
             "login_token",

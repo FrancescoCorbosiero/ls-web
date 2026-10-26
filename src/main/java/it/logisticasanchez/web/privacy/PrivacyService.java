@@ -3,6 +3,7 @@ package it.logisticasanchez.web.privacy;
 import it.logisticasanchez.web.auth.CustomerAccountService;
 import it.logisticasanchez.web.customers.AddressBookService;
 import it.logisticasanchez.web.customers.AddressView;
+import it.logisticasanchez.web.customers.CustomerChangeService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
 import it.logisticasanchez.web.notifications.NotificationService;
@@ -32,7 +33,8 @@ import tools.jackson.databind.ObjectMapper;
  * as JSON; {@link #anonymise} erases by anonymisation, never by deletion: the customer row and
  * its login identity get a placeholder address and are closed, one-time links are deleted,
  * leads, staff notes, outbox bodies and audit details are removed, report recipient lists are
- * rewritten, the address book of saved recipients (ENH-07) is deleted; the orders stay with
+ * rewritten, the address book of saved recipients (ENH-07) and the data change requests (ENH-16)
+ * are deleted; the orders stay with
  * their sender snapshots for the legal retention period (Q-18). Each module does its own part
  * through its service; this class only orchestrates.
  */
@@ -51,6 +53,7 @@ public class PrivacyService {
     private final ObjectMapper json;
     private final AddressBookService addressBook;
     private final QuoteService quotes;
+    private final CustomerChangeService customerChanges;
 
     public PrivacyService(
             CustomerService customers,
@@ -62,7 +65,8 @@ public class PrivacyService {
             AuditService audit,
             ObjectMapper json,
             AddressBookService addressBook,
-            QuoteService quotes) {
+            QuoteService quotes,
+            CustomerChangeService customerChanges) {
         this.customers = customers;
         this.accounts = accounts;
         this.orders = orders;
@@ -73,6 +77,7 @@ public class PrivacyService {
         this.json = json;
         this.addressBook = addressBook;
         this.quotes = quotes;
+        this.customerChanges = customerChanges;
     }
 
     /** What the tool found for an address before acting: the customer, if any, and the number of site requests. */
@@ -142,6 +147,11 @@ public class PrivacyService {
             if (!quoteRows.isEmpty()) {
                 document.put("preventivi", quoteRows);
             }
+            // ENH-16: only when the customer asked to change its data
+            List<Map<String, Object>> changeRows = customerChanges.exportFor(customer.id());
+            if (!changeRows.isEmpty()) {
+                document.put("richiesteModificaDati", changeRows);
+            }
         });
         document.put(
                 "richiesteDalSito",
@@ -162,7 +172,8 @@ public class PrivacyService {
 
     /**
      * What the anonymisation did, by counts (never values); {@code addresses}: the saved recipients
-     * deleted (ENH-07); {@code quotes}: the saved quotes emptied, the open ones withdrawn (ENH-20).
+     * deleted (ENH-07); {@code quotes}: the saved quotes emptied, the open ones withdrawn (ENH-20);
+     * {@code changeRequests}: the data change requests deleted (ENH-16).
      */
     public record Outcome(
             Long customerId,
@@ -172,7 +183,8 @@ public class PrivacyService {
             int reportRuns,
             int auditDetails,
             int addresses,
-            int quotes) {}
+            int quotes,
+            int changeRequests) {}
 
     /**
      * Erasure by anonymisation (NFR-03). Refused when nothing is known about the address. The
@@ -197,6 +209,7 @@ public class PrivacyService {
         int auditDetails = 0;
         int addresses = 0;
         int quoteRows = 0;
+        int changeRows = 0;
         if (customerId != null) {
             Optional<CustomerAccountService.Account> account = accounts.findByEmail(address);
             List<String> otherAddresses = accounts.anonymise(customerId, placeholder);
@@ -208,6 +221,7 @@ public class PrivacyService {
             notes = orders.eraseInternalNotes(customerId);
             addresses = addressBook.erase(customerId);
             quoteRows = quotes.erase(customerId);
+            changeRows = customerChanges.erase(customerId);
             auditDetails += audit.deletePersonalDetails(
                     "customer",
                     customerId,
@@ -224,8 +238,8 @@ public class PrivacyService {
             leadRows += leads.anonymiseByCustomer(customerId); // ENH-06: linked with another e-mail
         }
         auditDetails += audit.deletePersonalDetailsMentioning(address);
-        Outcome outcome =
-                new Outcome(customerId, leadRows, outboxRows, notes, reportRuns, auditDetails, addresses, quoteRows);
+        Outcome outcome = new Outcome(
+                customerId, leadRows, outboxRows, notes, reportRuns, auditDetails, addresses, quoteRows, changeRows);
         audit.record(AuditEntry.of(AuditActorType.STAFF, adminId, "privacy.anonymise")
                 .entity("customer", customerId, null)
                 .change(null, counts(outcome)));
@@ -245,6 +259,9 @@ public class PrivacyService {
         }
         if (outcome.quotes() > 0) {
             counts.put("quotes", outcome.quotes());
+        }
+        if (outcome.changeRequests() > 0) {
+            counts.put("changeRequests", outcome.changeRequests());
         }
         return counts;
     }

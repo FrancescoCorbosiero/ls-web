@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Profile (CUS-06): read-only company data, «chiedi una modifica» to the office, login e-mail change by link, the password (ADR 0032); with customers.addressBook on, the saved recipients (ENH-07, ADR 0033). -->
+<!-- Profile (CUS-06): read-only company data, «chiedi una modifica» to the office, login e-mail change by link, the password (ADR 0032); with customers.addressBook on, the saved recipients (ENH-07, ADR 0033); with customers.profileEdit on, «Modifica i dati» and the change waiting for approval (ENH-16, ADR 0038). -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
 <head>
   <title th:text="#{customers.profile.title} + ' · ' + ${business.brandName}">Il tuo profilo · Logistica Sanchez</title>
@@ -34,8 +34,26 @@
         </tbody>
       </table>
     </div>
-    <p th:text="#{customers.profile.changeHint}">I dati dell'azienda vengono modificati dal nostro ufficio: scrivici indicando cosa cambiare.</p>
-    <p><a class="btn btn-light" th:href="'mailto:' + ${business.officeEmail} + '?subject=' + #{customers.profile.changeSubject(${customer.email})}" th:text="#{customers.profile.changeAction}">Chiedi una modifica</a></p>
+    <th:block th:if="${!profileEdit}">
+      <p th:text="#{customers.profile.changeHint}">I dati dell'azienda vengono modificati dal nostro ufficio: scrivici indicando cosa cambiare.</p>
+      <p><a class="btn btn-light" th:href="'mailto:' + ${business.officeEmail} + '?subject=' + #{customers.profile.changeSubject(${customer.email})}" th:text="#{customers.profile.changeAction}">Chiedi una modifica</a></p>
+    </th:block>
+    <th:block th:if="${profileEdit}">
+      <div class="callout callout-info" role="status" th:if="${pendingChange != null}" data-pending-change>
+        <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-history"/></svg>
+        <div>
+          <p class="strong" th:text="#{customers.profile.pendingChange(${fmt.date(pendingChange.requestedAt)})}">Il 01/10/2026 hai chiesto di cambiare questi dati: la modifica aspetta l'approvazione del nostro ufficio.</p>
+          <ul>
+            <li th:each="c : ${pendingChange.changes()}"><span th:text="#{'customers.change.field.' + ${c.name}}">Campo</span>: <strong th:text="${c.requested}">valore</strong></li>
+          </ul>
+          <form class="callout-actions" method="post" th:action="@{/area-clienti/profilo/dati/ritira}">
+            <button type="submit" class="btn btn-light btn-sm" data-withdraw-change th:text="#{customers.profile.withdrawChange}">Ritira la richiesta</button>
+          </form>
+        </div>
+      </div>
+      <p th:text="#{customers.profile.editHint}">Puoi aggiornare tu i tuoi dati: indirizzo e telefono cambiano subito, ragione sociale, partita IVA e codice fiscale dopo l'approvazione del nostro ufficio.</p>
+      <p><a class="btn btn-light" href="/area-clienti/profilo/dati" data-edit-profile><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-pencil"/></svg><span th:text="#{customers.profile.editAction}">Modifica i dati</span></a></p>
+    </th:block>
 
     <th:block th:if="${addresses != null}">
       <h2 id="rubrica" th:text="#{customers.addressBook.title}">Rubrica dei destinatari</h2>

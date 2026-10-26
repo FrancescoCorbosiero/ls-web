@@ -57,6 +57,16 @@ customer_address phone varchar NULL
 customer_address email varchar NULL
 customer_address created_at timestamptz NOT NULL
 customer_address updated_at timestamptz NOT NULL
+customer_change_request id int8 NOT NULL
+customer_change_request customer_id int8 NOT NULL
+customer_change_request status varchar NOT NULL
+customer_change_request company_name varchar NOT NULL
+customer_change_request vat_number varchar NULL
+customer_change_request tax_code varchar NULL
+customer_change_request requested_at timestamptz NOT NULL
+customer_change_request closed_at timestamptz NULL
+customer_change_request decided_by int8 NULL
+customer_change_request decline_reason varchar NULL
 quote id int8 NOT NULL
 quote lead_id int8 NOT NULL
 quote customer_id int8 NOT NULL

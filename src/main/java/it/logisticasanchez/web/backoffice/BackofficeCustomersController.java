@@ -1,5 +1,6 @@
 package it.logisticasanchez.web.backoffice;
 
+import it.logisticasanchez.web.customers.CustomerChangeService;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
 import it.logisticasanchez.web.orders.OrderService;
@@ -24,7 +25,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * ADR 0017): «In Approvazione» with approve/decline behind a named confirmation page («Sei sicuro
  * di voler procedere?»), «Registrati» newest first with search and pagination, the customer page
  * with its orders. Rules and e-mails live in {@link CustomerService}; a refused action
- * (unverified customer, Q-28) is shown on the confirmation page.
+ * (unverified customer, Q-28) is shown on the confirmation page. With {@code customers.profileEdit}
+ * on (ENH-16, ADR 0038), «In Approvazione» also lists the customers' data changes and the customer
+ * page shows the one waiting, with «Approva la modifica» and «Rifiuta» ({@link CustomerChangeService}).
  */
 @Controller
 public class BackofficeCustomersController {
@@ -32,11 +35,14 @@ public class BackofficeCustomersController {
     static final int PAGE_SIZE = 25;
 
     private final CustomerService customers;
+    private final CustomerChangeService changes;
     private final OrderService orders;
     private final FeatureFlags flags;
 
-    public BackofficeCustomersController(CustomerService customers, OrderService orders, FeatureFlags flags) {
+    public BackofficeCustomersController(
+            CustomerService customers, CustomerChangeService changes, OrderService orders, FeatureFlags flags) {
         this.customers = customers;
+        this.changes = changes;
         this.orders = orders;
         this.flags = flags;
     }
@@ -44,6 +50,8 @@ public class BackofficeCustomersController {
     @GetMapping(BackofficeRoutes.CUSTOMERS_PENDING)
     public String pending(Model model) {
         model.addAttribute("customers", customers.pendingApproval());
+        // ENH-16: null while the flag is off, so the page is the M1 one
+        model.addAttribute("changeRequests", profileEdit() ? changes.allPending() : null);
         return "backoffice/customers-pending";
     }
 
@@ -65,7 +73,64 @@ public class BackofficeCustomersController {
         CustomerView customer = customer(id);
         model.addAttribute("customer", customer);
         model.addAttribute("orders", orders.listForCustomer(customer.id()));
+        model.addAttribute(
+                "changeRequest", profileEdit() ? changes.pending(customer.id()).orElse(null) : null);
         return "backoffice/customer";
+    }
+
+    @PostMapping(BackofficeRoutes.CUSTOMER_CHANGE_APPROVE)
+    public String approveChange(
+            @PathVariable("id") long id,
+            @PathVariable("request") long requestId,
+            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
+            RedirectAttributes redirect) {
+        CustomerView customer = changeOf(id);
+        try {
+            CustomerView updated = changes.approve(
+                    customer.id(), requestId, StaffSession.of(authentication).requireId());
+            redirect.addFlashAttribute(
+                    "flash",
+                    "Modifica approvata: i dati di «" + updated.companyName()
+                            + "» sono aggiornati e il cliente riceve un'e-mail.");
+        } catch (RuleViolationException e) {
+            redirect.addFlashAttribute("flashError", e.detail());
+        }
+        return "redirect:" + BackofficeRoutes.customer(customer.id());
+    }
+
+    @PostMapping(BackofficeRoutes.CUSTOMER_CHANGE_DECLINE)
+    public String declineChange(
+            @PathVariable("id") long id,
+            @PathVariable("request") long requestId,
+            @RequestParam(name = "motivo", required = false) String reason,
+            @CurrentSecurityContext(expression = "authentication") Authentication authentication,
+            RedirectAttributes redirect) {
+        CustomerView customer = changeOf(id);
+        if (reason != null && reason.length() > 500) {
+            redirect.addFlashAttribute("flashError", "Il motivo può avere al massimo 500 caratteri.");
+            return "redirect:" + BackofficeRoutes.customer(customer.id());
+        }
+        try {
+            changes.decline(
+                    customer.id(), requestId, StaffSession.of(authentication).requireId(), reason);
+            redirect.addFlashAttribute(
+                    "flash", "Modifica rifiutata: i dati restano quelli di prima e il cliente riceve un'e-mail.");
+        } catch (RuleViolationException e) {
+            redirect.addFlashAttribute("flashError", e.detail());
+        }
+        return "redirect:" + BackofficeRoutes.customer(customer.id());
+    }
+
+    private boolean profileEdit() {
+        return flags.isEnabled(FlagKey.CUSTOMERS_PROFILE_EDIT);
+    }
+
+    /** The customer whose data change staff decide (ENH-16), after the flag check (404 while off). */
+    private CustomerView changeOf(long id) {
+        if (!profileEdit()) {
+            throw new ClientErrorException(ErrorCode.NOT_FOUND);
+        }
+        return customer(id);
     }
 
     @GetMapping(BackofficeRoutes.CUSTOMER_APPROVE)

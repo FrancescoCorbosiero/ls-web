@@ -203,6 +203,9 @@ public class BackofficeSettingsController {
                             + outcome.notes() + " note interne"
                             + (outcome.addresses() > 0 ? ", " + outcome.addresses() + " destinatari in rubrica" : "")
                             + (outcome.quotes() > 0 ? ", " + outcome.quotes() + " preventivi" : "")
+                            + (outcome.changeRequests() > 0
+                                    ? ", " + outcome.changeRequests() + " richieste di modifica dei dati"
+                                    : "")
                             + ".");
         } catch (RuleViolationException e) {
             return privacyPage(model, ItalianFormats.trim(email), null, e.detail());

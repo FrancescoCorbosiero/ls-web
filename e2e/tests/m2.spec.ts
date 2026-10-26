@@ -5,7 +5,7 @@ import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
 /**
- * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036, 0037): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036, 0037, 0038): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -395,10 +395,76 @@ test('[ENH-20] a quote prepared from a request reaches the customer, who orders 
   await expect(customerPage.locator('[data-flash]')).toContainText('dal preventivo PRV-');
 });
 
+test('[ENH-16] the admin turns on the customers\' own data changes', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="customers.profileEdit"]')).toContainText('Disponibile');
+  await setFlag('customers.profileEdit', true);
+});
+
+test('[ENH-16] a customer changes its phone at once and its company name once the office approves', async ({ browser, baseURL }) => {
+  // a customer of its own, created by the office: the seeded ones stay as the other specs expect them
+  const email = `dati.${stamp}@cliente.example`;
+  const company = `Ditta Profilo ${stamp} S.r.l.`;
+  const renamed = `Ditta Profilo ${stamp} Trasporti S.r.l.`;
+  await staffPage.goto('/gestione/clienti/nuovo');
+  await staffPage.locator('#email').fill(email);
+  await staffPage.locator('#companyName').fill(company);
+  await staffPage.locator('#addressLine').fill('Via del Profilo 3');
+  await staffPage.locator('#city').fill('Desio');
+  await staffPage.locator('#province').fill('MB');
+  await staffPage.locator('#postalCode').fill('20832');
+  await staffPage.locator('#phone').fill('0362 111222');
+  await staffPage.getByRole('button', { name: 'Crea il cliente' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('creato e attivo');
+
+  const [context, page, problems] = await newPage(browser, baseURL!);
+  await page.goto('/area-clienti/');
+  await page.locator('#email').fill(email);
+  await page.getByRole('button', { name: 'Ricevi il link' }).click();
+  const signIn = await waitForMail({ to: email, subject: /link per accedere/ });
+  await page.goto(linkIn(signIn, '/area-clienti/accesso'));
+  await page.getByRole('button', { name: 'Accedi' }).click();
+  await expect(page).toHaveURL(/\/area-clienti\/ordini\/$/);
+
+  await page.goto('/area-clienti/profilo/');
+  await expect(page.getByRole('link', { name: 'Chiedi una modifica' })).toHaveCount(0);
+  await page.getByRole('link', { name: 'Modifica i dati' }).click();
+  await expect(page.locator('#companyName')).toHaveValue(company);
+  await expectAccessible(page);
+  await page.locator('#phone').fill('0362 333444');
+  await page.locator('#companyName').fill(renamed);
+  await page.getByRole('button', { name: 'Salva i dati' }).click();
+  await expect(page.locator('[data-flash]')).toContainText('Dati salvati');
+  await expect(page.locator('[data-flash]')).toContainText('inviata al nostro ufficio');
+  await expect(page.locator('[data-pending-change]')).toContainText(renamed);
+  await expect(page.locator('main')).toContainText('+390362333444');
+  await expectAccessible(page);
+
+  await staffPage.goto('/gestione/clienti/in-approvazione/');
+  await staffPage
+    .locator('[data-section="customer-changes"] tr', { hasText: company })
+    .getByRole('link', { name: 'Apri il cliente' })
+    .click();
+  await expect(staffPage.locator('[data-change-request]')).toContainText(renamed);
+  await expectAccessible(staffPage);
+  await staffPage.getByRole('button', { name: 'Approva la modifica' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Modifica approvata');
+  await expect(staffPage.getByRole('heading', { level: 1 })).toHaveText(renamed);
+
+  const outcome = await waitForMail({ to: email, subject: /Dati aggiornati/ });
+  expect(outcome.body).toContain(renamed);
+  await page.goto('/area-clienti/profilo/');
+  await expect(page.locator('[data-pending-change]')).toHaveCount(0);
+  await expect(page.locator('main')).toContainText(renamed);
+  problems.expectNone();
+  await context.close();
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
     [customerPage, '/area-clienti/profilo/rubrica/nuovo'],
+    [customerPage, '/area-clienti/profilo/dati'],
     [customerPage, '/area-clienti/ordini/nuovo/'],
     [customerPage, '/area-clienti/ordini/TEST-0002/'],
     [staffPage, '/gestione/ordini/nuovo'],

@@ -9,7 +9,8 @@ import org.springframework.stereotype.Component;
  * Routes of the back office (ADR 0002, 0017, 0028): customers, orders (their creation, change and
  * cancellation included; an approved order only by an ADMIN, checked by the service), tracking and
  * reports for every staff session, with the office tools of ADR 0035 (CSV exports, bulk tracking)
- * the website requests of ADR 0036 and the saved quotes of ADR 0037 (404 while their flag is off); settings, staff users and the
+ * the website requests of ADR 0036, the saved quotes of ADR 0037 and the customers' data changes of ADR 0038 (404 while their
+ * flag is off); settings, staff users and the
  * privacy tools for ADMIN only.
  * Every one is a line of {@code route-matrix.tsv}.
  */
@@ -62,7 +63,9 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.LEAD_STATUS,
                         BackofficeRoutes.LEAD_LINK,
                         BackofficeRoutes.LEAD_QUOTE,
-                        BackofficeRoutes.QUOTE_WITHDRAW)
+                        BackofficeRoutes.QUOTE_WITHDRAW,
+                        BackofficeRoutes.CUSTOMER_CHANGE_APPROVE,
+                        BackofficeRoutes.CUSTOMER_CHANGE_DECLINE)
                 .admin(
                         HttpMethod.GET,
                         BackofficeRoutes.SETTINGS,
