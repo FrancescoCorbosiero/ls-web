@@ -32,7 +32,7 @@ public enum FlagKey {
     SITE_NOTICE_BANNER("site.noticeBanner", "ENH-17", false),
     SITE_OPEN_NOW("site.openNow", "ENH-18", false),
     SITE_PICKUP_CUTOFF("site.pickupCutoff", "ENH-19", false),
-    QUOTES_SAVED("quotes.saved", "ENH-20", false),
+    QUOTES_SAVED("quotes.saved", "ENH-20", true),
     DOCUMENTS_MONTHLY_REPORT("documents.monthlyReport", "ENH-21", false),
     SITE_LIVE_COUNTERS("site.liveCounters", "ENH-22", false);
 

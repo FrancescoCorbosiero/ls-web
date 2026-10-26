@@ -48,6 +48,9 @@ class FormEndpointIT extends AbstractPostgresIT {
 
     @BeforeEach
     void clean() {
+        // saved quotes (ENH-20) point to their request: they go first
+        jdbc.update("delete from quote_line");
+        jdbc.update("delete from quote");
         jdbc.update("delete from lead");
         jdbc.update("delete from email_outbox where kind = 'EML-08'");
         rateLimiter.reset();

@@ -201,9 +201,9 @@ public class BackofficeSettingsController {
                             + (outcome.customerId() == null ? "nessun cliente" : "cliente n. " + outcome.customerId())
                             + ", " + outcome.leads() + " richieste dal sito, " + outcome.outboxRows() + " e-mail, "
                             + outcome.notes() + " note interne"
-                            + (outcome.addresses() > 0
-                                    ? ", " + outcome.addresses() + " destinatari in rubrica."
-                                    : "."));
+                            + (outcome.addresses() > 0 ? ", " + outcome.addresses() + " destinatari in rubrica" : "")
+                            + (outcome.quotes() > 0 ? ", " + outcome.quotes() + " preventivi" : "")
+                            + ".");
         } catch (RuleViolationException e) {
             return privacyPage(model, ItalianFormats.trim(email), null, e.detail());
         }

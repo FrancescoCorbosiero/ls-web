@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
  * Routes of the back office (ADR 0002, 0017, 0028): customers, orders (their creation, change and
  * cancellation included; an approved order only by an ADMIN, checked by the service), tracking and
  * reports for every staff session, with the office tools of ADR 0035 (CSV exports, bulk tracking)
- * and the website requests of ADR 0036 (404 while their flag is off); settings, staff users and the
+ * the website requests of ADR 0036 and the saved quotes of ADR 0037 (404 while their flag is off); settings, staff users and the
  * privacy tools for ADMIN only.
  * Every one is a line of {@code route-matrix.tsv}.
  */
@@ -40,7 +40,9 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.CUSTOMERS_EXPORT,
                         BackofficeRoutes.ORDERS_EXPORT,
                         BackofficeRoutes.LEADS,
-                        BackofficeRoutes.LEAD)
+                        BackofficeRoutes.LEAD,
+                        BackofficeRoutes.LEAD_QUOTE,
+                        BackofficeRoutes.QUOTE_PDF)
                 .staff(
                         HttpMethod.POST,
                         BackofficeRoutes.CUSTOMER_NEW,
@@ -58,7 +60,9 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.REPORTS,
                         BackofficeRoutes.TRACKING_BULK,
                         BackofficeRoutes.LEAD_STATUS,
-                        BackofficeRoutes.LEAD_LINK)
+                        BackofficeRoutes.LEAD_LINK,
+                        BackofficeRoutes.LEAD_QUOTE,
+                        BackofficeRoutes.QUOTE_WITHDRAW)
                 .admin(
                         HttpMethod.GET,
                         BackofficeRoutes.SETTINGS,

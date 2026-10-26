@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!--
+  The page of a saved quote's link (ENH-20, quotes.saved, ADR 0037): the quote for whoever holds the
+  link — reference, validity, route, lines, service, amount, the staff's note —, the PDF, and
+  «Ordina il preventivo», the order form of the customer area (sign-in first). A quote no longer
+  open says why (ordered, withdrawn, expired). Never indexed (X-Robots-Tag and the meta of the
+  private layout) nor cached.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{quotes.page.title(${quote.code()})} + ' · ' + ${business.brandName}">Preventivo · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('customer', null, null)}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{quotes.page.title(${quote.code()})}">Preventivo PRV-00001</h1>
+        <p class="lede" th:text="#{quotes.page.lead(${customer.companyName}, ${fmt.date(quote.createdAt)})}">Per Ditta, del 01/01/2026</p>
+      </div>
+    </div>
+    <p class="callout callout-warn" role="status" th:if="${closed != null}" data-quote-closed th:text="${closed}">Il preventivo è scaduto.</p>
+    <section class="panel mb-m" data-quote>
+      <dl class="facts">
+        <div><dt th:text="#{quotes.amount}">Importo</dt><dd class="strong" data-quote-amount th:text="${quote.amountText()}">180,50 €</dd></div>
+        <div><dt th:text="#{quotes.validUntil}">Valido fino al</dt><dd th:text="${quote.validUntilText()}">31/12/2026</dd></div>
+        <div><dt th:text="#{quotes.pickup}">Ritiro</dt><dd th:text="${customer.postalCode} + ' ' + ${customer.city}">20831 Seregno</dd></div>
+        <div><dt th:text="#{quotes.delivery}">Consegna</dt><dd th:text="${quote.destination() ?: '-'}">10121 Torino</dd></div>
+        <div class="span-all"><dt th:text="#{quotes.service}">Servizio accessorio</dt><dd th:text="${quote.accessoryServiceLabel ?: '-'}">-</dd></div>
+        <div class="span-all" th:if="${quote.note != null}"><dt th:text="#{quotes.note}">Note</dt><dd class="facts-note" th:text="${quote.note}">-</dd></div>
+      </dl>
+    </section>
+    <section class="panel mb-m" aria-labelledby="righe-title">
+      <h2 id="righe-title" th:text="#{quotes.lines}">Pallet e colli</h2>
+      <div class="data-table-wrap" role="region" aria-labelledby="righe-title" tabindex="0">
+        <table class="data-table stacked" data-table="quote-lines">
+          <thead><tr>
+            <th scope="col" th:text="#{quotes.col.line}">Pallet / colli</th>
+            <th scope="col" class="num" th:text="#{quotes.col.weight}">Peso unitario</th>
+            <th scope="col" class="num" th:text="#{quotes.col.quantity}">Quantità</th>
+          </tr></thead>
+          <tbody>
+            <tr th:each="l : ${quote.lines}">
+              <td th:attr="data-label=#{quotes.col.line}" th:text="${l.description()}">Epal 120 × 80 × 150 cm</td>
+              <td class="num" th:attr="data-label=#{quotes.col.weight}" th:text="${l.weightText()}">300 kg</td>
+              <td class="num" th:attr="data-label=#{quotes.col.quantity}" th:text="${l.quantity}">2</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <div class="form-actions">
+      <a class="btn" th:if="${open}" th:href="${orderUrl}" data-order-quote><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-package"/></svg><span th:text="#{quotes.order}">Ordina il preventivo</span></a>
+      <a class="btn btn-light" th:href="${pdfUrl}" data-quote-pdf><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg><span th:text="#{quotes.pdf}">Scarica il PDF</span></a>
+    </div>
+    <p class="muted small" th:if="${open}" th:text="#{quotes.orderHint}">Per ordinare accedi all'area clienti: trovi il preventivo anche in «I miei ordini».</p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

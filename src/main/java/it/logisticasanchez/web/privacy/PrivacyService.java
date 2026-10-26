@@ -12,6 +12,7 @@ import it.logisticasanchez.web.platform.audit.AuditActorType;
 import it.logisticasanchez.web.platform.audit.AuditEntry;
 import it.logisticasanchez.web.platform.audit.AuditService;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
+import it.logisticasanchez.web.quotes.QuoteService;
 import it.logisticasanchez.web.reports.ReportService;
 import it.logisticasanchez.web.site.forms.LeadService;
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ public class PrivacyService {
     private final AuditService audit;
     private final ObjectMapper json;
     private final AddressBookService addressBook;
+    private final QuoteService quotes;
 
     public PrivacyService(
             CustomerService customers,
@@ -59,7 +61,8 @@ public class PrivacyService {
             NotificationService notifications,
             AuditService audit,
             ObjectMapper json,
-            AddressBookService addressBook) {
+            AddressBookService addressBook,
+            QuoteService quotes) {
         this.customers = customers;
         this.accounts = accounts;
         this.orders = orders;
@@ -69,6 +72,7 @@ public class PrivacyService {
         this.audit = audit;
         this.json = json;
         this.addressBook = addressBook;
+        this.quotes = quotes;
     }
 
     /** What the tool found for an address before acting: the customer, if any, and the number of site requests. */
@@ -133,6 +137,11 @@ public class PrivacyService {
                         "rubricaDestinatari",
                         book.stream().map(AddressView::fields).toList());
             }
+            // ENH-20: only when the customer received saved quotes
+            List<Map<String, Object>> quoteRows = quotes.exportFor(customer.id());
+            if (!quoteRows.isEmpty()) {
+                document.put("preventivi", quoteRows);
+            }
         });
         document.put(
                 "richiesteDalSito",
@@ -151,9 +160,19 @@ public class PrivacyService {
         return json.writerWithDefaultPrettyPrinter().writeValueAsString(document);
     }
 
-    /** What the anonymisation did, by counts (never values); {@code addresses}: the saved recipients deleted (ENH-07). */
+    /**
+     * What the anonymisation did, by counts (never values); {@code addresses}: the saved recipients
+     * deleted (ENH-07); {@code quotes}: the saved quotes emptied, the open ones withdrawn (ENH-20).
+     */
     public record Outcome(
-            Long customerId, int leads, int outboxRows, int notes, int reportRuns, int auditDetails, int addresses) {}
+            Long customerId,
+            int leads,
+            int outboxRows,
+            int notes,
+            int reportRuns,
+            int auditDetails,
+            int addresses,
+            int quotes) {}
 
     /**
      * Erasure by anonymisation (NFR-03). Refused when nothing is known about the address. The
@@ -177,6 +196,7 @@ public class PrivacyService {
         int notes = 0;
         int auditDetails = 0;
         int addresses = 0;
+        int quoteRows = 0;
         if (customerId != null) {
             Optional<CustomerAccountService.Account> account = accounts.findByEmail(address);
             List<String> otherAddresses = accounts.anonymise(customerId, placeholder);
@@ -187,6 +207,7 @@ public class PrivacyService {
             }
             notes = orders.eraseInternalNotes(customerId);
             addresses = addressBook.erase(customerId);
+            quoteRows = quotes.erase(customerId);
             auditDetails += audit.deletePersonalDetails(
                     "customer",
                     customerId,
@@ -203,7 +224,8 @@ public class PrivacyService {
             leadRows += leads.anonymiseByCustomer(customerId); // ENH-06: linked with another e-mail
         }
         auditDetails += audit.deletePersonalDetailsMentioning(address);
-        Outcome outcome = new Outcome(customerId, leadRows, outboxRows, notes, reportRuns, auditDetails, addresses);
+        Outcome outcome =
+                new Outcome(customerId, leadRows, outboxRows, notes, reportRuns, auditDetails, addresses, quoteRows);
         audit.record(AuditEntry.of(AuditActorType.STAFF, adminId, "privacy.anonymise")
                 .entity("customer", customerId, null)
                 .change(null, counts(outcome)));
@@ -220,6 +242,9 @@ public class PrivacyService {
         counts.put("auditDetails", outcome.auditDetails());
         if (outcome.addresses() > 0) {
             counts.put("addresses", outcome.addresses());
+        }
+        if (outcome.quotes() > 0) {
+            counts.put("quotes", outcome.quotes());
         }
         return counts;
     }

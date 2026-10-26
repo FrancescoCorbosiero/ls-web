@@ -1383,3 +1383,12 @@ a.tile:hover {
 .button-row form {
   margin: 0;
 }
+/* ADR 0037: a short list inside a callout (the quotes a customer can still order). */
+.plain-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.plain-list li + li {
+  margin-top: 4px;
+}

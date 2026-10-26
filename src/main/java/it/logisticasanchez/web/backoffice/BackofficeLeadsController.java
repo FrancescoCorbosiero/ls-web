@@ -9,6 +9,7 @@ import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
+import it.logisticasanchez.web.quotes.QuoteService;
 import it.logisticasanchez.web.site.forms.LeadService;
 import it.logisticasanchez.web.site.forms.LeadStatus;
 import it.logisticasanchez.web.site.forms.LeadView;
@@ -44,18 +45,21 @@ public class BackofficeLeadsController {
     private final OrderService orders;
     private final FeatureFlags flags;
     private final MessageSource messages;
+    private final QuoteService quotes;
 
     public BackofficeLeadsController(
             LeadService leads,
             CustomerService customers,
             OrderService orders,
             FeatureFlags flags,
-            MessageSource messages) {
+            MessageSource messages,
+            QuoteService quotes) {
         this.leads = leads;
         this.customers = customers;
         this.orders = orders;
         this.flags = flags;
         this.messages = messages;
+        this.quotes = quotes;
     }
 
     @GetMapping(BackofficeRoutes.LEADS)
@@ -102,6 +106,17 @@ public class BackofficeLeadsController {
         model.addAttribute(
                 "canCreateOrder",
                 lead.status().open() && lead.convertedOrderId() == null && customer != null && customer.canOrder());
+        // ENH-20 (ADR 0037): the saved quotes of the request; a new one for its linked customer
+        boolean quotesEnabled = flags.isEnabled(FlagKey.QUOTES_SAVED);
+        model.addAttribute("quotesEnabled", quotesEnabled);
+        model.addAttribute("quotes", quotesEnabled ? quotes.forLead(id) : List.of());
+        model.addAttribute("today", quotes.today());
+        model.addAttribute(
+                "canQuote",
+                quotesEnabled
+                        && lead.status().open()
+                        && linked.isPresent()
+                        && linked.get().canOrder());
         return "backoffice/lead";
     }
 

@@ -89,6 +89,12 @@ The tracking update «Aggiornamento spedizione N. {codice}: {stato}» of ADR 003
 `tracking.notifyCustomer`: outbox kind `EML-10` (V017), queued by `OrderService.setTrackingState`
 in the event's transaction for TRANSITO, TERMINAL_DEST and ASSEGNATO only.
 
+### EML-11 (2026-10-26, ENH-20)
+
+`quotes.saved`: outbox kind `EML-11` «Il tuo preventivo PRV-…» to the customer's sign-in address,
+queued by `QuoteService.create` with the link of the saved quote (ADR 0037). V018 widens the check
+to `EML-10`…`EML-19` for the M2 e-mails to come.
+
 ## Consequences
 
 * A controller that needs to send e-mail calls a domain service, which enqueues; the test of

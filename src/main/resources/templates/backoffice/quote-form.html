@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--
+  «Prepara preventivo» (ENH-20, quotes.saved, ADR 0037) for a website request whose customer is
+  linked: the lines are the rows of the order form (orders/form.html, filled from the request), then
+  the amount, the last valid day, the accessory service, the destination and a note for the
+  customer. «Invia il preventivo» saves it and e-mails the customer the link (EML-11).
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.quote.title} + ' · ' + #{layout.private.backoffice}">Prepara preventivo · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('leads')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:href="@{/gestione/richieste/{id}/(id=${lead.id})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.quote.back}">Torna alla richiesta</span></a>
+        <h1 th:text="#{backoffice.quote.title}">Prepara preventivo</h1>
+        <p class="lede" th:if="${customer != null}" th:text="#{backoffice.quote.lead(${customer.companyName}, ${customer.email})}">Per Ditta: il link arriva a email.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: error(${error})}"></th:block>
+    <div class="callout callout-error" role="alert" th:if="${form.hasErrors()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" novalidate data-order-form th:action="@{/gestione/richieste/{id}/preventivo(id=${lead.id})}">
+      <button type="submit" name="action" value="save" class="visually-hidden" tabindex="-1" aria-hidden="true" th:text="#{backoffice.quote.send}">Invia il preventivo</button>
+      <div class="stack">
+        <section th:replace="~{orders/form :: lines(${form}, ${kinds}, 1)}"></section>
+        <section class="panel" aria-labelledby="preventivo-title" data-quote-fields>
+          <div class="form-step"><span class="form-step-num" aria-hidden="true">2</span><h2 id="preventivo-title" th:text="#{backoffice.quote.quoteTitle}">Prezzo e validità</h2></div>
+          <div class="fields">
+            <div class="field">
+              <label class="label" for="amount" th:text="#{backoffice.quote.amount}">Importo (€)</label>
+              <input class="input" id="amount" name="amount" type="text" inputmode="decimal" maxlength="20" autocomplete="off" required th:value="${values['amount']}">
+            </div>
+            <div class="field">
+              <label class="label" for="validUntil" th:text="#{backoffice.quote.validUntil}">Valido fino al</label>
+              <input class="input" id="validUntil" name="validUntil" type="date" required th:value="${values['validUntil']}">
+            </div>
+            <div class="field span-all">
+              <label class="label" for="accessoryServiceId" th:text="#{orders.field.accessoryServiceChoose}">Seleziona servizio</label>
+              <select class="select" id="accessoryServiceId" name="accessoryServiceId">
+                <option th:each="s : ${services}" th:value="${s.none()} ? '' : ${s.id()}" th:text="${s.label()}" th:selected="${s.none()} ? ${values['accessoryServiceId'] == ''} : ${values['accessoryServiceId'] == #strings.toString(s.id())}">Nessun servizio accessorio</option>
+              </select>
+            </div>
+            <div class="field">
+              <label class="label" for="recipientCity" th:text="#{backoffice.quote.city}">Città di consegna</label>
+              <input class="input" id="recipientCity" name="recipientCity" type="text" maxlength="100" autocomplete="off" th:value="${values['recipientCity']}">
+            </div>
+            <div class="field">
+              <label class="label" for="recipientPostalCode" th:text="#{backoffice.quote.postalCode}">CAP di consegna</label>
+              <input class="input" id="recipientPostalCode" name="recipientPostalCode" type="text" inputmode="numeric" maxlength="10" autocomplete="off" th:value="${values['recipientPostalCode']}">
+            </div>
+            <div class="field span-all">
+              <label class="label" for="note" th:text="#{backoffice.quote.note}">Nota per il cliente (facoltativa)</label>
+              <textarea class="textarea" id="note" name="note" rows="3" maxlength="1000" th:text="${values['note']}"></textarea>
+              <p class="field-hint" th:text="#{backoffice.quote.noteHint}">Condizioni, tempi, IVA: compare sulla pagina del preventivo e nel PDF.</p>
+            </div>
+          </div>
+        </section>
+        <p class="form-actions">
+          <button type="submit" class="btn" name="action" value="save" data-send-quote><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{backoffice.quote.send}">Invia il preventivo</span></button>
+        </p>
+      </div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

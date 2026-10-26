@@ -2035,3 +2035,59 @@ collegata al nuovo cliente.», «La richiesta del sito è segnata come vinta.»,
 dati della richiesta del sito: completa il destinatario, il documento di trasporto e le righe che
 mancano.»; on «Nuovo cliente»: «I dati vengono dalla richiesta del sito: controllali e completa
 indirizzo e provincia.».
+
+## Step L — M2: ENH-20, saved quotes (2026-10-26)
+
+Second of the M2 items of the owner's request «procedi con quelli che puoi fare ora». ADR 0037.
+
+### What was built
+
+* Module `quotes` and migration `V018__saved_quotes.sql` (`quote`, `quote_line`; outbox kinds
+  `EML-10`…`EML-19`): `QuoteService` (create, withdraw, accept, export and erasure),
+  `QuoteRepository`, `QuoteTokens` (32 random bytes, only the SHA-256 stored), `QuotePdf`,
+  `QuoteMails` (EML-11 «Il tuo preventivo PRV-…»), `QuotePageController` (`/preventivi/{token}`
+  and `/pdf`, public, noindex, no-store), `QuoteAcceptController`
+  (`/area-clienti/preventivi/{id}/ordina`), `QuoteNotices` (open quotes on «I miei ordini»).
+* Back office: «Prepara preventivo» on a request linked to an active customer
+  (`BackofficeQuotesController`, the order form's line rows filled from the request,
+  `OrderForm.validateLines`), the quotes of a request with «Ritira» and the PDF; «Dal preventivo»
+  on the staff order page and the quote's amount proposed by «Approva».
+* `LeadService.converted` takes the actor (the customer, when a quote is ordered);
+  `PrivacyService` exports and erases the customer's quotes.
+* Tests: `QuoteTokensTest`, `SavedQuotesIT` (5), `SavedQuotesOffIT`, schema expectations and
+  migration counts (18), route matrix; E2E `m2.spec.ts`: a quote request sent with the seeded
+  customer's e-mail is linked, quoted, e-mailed, opened from the link and ordered.
+
+### New Italian texts for the owner's review
+
+E-mail EML-11: subject «Il tuo preventivo PRV-…»; title «Il tuo preventivo PRV-…»; «Grazie per la
+tua richiesta: ecco il preventivo che abbiamo preparato per te.»; table «Preventivo» (Preventivo,
+Importo, Valido fino al, Tratta, Merce «N unità, N righe»); «Dalla pagina del preventivo puoi
+scaricarlo in PDF e, quando sei pronto, trasformarlo in un ordine: accedi all'area clienti,
+completa destinatario e documento di trasporto e invia.»; button «Vedi il preventivo». The page of
+the link: «Preventivo PRV-…», «Per {ditta}, del {data}», Importo, Valido fino al, Ritiro,
+Consegna, Servizio accessorio, Note, «Pallet e colli» (Pallet / colli, Peso unitario, Quantità),
+«Ordina il preventivo», «Scarica il PDF», «Per ordinare accedi all'area clienti: trovi il
+preventivo anche in «I miei ordini».»; closed: «Hai già trasformato il preventivo … in un
+ordine.», «Il preventivo … è stato ritirato: chiedici un nuovo preventivo.», «Il preventivo … è
+scaduto il …: chiedici di aggiornarlo.». The PDF: «… - Preventivo PRV-…», «Del …, valido fino al
+…», Cliente, the lines, «Importo: …», «Per ordinare apri il link ricevuto per e-mail, accedi
+all'area clienti e completa destinatario e documento di trasporto.». Customer area: «Hai un
+preventivo da ordinare» with «PRV-…: 180,50 €, valido fino al …»; «Ordina il preventivo PRV-…»,
+«Importo …, valido fino al …. Completa i dati della spedizione e il destinatario.», «Cosa
+spedisci», «Righe e servizio sono quelli del preventivo: per cambiarli chiedici un nuovo
+preventivo.», «Invia l'ordine», «L'ordine arriva all'ufficio con un codice provvisorio: lo
+confermiamo con codice e importo.», flash «Ordine TEMP-… inviato dal preventivo PRV-…: lo
+confermiamo con codice e importo.». Back office: «Prepara preventivo», «Per {ditta}: il link al
+preventivo arriva a {e-mail}.», «Prezzo e validità», «Importo (€)», «Valido fino al», «Città di
+consegna», «CAP di consegna», «Nota per il cliente (facoltativa)», «Condizioni, tempi, IVA:
+compare sulla pagina del preventivo e nel PDF.», «Invia il preventivo»; «Preventivi» (Preventivo,
+Importo, Valido fino al, Stato: «Inviato», «Ordinato», «Ritirato», «Scaduto»), «Vedi l'ordine»,
+«Ritira»; «Per preparare un preventivo collega prima la richiesta a un cliente attivo.»; «Dal
+preventivo»; «Importo del preventivo PRV-…: ….»; flashes «Preventivo PRV-… inviato a …: il
+cliente lo trova nel link dell'e-mail e in «I miei ordini».», «Preventivo PRV-… ritirato: il
+link ora dice che non è più valido.»; errors «Collega prima la richiesta a un cliente attivo: il
+preventivo è per lui.», «La richiesta è già chiusa: il preventivo non si prepara più.», «Aggiungi
+almeno una riga di pallet o colli.», «Inserisci un importo maggiore di zero, per esempio
+180,50.», «Scegli fino a quando vale il preventivo: da oggi a un anno.», «La nota per il cliente
+può avere al massimo 1000 caratteri.», «Il preventivo PRV-… non è più ritirabile.».

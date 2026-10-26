@@ -57,6 +57,31 @@ customer_address phone varchar NULL
 customer_address email varchar NULL
 customer_address created_at timestamptz NOT NULL
 customer_address updated_at timestamptz NOT NULL
+quote id int8 NOT NULL
+quote lead_id int8 NOT NULL
+quote customer_id int8 NOT NULL
+quote token_hash varchar NOT NULL
+quote status varchar NOT NULL
+quote amount numeric NOT NULL
+quote valid_until date NOT NULL
+quote accessory_service_id int4 NULL
+quote recipient_city varchar NULL
+quote recipient_postal_code varchar NULL
+quote note varchar NULL
+quote created_by int8 NOT NULL
+quote created_at timestamptz NOT NULL
+quote order_id int8 NULL
+quote accepted_at timestamptz NULL
+quote withdrawn_at timestamptz NULL
+quote_line id int8 NOT NULL
+quote_line quote_id int8 NOT NULL
+quote_line line_no int2 NOT NULL
+quote_line kind varchar NOT NULL
+quote_line height_cm int4 NOT NULL
+quote_line length_cm int4 NOT NULL
+quote_line width_cm int4 NOT NULL
+quote_line weight_kg numeric NOT NULL
+quote_line quantity int4 NOT NULL
 customer_pending_registration customer_id int8 NOT NULL
 customer_pending_registration company_name varchar NOT NULL
 customer_pending_registration address_line varchar NOT NULL

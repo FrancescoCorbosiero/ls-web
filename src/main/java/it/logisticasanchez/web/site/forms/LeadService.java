@@ -169,11 +169,17 @@ public class LeadService {
      */
     @Transactional
     public boolean converted(long id, long staffUserId, long customerId, long orderId) {
+        return converted(id, AuditActorType.STAFF, staffUserId, customerId, orderId);
+    }
+
+    /** ENH-20: the same, when the customer orders a saved quote made from the request (actor CUSTOMER). */
+    @Transactional
+    public boolean converted(long id, AuditActorType actorType, long actorId, long customerId, long orderId) {
         Optional<LeadView> lead = leads.find(id);
         if (lead.isEmpty() || !leads.markConverted(id, customerId, orderId)) {
             return false;
         }
-        audit.record(AuditEntry.of(AuditActorType.STAFF, staffUserId, "lead.convert")
+        audit.record(AuditEntry.of(actorType, actorId, "lead.convert")
                 .entity("lead", id, null)
                 .change(
                         Map.of("status", lead.get().status().name()),

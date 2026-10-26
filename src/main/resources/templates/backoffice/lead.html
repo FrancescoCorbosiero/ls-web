@@ -25,7 +25,8 @@
         </p>
       </div>
       <div class="page-actions">
-        <a class="btn" th:if="${canCreateOrder}" th:href="@{/gestione/ordini/nuovo(cliente=${customer.id}, richiesta=${lead.id})}" data-create-order><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.leads.createOrder}">Crea ordine</span></a>
+        <a class="btn" th:if="${canQuote}" th:href="@{/gestione/richieste/{id}/preventivo(id=${lead.id})}" data-create-quote><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg><span th:text="#{backoffice.quote.title}">Prepara preventivo</span></a>
+        <a class="btn" th:classappend="${canQuote} ? 'btn-light'" th:if="${canCreateOrder}" th:href="@{/gestione/ordini/nuovo(cliente=${customer.id}, richiesta=${lead.id})}" data-create-order><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.leads.createOrder}">Crea ordine</span></a>
         <a class="btn btn-light" th:if="${canCreateCustomer}" th:href="@{/gestione/clienti/nuovo(richiesta=${lead.id})}" data-create-customer><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-plus"/></svg><span th:text="#{backoffice.leads.createCustomer}">Crea cliente</span></a>
       </div>
     </div>
@@ -52,6 +53,36 @@
             <div class="span-all"><dt th:text="#{backoffice.leads.extras}">Servizi extra</dt><dd th:text="${lead.extras.isEmpty()} ? '-' : ${#strings.listJoin(lead.extras, ', ')}">-</dd></div>
             <div class="span-all"><dt th:text="#{backoffice.leads.notes}">Note</dt><dd class="facts-note" th:text="${lead.message ?: '-'}">-</dd></div>
           </dl>
+        </section>
+        <section class="panel" th:if="${quotesEnabled and !quotes.isEmpty()}" aria-labelledby="preventivi-title" data-section="quotes">
+          <h2 id="preventivi-title" th:text="#{backoffice.quote.list}">Preventivi</h2>
+          <div class="data-table-wrap" role="region" aria-labelledby="preventivi-title" tabindex="0">
+            <table class="data-table stacked" data-table="quotes">
+              <thead><tr>
+                <th scope="col" th:text="#{backoffice.quote.col.code}">Preventivo</th>
+                <th scope="col" class="num" th:text="#{backoffice.quote.col.amount}">Importo</th>
+                <th scope="col" th:text="#{backoffice.quote.col.validUntil}">Valido fino al</th>
+                <th scope="col" th:text="#{backoffice.quote.col.status}">Stato</th>
+                <th scope="col"><span class="visually-hidden" th:text="#{backoffice.quote.col.actions}">Azioni</span></th>
+              </tr></thead>
+              <tbody>
+                <tr th:each="q : ${quotes}" th:attr="data-quote=${q.code()}">
+                  <td class="code" th:attr="data-label=#{backoffice.quote.col.code}"><a th:href="@{/gestione/preventivi/{id}/pdf(id=${q.id})}" th:text="${q.code()}">PRV-00001</a></td>
+                  <td class="num" th:attr="data-label=#{backoffice.quote.col.amount}" th:text="${q.amountText()}">180,50 €</td>
+                  <td th:attr="data-label=#{backoffice.quote.col.validUntil}" th:text="${q.validUntilText()}">31/12/2026</td>
+                  <td th:attr="data-label=#{backoffice.quote.col.status}">
+                    <span class="pill" th:classappend="${q.status.name() == 'ACCEPTED'} ? 'pill-active' : (${q.status.name() == 'SENT' and !q.expired(today)} ? 'pill-track' : 'pill-neutral')"
+                          th:attr="data-quote-status=${q.status.name()}"
+                          th:text="${q.status.name() == 'SENT' and q.expired(today)} ? #{quotes.status.EXPIRED} : #{'quotes.status.' + ${q.status.name()}}">Inviato</span>
+                    <a class="small" th:if="${q.orderId != null}" th:href="@{/gestione/ordini/{id}/(id=${q.orderId})}" th:text="#{backoffice.quote.order}">Vedi l'ordine</a>
+                  </td>
+                  <td th:attr="data-label=#{backoffice.quote.col.actions}">
+                    <form method="post" th:if="${q.status.name() == 'SENT'}" th:action="@{/gestione/preventivi/{id}/ritira(id=${q.id})}"><button type="submit" class="btn btn-light btn-sm" th:text="#{backoffice.quote.withdraw}">Ritira</button></form>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </section>
         <section class="panel" th:if="${!lead.quote()}" data-section="message">
           <h2 th:text="#{backoffice.leads.message}">Messaggio</h2>
@@ -82,6 +113,7 @@
           <p class="muted" th:if="${customer == null}" th:text="#{backoffice.leads.noCustomer}">Nessun cliente registrato con questa e-mail: con «Crea cliente» lo registri con i dati della richiesta.</p>
           <p th:if="${order != null}" data-converted-order><span th:text="#{backoffice.leads.order}">Ordine creato dalla richiesta:</span> <a class="strong" th:href="@{/gestione/ordini/{id}/(id=${order.id})}" th:text="${order.displayCode()}">TEMP-</a></p>
           <p class="muted small mb-0" th:if="${canCreateOrder}" th:text="#{backoffice.leads.orderHint}">«Crea ordine» apre il modulo con i dati della richiesta; quando lo salvi, la richiesta diventa «Vinta».</p>
+          <p class="muted small mb-0" th:if="${quotesEnabled and !canQuote and lead.status.open() and !customerLinked}" th:text="#{backoffice.quote.linkFirst}">Per preparare un preventivo collega prima la richiesta a un cliente attivo.</p>
         </section>
         <section class="panel" th:if="${!lead.status.next().isEmpty()}" data-section="status">
           <h2 th:text="#{backoffice.leads.statusTitle}">Stato della richiesta</h2>

@@ -102,6 +102,7 @@
             <div><dt th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</dt><dd th:text="${order.transportDocumentCode}">-</dd></div>
             <div><dt th:text="#{orders.field.accessoryService}">Servizio accessorio</dt><dd th:text="${order.accessoryServiceLabel}">-</dd></div>
             <div><dt th:text="#{orders.col.amount}">Importo</dt><dd th:text="${order.amountText()}">-</dd></div>
+            <div th:if="${quote != null}" data-order-quote><dt th:text="#{backoffice.quote.fromQuote}">Dal preventivo</dt><dd><a th:href="@{/gestione/preventivi/{id}/pdf(id=${quote.id})}" th:text="${quote.code()}">PRV-00001</a> <span class="muted" th:text="${quote.amountText()}">180,50 €</span></dd></div>
             <div><dt th:text="#{orders.col.tracking}">Tracking</dt><dd th:text="${order.isApproved()} ? ${order.trackingLabel} : '-'">-</dd></div>
             <div class="span-all"><dt th:text="#{backoffice.order.customerNotes}">Note del cliente</dt><dd class="facts-note" data-customer-notes th:text="${order.customerNotes ?: '-'}">-</dd></div>
           </dl>

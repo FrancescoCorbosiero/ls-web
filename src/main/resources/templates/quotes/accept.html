@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<!--
+  «Ordina il preventivo» (ENH-20, quotes.saved, ADR 0037) in the customer area: the quote's lines and
+  accessory service as they were priced (read only), then the transport document, packages and notes
+  and the recipient (the fragment of orders/form.html, the destination's city and CAP filled in).
+  The order goes to «Ordini da approvare» like any other. A quote no longer open shows why.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{quotes.accept.title(${quote.code()})} + ' · ' + ${business.brandName}">Ordina il preventivo · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('customer', ${email}, '/area-clienti/logout')}"></th:block>
+<th:block th:replace="~{layout/private :: customerNav('orders', ${customer.canOrder()})}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/area-clienti/ordini/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{quotes.accept.back}">Torna ai tuoi ordini</span></a>
+        <h1 th:text="#{quotes.accept.title(${quote.code()})}">Ordina il preventivo PRV-00001</h1>
+        <p class="lede" th:text="#{quotes.accept.lead(${quote.amountText()}, ${quote.validUntilText()})}">Importo 180,50 €, valido fino al 31/12/2026.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{layout/private :: error(${error})}"></th:block>
+    <p class="callout callout-warn" role="status" th:if="${closed != null}" data-quote-closed th:text="${closed}">Il preventivo è scaduto.</p>
+    <div class="callout callout-error" role="alert" th:if="${open and form.hasErrors()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+
+    <section class="panel mb-m" aria-labelledby="preventivo-title">
+      <h2 id="preventivo-title" th:text="#{quotes.accept.quoted}">Cosa hai chiesto di spedire</h2>
+      <p class="muted small" th:text="#{quotes.accept.quotedHint}">Righe e servizio sono quelli del preventivo: per cambiarli chiedici un nuovo preventivo.</p>
+      <div class="data-table-wrap" role="region" aria-labelledby="preventivo-title" tabindex="0">
+        <table class="data-table stacked" data-table="quote-lines">
+          <thead><tr>
+            <th scope="col" th:text="#{quotes.col.line}">Pallet / colli</th>
+            <th scope="col" class="num" th:text="#{quotes.col.weight}">Peso unitario</th>
+            <th scope="col" class="num" th:text="#{quotes.col.quantity}">Quantità</th>
+          </tr></thead>
+          <tbody>
+            <tr th:each="l : ${quote.lines}">
+              <td th:attr="data-label=#{quotes.col.line}" th:text="${l.description()}">Epal 120 × 80 × 150 cm</td>
+              <td class="num" th:attr="data-label=#{quotes.col.weight}" th:text="${l.weightText()}">300 kg</td>
+              <td class="num" th:attr="data-label=#{quotes.col.quantity}" th:text="${l.quantity}">2</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mb-0"><span class="muted" th:text="#{quotes.service}">Servizio accessorio</span>: <strong th:text="${quote.accessoryServiceLabel ?: '-'}">-</strong></p>
+    </section>
+
+    <form method="post" novalidate th:if="${open}" th:action="@{/area-clienti/preventivi/{id}/ordina(id=${quote.id})}" data-quote-order>
+      <div class="stack">
+        <section class="panel" id="spedizione" aria-labelledby="spedizione-title">
+          <div class="form-step"><span class="form-step-num" aria-hidden="true">1</span><h2 id="spedizione-title" th:text="#{orders.form.shipmentTitle}">Dati della spedizione</h2></div>
+          <div class="fields">
+            <div class="field">
+              <label class="label" for="transportDocumentCode" th:text="#{orders.field.transportDocumentCode}">Documento di trasporto</label>
+              <input class="input" id="transportDocumentCode" name="transportDocumentCode" type="text" maxlength="100" autocomplete="off" th:value="${form.value('transportDocumentCode')}" th:attr="aria-invalid=${form.error('transportDocumentCode') != null}">
+              <p class="field-error" th:if="${form.error('transportDocumentCode') != null}" th:text="#{${form.error('transportDocumentCode')}}">Errore</p>
+            </div>
+            <div class="field">
+              <label class="label" for="packageCount" th:text="#{orders.field.packageCountOptional}">Numero Colli (facoltativo)</label>
+              <input class="input" id="packageCount" name="packageCount" type="text" inputmode="numeric" maxlength="6" autocomplete="off" th:value="${form.value('packageCount')}" th:attr="aria-invalid=${form.error('packageCount') != null}">
+              <p class="field-error" th:if="${form.error('packageCount') != null}" th:text="#{${form.error('packageCount')}}">Errore</p>
+            </div>
+            <div class="field span-all">
+              <label class="label" for="notes" th:text="#{orders.field.notesOptional}">Note (facoltativo)</label>
+              <textarea class="textarea" id="notes" name="notes" rows="3" maxlength="2000" th:text="${form.value('notes')}" th:attr="aria-invalid=${form.error('notes') != null}"></textarea>
+              <p class="field-error" th:if="${form.error('notes') != null}" th:text="#{${form.error('notes')}}">Errore</p>
+            </div>
+          </div>
+        </section>
+        <section th:replace="~{orders/form :: recipient(${form}, 2)}"></section>
+        <p class="form-actions">
+          <button type="submit" class="btn" data-submit-quote-order><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-check"/></svg><span th:text="#{quotes.accept.submit}">Invia l'ordine</span></button>
+        </p>
+        <p class="muted small" th:text="#{quotes.accept.submitHint}">L'ordine arriva all'ufficio con un codice provvisorio: lo confermiamo con codice e importo.</p>
+      </div>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>
