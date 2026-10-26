@@ -2193,3 +2193,28 @@ verifica: al prossimo accesso la configura di nuovo.», flash «Verifica in due 
 azzerata: al prossimo accesso la configura di nuovo.». Command: «Verifica in due passaggi
 azzerata per …: al prossimo accesso la configura di nuovo.», «Nessun utente con username …»,
 «Uso: reset-staff-totp --username=<username>».
+
+## Step O — M2: ENH-13, the audit log viewer (2026-10-26)
+
+Fifth of the M2 items of the owner's request «procedi con quelli che puoi fare ora». ADR 0040.
+
+### What was built
+
+* `platform.audit`: `AuditService.search` (plain SQL over `audit_log`, never `audit_log_detail`,
+  newest first, a page at a time), `actions()`, `entityTypes()`, `AuditQuery`, `AuditView`.
+* Back office: «Registro delle attività» (`BackofficeAuditController`, `/gestione/impostazioni/registro/`,
+  ADMIN only) with filters by who, action, object and id, Europe/Rome days; the link on
+  «Impostazioni».
+* Tests: `AuditViewerIT` (3: an object's log newest first without personal values; filters by
+  staff user, customers, action, Rome days, unknown values ignored; ADMIN only, link on the
+  settings), `AuditViewerOffIT`; route matrix; E2E `m2.spec.ts`: the ADMIN filters the log by
+  `flag.toggle` and finds the features it turned on (axe; the page on a phone in the NFR-01 list).
+
+### New Italian texts for the owner's review
+
+«Registro delle attività», «Chi ha fatto cosa e quando, le azioni più recenti in alto. Di ogni
+azione vedi gli identificativi e i campi cambiati, mai i dati personali.»; filters «Chi» («Tutti»,
+«Tutto lo staff», each user, «Clienti», «Sistema»), «Azione» («Tutte»), «Oggetto», «ID
+dell'oggetto», «dal», «al»; columns «Quando», «Chi», «Azione», «Oggetto», «Modifica»; «Cliente ·
+accesso N», «Staff n. N», «Dati personali registrati a parte: non si mostrano.», «Nessuna attività
+registrata con questi filtri.».
