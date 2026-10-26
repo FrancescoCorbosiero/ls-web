@@ -139,6 +139,10 @@ are added by stage 3 with the publisher and a test that each named event is publ
 * **2026-10-26 — ENH-17, `site.noticeBanner` built** (ADR 0041; V021): «Avvisi sul sito» under
   «Impostazioni»; the notice in force above the top bar of every public page, drawn by the server.
   Flag-on tests `SiteNoticesIT`, «flag off = M1» `SiteNoticesOffIT`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-18, `site.openNow` built** (ADR 0042; V022): «Aperto ora / Chiuso ora» after
+  the hours of every public page, from the openings of the next 14 days and the browser's clock;
+  «Chiusure dell'ufficio» under «Impostazioni». Unit `OpeningHoursTest`, flag-on `OpenNowIT`, «flag
+  off = M1» `OpenNowOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 

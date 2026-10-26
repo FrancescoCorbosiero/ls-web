@@ -18,6 +18,7 @@
   <link rel="preload" href="/fonts/barlow-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/css/main.css">
   <script type="module" src="/js/main.js"></script>
+  <script type="module" src="/js/open-now.js" th:if="${openNow != null}"></script>
   <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
@@ -36,7 +37,9 @@
 
 <th:block th:fragment="siteHeader(nav)">
 <a class="skip-link" href="#main" th:text="#{layout.skip}">Vai al contenuto</a>
-<!-- ENH-17 (site.noticeBanner, ADR 0041): the notice in force, rendered here; nothing while the flag is off. -->
+<!--/* ENH-17 (site.noticeBanner, ADR 0041): the notice in force, rendered here; nothing while the flag is off.
+     ENH-18 (site.openNow, ADR 0042): «Aperto ora / Chiuso ora» after the hours (top bar, footer), set by
+     /js/open-now.js. Parser-level comment: it never reaches the page. */-->
 <div class="site-notice" th:if="${siteNotice != null}" th:classappend="${siteNotice.warning()} ? 'site-notice-warning'" role="region" th:aria-label="#{layout.notice.label}" data-site-notice>
   <div class="container site-notice-row">
     <svg class="icon" aria-hidden="true"><use th:href="${siteNotice.warning()} ? '/img/icons.svg#i-triangle-alert' : '/img/icons.svg#i-calendar-clock'" href="/img/icons.svg#i-calendar-clock"/></svg>
@@ -51,7 +54,7 @@
       <li><a href="/contatti/#dove-siamo"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-map-pin"/></svg><span th:text="${business.address.line + ', ' + business.address.city + ' (' + business.address.province + ')'}">Via dei Meiani 90, Seregno (MB)</span></a></li>
     </ul>
     <ul class="topbar-list" role="list">
-      <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clock"/></svg><span th:text="${business.hours.shortLabel}">Lun–Ven 8–18 · Sab 8–12</span></li>
+      <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clock"/></svg><span th:text="${business.hours.shortLabel}">Lun–Ven 8–18 · Sab 8–12</span><span class="open-now" th:if="${openNow != null}" data-open-now th:attr="data-intervals=${openNow},data-open-label=#{layout.openNow.open},data-closed-label=#{layout.openNow.closed}" hidden></span></li>
       <li><a href="/area-clienti/" data-nav="area-clienti" th:attr="aria-current=${layout.ariaCurrent(nav,'area-clienti')}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-box"/></svg><span th:text="#{layout.topbar.customerArea}">Area clienti</span></a></li>
       <li><a href="/tracking/"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-package-search"/></svg><span th:text="#{layout.topbar.track}">Traccia la spedizione</span></a></li>
     </ul>
@@ -209,7 +212,7 @@
         <li><a th:href="'tel:' + ${business.phoneDigits()}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-phone"/></svg><span class="nowrap" th:text="${business.phone}">+39 329 239 6962</span></a></li>
         <li><a th:href="${business.whatsappUrl()}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-whatsapp"/></svg><th:block th:text="#{layout.drawer.whatsapp}">WhatsApp</th:block></a></li>
         <li><a th:href="'mailto:' + ${business.officeEmail}"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-mail"/></svg><span th:text="${business.officeEmail}">ufficio</span></a></li>
-        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clock"/></svg><th:block th:text="${business.hours.shortLabel}">Lun–Ven 8–18 · Sab 8–12</th:block></li>
+        <li><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-clock"/></svg><th:block th:text="${business.hours.shortLabel}">Lun–Ven 8–18 · Sab 8–12</th:block><span class="open-now" th:if="${openNow != null}" data-open-now th:attr="data-intervals=${openNow},data-open-label=#{layout.openNow.open},data-closed-label=#{layout.openNow.closed}" hidden></span></li>
         <li th:if="${business.social.instagram != null and !business.social.instagram.isBlank()}"><a th:href="${business.social.instagram}" target="_blank" rel="noopener"><svg class="icon" aria-hidden="true"><use href="/img/icons.svg#i-instagram"/></svg><th:block th:text="#{layout.footer.instagram}">Instagram</th:block></a></li>
       </ul>
     </div>

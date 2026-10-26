@@ -2254,3 +2254,37 @@ al massimo 60 caratteri.», «La fine deve venire dopo l'inizio.», «La fine è
 una data futura.», «Inserisci data e ora (giorno, mese, anno, ore e minuti).»; flashes «Avviso
 salvato: le pagine del sito lo mostrano nel periodo scelto.», «Avviso chiuso: non compare più sul
 sito.», «L'avviso era già concluso.», «Avviso eliminato.»; the banner's region label «Avviso».
+
+## Step Q — M2: ENH-18, «Aperto ora / Chiuso ora» (2026-10-26)
+
+Seventh of the M2 items of the owner's request «procedi con quelli che puoi fare ora». ADR 0042.
+
+### What was built
+
+* Migration `V022__office_closures.sql` (`office_closure`); package `site.hours`: `OpeningHours`
+  (the weekly ranges of `ls.business.hours`, Sunday closed, closure days; instants of Europe/Rome),
+  `OfficeClosureService` (the openings of the next 14 days as JSON for the pages, kept 60 seconds
+  and forgotten at every change; closures added by day or range and removed; audited),
+  `OpenNowModelAttributes` (`openNow` for the site module's pages).
+* `layout/public`: the hidden badge after the hours in the top bar and the footer, and the module
+  `/js/open-now.js` (loaded only with the flag on) that writes «Aperto ora» or «Chiuso ora» from
+  the openings and the browser's clock, every minute; styles in `main.css`.
+* «Chiusure dell'ufficio» (`BackofficeClosuresController`, `/gestione/impostazioni/chiusure/`,
+  ADMIN only) and its link on «Impostazioni».
+* Tests: `OpeningHoursTest` (weekdays, Saturday noon, Sunday, a closure day, the daylight-saving
+  changes of 2026, the ranges of the configuration), `OpenNowIT` (3), `OpenNowOffIT`; schema
+  expectations and migration counts (22), route matrix; E2E `m2.spec.ts`: the badge matches the
+  openings and the clock, a closure added for today makes it «Chiuso ora» (axe).
+
+### New Italian texts for the owner's review
+
+Badge «Aperto ora» / «Chiuso ora». «Chiusure dell'ufficio», «I giorni in cui l'ufficio resta chiuso
+anche se l'orario dice aperto: festività, ferie, imprevisti. Il sito accanto all'orario scrive
+«Aperto ora» o «Chiuso ora».», «Adesso il sito scrive: …», columns «Giorno», «Motivo», «Rimuovi»
+(«Rimuovi la chiusura del …»), «Nessuna chiusura in programma: valgono gli orari di sempre.»; form
+«Aggiungi una chiusura», «Dal», «Al (facoltativo)», «Lascialo vuoto per un giorno solo.», «Motivo
+(facoltativo, non compare sul sito)», «Aggiungi»; errors «Scegli il giorno di chiusura.», «Il
+giorno è già passato.», «L'ultimo giorno viene dopo il primo.», «Al massimo 62 giorni alla volta.»,
+«Il motivo può avere al massimo 100 caratteri.», «Inserisci una data valida.»; flashes «Chiusura
+aggiunta: il sito ne tiene conto accanto all'orario.», «Chiusura rimossa: quel giorno vale
+l'orario di sempre.».

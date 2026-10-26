@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!--
+  «Chiusure dell'ufficio» (ENH-18, site.openNow, ADR 0042), ADMIN only: the closure days to come
+  with «Rimuovi», what the site says now, and the form that adds a day or a range.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.closures.title} + ' · ' + #{layout.private.backoffice}">Chiusure dell'ufficio · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/gestione/impostazioni/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.settings.back}">Torna alle impostazioni</span></a>
+        <h1 th:text="#{backoffice.closures.title}">Chiusure dell'ufficio</h1>
+        <p class="lede" th:text="#{backoffice.closures.lead}">I giorni in cui l'ufficio resta chiuso anche se l'orario dice aperto.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <p class="muted" data-open-state th:text="#{backoffice.closures.now(${openNow} ? #{layout.openNow.open} : #{layout.openNow.closed})}">Adesso il sito scrive: Aperto ora.</p>
+
+    <div class="data-table-wrap mb-m" th:if="${!closures.isEmpty()}">
+      <table class="data-table stacked" data-table="closures">
+        <thead><tr>
+          <th scope="col" th:text="#{backoffice.closures.col.day}">Giorno</th>
+          <th scope="col" th:text="#{backoffice.closures.col.label}">Motivo</th>
+          <th scope="col"><span class="visually-hidden" th:text="#{backoffice.col.actions}">Azioni</span></th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="c : ${closures}" th:attr="data-closure=${c.day}">
+            <td th:attr="data-label=#{backoffice.closures.col.day}" th:text="${fmt.day(c.day)}">24/12/2026</td>
+            <td th:attr="data-label=#{backoffice.closures.col.label}" th:text="${c.label ?: '-'}">Natale</td>
+            <td class="row-actions">
+              <form class="inline-form" method="post" th:action="@{/gestione/impostazioni/chiusure/{giorno}/rimuovi(giorno=${c.day})}">
+                <button type="submit" class="btn btn-light btn-xs" th:attr="aria-label=#{backoffice.closures.removeNamed(${fmt.day(c.day)})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-trash"/></svg><span th:text="#{backoffice.closures.remove}">Rimuovi</span></button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" th:if="${closures.isEmpty()}" data-empty th:text="#{backoffice.closures.empty}">Nessuna chiusura in programma: valgono gli orari di sempre.</p>
+
+    <h2 class="mt-m" th:text="#{backoffice.closures.new}">Aggiungi una chiusura</h2>
+    <div class="callout callout-error" role="alert" th:if="${!errors.isEmpty()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" th:action="@{/gestione/impostazioni/chiusure/}" class="panel fields" novalidate data-closure-form>
+      <div class="field">
+        <label class="label" for="dal" th:text="#{backoffice.closures.field.from}">Dal</label>
+        <input class="input" id="dal" name="dal" type="date" required th:value="${values['dal']}" th:attr="aria-invalid=${errors['dal'] != null}">
+        <p class="field-error" th:if="${errors['dal'] != null}" th:text="${errors['dal']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="al" th:text="#{backoffice.closures.field.to}">Al (facoltativo)</label>
+        <input class="input" id="al" name="al" type="date" th:value="${values['al']}" th:attr="aria-invalid=${errors['al'] != null}" aria-describedby="al-hint">
+        <p class="field-hint" id="al-hint" th:text="#{backoffice.closures.field.toHint}">Lascialo vuoto per un giorno solo.</p>
+        <p class="field-error" th:if="${errors['al'] != null}" th:text="${errors['al']}">Errore</p>
+      </div>
+      <div class="field span-all">
+        <label class="label" for="motivo" th:text="#{backoffice.closures.field.label}">Motivo (facoltativo, non compare sul sito)</label>
+        <input class="input" id="motivo" name="motivo" type="text" maxlength="100" autocomplete="off" th:value="${values['motivo']}" th:attr="aria-invalid=${errors['motivo'] != null}">
+        <p class="field-error" th:if="${errors['motivo'] != null}" th:text="${errors['motivo']}">Errore</p>
+      </div>
+      <p class="form-actions span-all"><button type="submit" class="btn" data-add-closure th:text="#{backoffice.closures.save}">Aggiungi</button></p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>
