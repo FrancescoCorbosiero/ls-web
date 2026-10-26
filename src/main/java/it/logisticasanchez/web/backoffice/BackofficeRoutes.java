@@ -2,7 +2,7 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
 
-/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037; the customers' data changes of ADR 0038; the audit log viewer of ADR 0040). */
+/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036; the saved quotes of ADR 0037; the customers' data changes of ADR 0038; the audit log viewer of ADR 0040; the site notices of ADR 0041). */
 public final class BackofficeRoutes {
 
     public static final String HOME = AuthRoutes.BACKOFFICE;
@@ -64,6 +64,11 @@ public final class BackofficeRoutes {
 
     /** ENH-13 (admin.audit, ADR 0040): the audit log viewer. */
     public static final String AUDIT = SETTINGS + "registro/";
+    /** ENH-17 (site.noticeBanner, ADR 0041): the notices of the public site. */
+    public static final String NOTICES = SETTINGS + "avvisi/";
+
+    public static final String NOTICE_END = NOTICES + "{id}/chiudi";
+    public static final String NOTICE_DELETE = NOTICES + "{id}/elimina";
 
     public static final String PRIVACY = SETTINGS + "privacy/";
     public static final String PRIVACY_LOOKUP = PRIVACY + "cerca";

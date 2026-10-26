@@ -136,6 +136,9 @@ are added by stage 3 with the publisher and a test that each named event is publ
 * **2026-10-26 — ENH-13, `admin.audit` built** (ADR 0040): «Registro delle attività» under
   «Impostazioni», filters by who, action, object and days, never the personal values. Flag-on
   tests `AuditViewerIT`, «flag off = M1» `AuditViewerOffIT`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-17, `site.noticeBanner` built** (ADR 0041; V021): «Avvisi sul sito» under
+  «Impostazioni»; the notice in force above the top bar of every public page, drawn by the server.
+  Flag-on tests `SiteNoticesIT`, «flag off = M1» `SiteNoticesOffIT`, E2E `m2.spec.ts`.
 
 ## Consequences
 

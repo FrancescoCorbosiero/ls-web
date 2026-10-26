@@ -10,8 +10,8 @@ import org.springframework.stereotype.Component;
  * cancellation included; an approved order only by an ADMIN, checked by the service), tracking and
  * reports for every staff session, with the office tools of ADR 0035 (CSV exports, bulk tracking)
  * the website requests of ADR 0036, the saved quotes of ADR 0037 and the customers' data changes of ADR 0038 (404 while their
- * flag is off); settings, staff users, the privacy tools and the audit log viewer of ADR 0040 for
- * ADMIN only.
+ * flag is off); settings, staff users, the privacy tools, the audit log viewer of ADR 0040 and the
+ * site notices of ADR 0041 for ADMIN only.
  * Every one is a line of {@code route-matrix.tsv}.
  */
 @Component
@@ -71,7 +71,8 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.SETTINGS,
                         BackofficeRoutes.STAFF_USERS,
                         BackofficeRoutes.PRIVACY,
-                        BackofficeRoutes.AUDIT)
+                        BackofficeRoutes.AUDIT,
+                        BackofficeRoutes.NOTICES)
                 .admin(
                         HttpMethod.POST,
                         BackofficeRoutes.SETTINGS_FLAG,
@@ -79,6 +80,9 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.SETTINGS_RECIPIENT_REMOVE,
                         BackofficeRoutes.STAFF_USERS,
                         BackofficeRoutes.STAFF_USER_TWO_FACTOR_RESET,
+                        BackofficeRoutes.NOTICES,
+                        BackofficeRoutes.NOTICE_END,
+                        BackofficeRoutes.NOTICE_DELETE,
                         BackofficeRoutes.PRIVACY_LOOKUP,
                         BackofficeRoutes.PRIVACY_EXPORT,
                         BackofficeRoutes.PRIVACY_ANONYMISE);
