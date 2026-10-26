@@ -31,6 +31,9 @@ registrata con data ed esito in `docs/rehearsals/`).
 7. Primo amministratore: `docker compose --env-file .env run --rm app create-staff-user
    --username=<nome> --role=ADMIN --name="Nome Cognome"` stampa un link
    `https://<dominio>/gestione/imposta-password?t=…` valido una volta: aprilo e scegli la password.
+   Con la verifica in due passaggi attiva (`security.adminTotp`, ADR 0039), un amministratore che
+   ha perso il telefono e non riesce a entrare: `docker compose --env-file .env run --rm app
+   reset-staff-totp --username=<nome>`; al prossimo accesso configura di nuovo l'app.
 8. Verifica: `curl -fsS https://<dominio>/actuator/health` → `{"status":"UP"}`; home page, un
    accesso cliente con un indirizzo di prova (in staging l'e-mail finisce nell'allow-list o nei
    file del sink `directory`), login al back office.

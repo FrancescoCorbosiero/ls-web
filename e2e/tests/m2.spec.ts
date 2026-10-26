@@ -3,9 +3,10 @@ import { expect, test, type Browser, type BrowserContext, type Page } from '@pla
 import AxeBuilder from '@axe-core/playwright';
 import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
+import { base32Decode, currentStep, totpCode } from '../support/totp';
 
 /**
- * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036, 0037, 0038): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036, 0037, 0038, 0039): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -456,6 +457,54 @@ test('[ENH-16] a customer changes its phone at once and its company name once th
   await page.goto('/area-clienti/profilo/');
   await expect(page.locator('[data-pending-change]')).toHaveCount(0);
   await expect(page.locator('main')).toContainText(renamed);
+  problems.expectNone();
+  await context.close();
+});
+
+test('[ENH-09] the admin turns on the two-step login for staff', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="security.adminTotp"]')).toContainText('Disponibile');
+  await setFlag('security.adminTotp', true);
+});
+
+test('[ENH-09] a staff login sets the app up once, then asks only its code', async ({ browser, baseURL }) => {
+  // a second browser: the staff session of the other tests stays as it is
+  const [context, page, problems] = await newPage(browser, baseURL!);
+  const signIn = async () => {
+    await page.goto('/gestione/login');
+    await page.getByLabel('Username').fill(staff.username);
+    await page.getByLabel('Password').fill(staff.password);
+    await page.getByRole('button', { name: 'Accedi' }).click();
+    await expect(page).toHaveURL(/\/gestione\/verifica$/);
+  };
+
+  await signIn();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Configura la verifica in due passaggi');
+  await expect(page.locator('svg.totp-qr')).toBeVisible();
+  await expectAccessible(page);
+  const secret = base32Decode(await page.locator('[data-totp-key]').innerText());
+  await page.getByLabel('Codice', { exact: true }).fill('000000' === totpCode(secret, currentStep()) ? '111111' : '000000');
+  await page.getByRole('button', { name: 'Verifica' }).click();
+  await expect(page.locator('[data-wrong-code]')).toBeVisible();
+  await page.getByLabel('Codice', { exact: true }).fill(totpCode(secret, currentStep()));
+  await page.getByRole('button', { name: 'Verifica' }).click();
+  await expect(page).toHaveURL(/\/gestione\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Ciao');
+
+  await page.getByRole('button', { name: 'Esci' }).click();
+  await signIn();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Verifica in due passaggi');
+  await expect(page.locator('[data-two-factor-setup]')).toHaveCount(0);
+  await expectAccessible(page);
+  // the step of the set-up code is used: the next one, as the app shows it a few seconds later
+  await page.getByLabel('Codice', { exact: true }).fill(totpCode(secret, currentStep() + 1));
+  await page.getByRole('button', { name: 'Verifica' }).click();
+  await expect(page).toHaveURL(/\/gestione\/$/);
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('Ciao');
+
+  await staffPage.goto('/gestione/impostazioni/utenti/');
+  await expect(staffPage.locator(`tr[data-user="${staff.username}"] [data-two-factor]`)).toContainText('Attiva');
+  await expectAccessible(staffPage);
   problems.expectNone();
   await context.close();
 });

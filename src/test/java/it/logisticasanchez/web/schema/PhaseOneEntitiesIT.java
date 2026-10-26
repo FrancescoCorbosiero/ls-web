@@ -75,8 +75,12 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
     void staffUserRoundTrip() {
         StaffUser saved = staffUsers.save(new StaffUser("  Mario.Test ", "Mario Test", StaffRole.OPERATOR));
         saved.setEmail("Mario.Test@example");
-        saved.setTotpSecret(new byte[] {1, 2, 3});
         flushAndClear();
+        // ENH-09: the secret is set by the two-factor set-up, with the time it was confirmed (V020)
+        jdbc.update(
+                "update staff_user set totp_secret = ?, totp_enabled_at = now() where id = ?",
+                new byte[] {1, 2, 3},
+                saved.getId());
 
         StaffUser found = staffUsers.findByUsername("mario.test").orElseThrow();
         assertThat(found.getId()).isEqualTo(saved.getId());
@@ -88,6 +92,8 @@ class PhaseOneEntitiesIT extends AbstractPostgresIT {
                 .as("no password until the one-time link is used")
                 .isNull();
         assertThat(found.getTotpSecret()).containsExactly(1, 2, 3);
+        assertThat(found.getTotpEnabledAt()).isNotNull();
+        assertThat(found.getTotpLastStep()).isNull();
         // The test database is shared with the auth tests, which create ADMIN accounts: assert
         // the query on the role just saved.
         assertThat(staffUsers.existsByRole(StaffRole.OPERATOR)).isTrue();

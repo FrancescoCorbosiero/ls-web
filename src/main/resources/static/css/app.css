@@ -1392,3 +1392,20 @@ a.tile:hover {
 .plain-list li + li {
   margin-top: 4px;
 }
+/* ADR 0039: the QR code and the key of the two-factor set-up. */
+.totp-qr {
+  display: block;
+  width: min(220px, 100%);
+  height: auto;
+  margin: 12px 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.totp-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.05rem;
+  color: var(--ink);
+  letter-spacing: 0.06em;
+  word-spacing: 0.3em;
+  overflow-wrap: anywhere;
+}

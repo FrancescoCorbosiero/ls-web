@@ -105,6 +105,8 @@ POST	/gestione/impostazioni/destinatari	403	403	403	403
 POST	/gestione/impostazioni/destinatari/{id}/rimuovi	403	403	403	403
 GET	/gestione/impostazioni/utenti/	302	403	403	200
 POST	/gestione/impostazioni/utenti/	403	403	403	403
+# ENH-09 an ADMIN resets a user's two-factor secret (ADR 0039); POST only, CSRF first.
+POST	/gestione/impostazioni/utenti/{id}/doppia-verifica	403	403	403	403
 GET	/gestione/impostazioni/privacy/	302	403	403	200
 POST	/gestione/impostazioni/privacy/cerca	403	403	403	403
 POST	/gestione/impostazioni/privacy/esporta	403	403	403	403
@@ -114,6 +116,9 @@ GET	/gestione/report/{id}/download	302	403	404|200	404|200
 GET	/area-clienti/report/{id}/download	302	404|403	403	403
 GET	/gestione/imposta-password	200	200	200	200
 POST	/gestione/imposta-password	403	403	403	403
+# ENH-09 the code after the password (ADR 0039): 404 for everyone while security.adminTotp is off, as in this run.
+GET	/gestione/verifica	404	404	404	404
+POST	/gestione/verifica	403	403	403	403
 GET	/js/config.js	200	200	200	200
 GET	/site.webmanifest	200	200	200	200
 # site module (ADR 0012, 0013, 0014): the public pages of chapter 06 §3.1, the generated files, the form endpoint.

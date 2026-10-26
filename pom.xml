@@ -28,6 +28,8 @@
     <!-- AWS SDK v2 BOM (ADR 0001): SESv2 only in M1, used by the notifications outbox worker. -->
     <awssdk.version>2.57.2</awssdk.version>
     <openpdf.version>3.0.5</openpdf.version>
+    <!-- ENH-09 (ADR 0039): the QR code of the staff two-factor set-up, encoded in the app. -->
+    <zxing.version>3.5.3</zxing.version>
   </properties>
 
   <dependencyManagement>
@@ -112,6 +114,13 @@
       <groupId>com.github.librepdf</groupId>
       <artifactId>openpdf</artifactId>
       <version>${openpdf.version}</version>
+    </dependency>
+
+    <!-- Staff two-factor set-up (ENH-09, ADR 0039): the otpauth QR code, drawn as inline SVG -->
+    <dependency>
+      <groupId>com.google.zxing</groupId>
+      <artifactId>core</artifactId>
+      <version>${zxing.version}</version>
     </dependency>
 
     <!-- Observability: only /actuator/health is exposed (application.yml) -->

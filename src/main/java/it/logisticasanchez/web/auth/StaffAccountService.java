@@ -192,11 +192,12 @@ public class StaffAccountService {
                         u.getRole(),
                         u.isActive(),
                         u.getPasswordHash() != null,
-                        u.getLastLoginAt()))
+                        u.getLastLoginAt(),
+                        u.getTotpSecret() != null))
                 .toList();
     }
 
-    /** A staff account as the back office lists it (never the entity). */
+    /** A staff account as the back office lists it (never the entity); {@code twoFactor}: a TOTP secret is set up (ENH-09). */
     public record StaffUserView(
             long id,
             String username,
@@ -205,7 +206,8 @@ public class StaffAccountService {
             StaffRole role,
             boolean active,
             boolean passwordSet,
-            Instant lastLoginAt) {}
+            Instant lastLoginAt,
+            boolean twoFactor) {}
 
     /** The absolute URL of a set-password link, as the command prints it and the e-mail carries it. */
     public String setupUrl(String rawToken) {

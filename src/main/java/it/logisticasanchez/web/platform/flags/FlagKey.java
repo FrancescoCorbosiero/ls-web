@@ -21,7 +21,7 @@ public enum FlagKey {
     ORDERS_REPEAT("orders.repeat", "ENH-07", true),
     ADMIN_DASHBOARD("admin.dashboard", "ENH-08", true),
     ADMIN_EXPORTS("admin.exports", "ENH-08", true),
-    SECURITY_ADMIN_TOTP("security.adminTotp", "ENH-09", false),
+    SECURITY_ADMIN_TOTP("security.adminTotp", "ENH-09", true),
     DELIVERY_UNIFIED_TIMES("delivery.unifiedTimes", "ENH-10", false),
     PRICING_MARGIN_VIEW("pricing.marginView", "ENH-11", false),
     DOCUMENTS("documents", "ENH-12", false),

@@ -58,6 +58,12 @@ public class StaffUser {
     @Column(name = "totp_secret")
     private byte[] totpSecret;
 
+    @Column(name = "totp_enabled_at")
+    private Instant totpEnabledAt;
+
+    @Column(name = "totp_last_step")
+    private Long totpLastStep;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
 
@@ -154,8 +160,31 @@ public class StaffUser {
         return totpSecret;
     }
 
-    public void setTotpSecret(byte[] totpSecret) {
-        this.totpSecret = totpSecret;
+    public Instant getTotpEnabledAt() {
+        return totpEnabledAt;
+    }
+
+    public Long getTotpLastStep() {
+        return totpLastStep;
+    }
+
+    /** ENH-09: the secret confirmed by a first code ({@code sealed} is its ciphertext). */
+    void enableTotp(byte[] sealed, Instant at, long step) {
+        this.totpSecret = Objects.requireNonNull(sealed, "sealed");
+        this.totpEnabledAt = Objects.requireNonNull(at, "at");
+        this.totpLastStep = step;
+    }
+
+    /** ENH-09: a code of {@code step} was accepted; older or equal steps are refused from now on. */
+    void acceptTotpStep(long step) {
+        this.totpLastStep = step;
+    }
+
+    /** ENH-09: no secret any more; the next login with the flag on sets one up again. */
+    void resetTotp() {
+        this.totpSecret = null;
+        this.totpEnabledAt = null;
+        this.totpLastStep = null;
     }
 
     public Instant getCreatedAt() {

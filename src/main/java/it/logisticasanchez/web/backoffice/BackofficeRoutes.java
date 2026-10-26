@@ -59,6 +59,9 @@ public final class BackofficeRoutes {
     public static final String SETTINGS_RECIPIENTS = SETTINGS + "destinatari";
     public static final String SETTINGS_RECIPIENT_REMOVE = SETTINGS + "destinatari/{id}/rimuovi";
     public static final String STAFF_USERS = SETTINGS + "utenti/";
+    /** ENH-09 (security.adminTotp, ADR 0039): an ADMIN removes a user's two-factor secret. */
+    public static final String STAFF_USER_TWO_FACTOR_RESET = STAFF_USERS + "{id}/doppia-verifica";
+
     public static final String PRIVACY = SETTINGS + "privacy/";
     public static final String PRIVACY_LOOKUP = PRIVACY + "cerca";
     public static final String PRIVACY_EXPORT = PRIVACY + "esporta";

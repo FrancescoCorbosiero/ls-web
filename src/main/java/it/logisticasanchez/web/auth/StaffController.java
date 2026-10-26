@@ -41,6 +41,7 @@ public class StaffController {
             @RequestParam(name = "errore", required = false) String error,
             @RequestParam(name = "impostata", required = false) String passwordSet,
             @RequestParam(name = "uscito", required = false) String loggedOut,
+            @RequestParam(name = "verifica", required = false) String twoFactorFailed,
             Model model) {
         if (SessionLimitsFilter.isAuthenticated(authentication) && SessionLimitsFilter.isStaff(authentication)) {
             model.addAttribute("displayName", displayName(authentication));
@@ -51,6 +52,7 @@ public class StaffController {
         model.addAttribute("loginError", error != null);
         model.addAttribute("passwordSet", passwordSet != null);
         model.addAttribute("loggedOut", loggedOut != null);
+        model.addAttribute("twoFactorFailed", twoFactorFailed != null); // ENH-09
         return "auth/staff-login";
     }
 

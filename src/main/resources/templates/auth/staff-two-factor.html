@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<!--
+  «Verifica in due passaggi» (ENH-09, security.adminTotp, ADR 0039): after the right password,
+  the 6-digit code of the authenticator app; a user without a secret first sets the app up from
+  the QR code (an inline SVG path drawn by the server) or the key, then types its first code.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${setUp} ? #{auth.staff.twoFactor.setupTitle} : #{auth.staff.twoFactor.title}) + ' · ' + ${business.brandName}">Verifica in due passaggi · Logistica Sanchez</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body>
+<th:block th:replace="~{layout/private :: siteHeader('staff', null, null)}"></th:block>
+<main id="main" class="app-main">
+  <div class="container container-narrow">
+    <div class="page-head">
+      <div>
+        <h1 th:text="${setUp} ? #{auth.staff.twoFactor.setupTitle} : #{auth.staff.twoFactor.title}">Verifica in due passaggi</h1>
+        <p class="lede" th:text="${setUp} ? #{auth.staff.twoFactor.setupLead} : #{auth.staff.twoFactor.lead}">Inserisci il codice di 6 cifre che vedi nell'app di autenticazione del tuo telefono.</p>
+      </div>
+    </div>
+    <p class="callout callout-error" role="alert" th:if="${wrongCode}" data-wrong-code th:text="#{auth.staff.twoFactor.wrong}">Il codice non è corretto o è scaduto: riprova con quello che vedi ora.</p>
+    <section class="panel mb-m" th:if="${setUp}" aria-labelledby="app-title" data-two-factor-setup>
+      <h2 id="app-title" th:text="#{auth.staff.twoFactor.setupApp}">1. Collega l'app</h2>
+      <p th:text="#{auth.staff.twoFactor.setupScan}">Apri l'app di autenticazione del telefono (per esempio Google Authenticator o Microsoft Authenticator), aggiungi un account e inquadra il codice QR.</p>
+      <svg class="totp-qr" xmlns="http://www.w3.org/2000/svg" role="img" shape-rendering="crispEdges" th:attr="viewBox=|0 0 ${setup.qr.size} ${setup.qr.size}|,aria-label=#{auth.staff.twoFactor.qrLabel}"><rect width="100%" height="100%" fill="#ffffff"/><path fill="#0b1f33" th:attr="d=${setup.qr.path}"/></svg>
+      <p class="muted small" th:text="#{auth.staff.twoFactor.setupKey}">Non riesci a inquadrarlo? Scegli «Inserisci una chiave» nell'app e scrivi questa chiave:</p>
+      <p class="totp-key" data-totp-key th:text="${setup.key}">ABCD EFGH IJKL MNOP QRST UVWX YZ23 4567</p>
+    </section>
+    <form method="post" th:action="@{/gestione/verifica}" class="panel fields" data-two-factor-form>
+      <h2 class="span-all" th:if="${setUp}" th:text="#{auth.staff.twoFactor.setupConfirm}">2. Conferma con il primo codice</h2>
+      <input type="text" name="username" autocomplete="username" th:value="${username}" hidden>
+      <div class="field">
+        <label class="label" for="codice" th:text="#{auth.staff.twoFactor.code}">Codice</label>
+        <input class="input" id="codice" name="codice" type="text" inputmode="numeric" pattern="[0-9 ]*" maxlength="7" autocomplete="one-time-code" required autofocus aria-describedby="codice-hint">
+        <p class="field-hint" id="codice-hint" th:text="#{auth.staff.twoFactor.codeHint}">Le 6 cifre dell'app: cambiano ogni 30 secondi.</p>
+      </div>
+      <div class="form-actions span-all"><button type="submit" class="btn" th:text="#{auth.staff.twoFactor.submit}">Verifica</button></div>
+    </form>
+    <p class="mt-m"><a href="/gestione/" th:text="#{auth.staff.twoFactor.back}">Torna al login</a></p>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

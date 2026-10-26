@@ -63,8 +63,8 @@ public record SecurityProperties(
             @NotNull @DefaultValue("24h") Duration registration,
             @NotNull @DefaultValue("15m") Duration changeEmail) {}
 
-    public record Staff(
-            @DefaultValue Lockout lockout, @DefaultValue Totp totp) {}
+    /** The staff accounts; their two-factor sign-in is the flag {@code security.adminTotp} (ENH-09, ADR 0039). */
+    public record Staff(@DefaultValue Lockout lockout) {}
 
     /** PD-10: lock the account after {@code threshold} failed logins for {@code duration}. */
     public record Lockout(
@@ -79,10 +79,6 @@ public record SecurityProperties(
      */
     public record CustomerPassword(
             @Min(8) @DefaultValue("8") int minLength) {}
-
-    /** TOTP for staff is M2 (ENH-09, flag {@code security.adminTotp}); this seam stays off in M1. */
-    public record Totp(@DefaultValue("false") boolean enabled // Q-17
-            ) {}
 
     /**
      * Forwarded-header trust (chapter 10 §4): exactly one proxy hop. When true, the scheme,

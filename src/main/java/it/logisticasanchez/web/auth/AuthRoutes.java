@@ -17,6 +17,8 @@ public final class AuthRoutes {
     public static final String STAFF_LOGIN = BACKOFFICE + "login";
     public static final String STAFF_LOGOUT = BACKOFFICE + "logout";
     public static final String STAFF_SET_PASSWORD = BACKOFFICE + "imposta-password";
+    /** ENH-09 (security.adminTotp, ADR 0039): the code after the password, or the set-up of the app. */
+    public static final String STAFF_TWO_FACTOR = BACKOFFICE + "verifica";
 
     private AuthRoutes() {}
 }
