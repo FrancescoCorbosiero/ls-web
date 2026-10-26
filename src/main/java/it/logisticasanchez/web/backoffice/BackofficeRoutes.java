@@ -2,7 +2,7 @@ package it.logisticasanchez.web.backoffice;
 
 import it.logisticasanchez.web.auth.AuthRoutes;
 
-/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035). */
+/** The paths of the back office (chapter 10 §2 URL map: {@code clienti/}, {@code ordini/}, {@code tracking/}, {@code report/}, {@code impostazioni/}; the record editing of ADM-11 and ADM-12; the office tools of ADR 0035; the website requests of ADR 0036). */
 public final class BackofficeRoutes {
 
     public static final String HOME = AuthRoutes.BACKOFFICE;
@@ -36,6 +36,13 @@ public final class BackofficeRoutes {
 
     public static final String REPORTS = HOME + "report/";
 
+    /** ENH-06 (leads.inbox, ADR 0036): the quote and contact requests of the website. */
+    public static final String LEADS = HOME + "richieste/";
+
+    public static final String LEAD = LEADS + "{id}/";
+    public static final String LEAD_STATUS = LEAD + "stato";
+    public static final String LEAD_LINK = LEAD + "collega";
+
     public static final String SETTINGS = HOME + "impostazioni/";
     public static final String SETTINGS_FLAG = SETTINGS + "flag";
     public static final String SETTINGS_RECIPIENTS = SETTINGS + "destinatari";
@@ -54,5 +61,9 @@ public final class BackofficeRoutes {
 
     public static String order(long id) {
         return ORDER.replace("{id}", Long.toString(id));
+    }
+
+    public static String lead(long id) {
+        return LEAD.replace("{id}", Long.toString(id));
     }
 }

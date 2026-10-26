@@ -16,7 +16,7 @@ public enum FlagKey {
     PRICING_PUBLIC_ESTIMATE("pricing.publicEstimate", "ENH-04", false),
     TRACKING_HISTORY("tracking.history", "ENH-05", true),
     TRACKING_NOTIFY_CUSTOMER("tracking.notifyCustomer", "ENH-05", true),
-    LEADS_INBOX("leads.inbox", "ENH-06", false),
+    LEADS_INBOX("leads.inbox", "ENH-06", true),
     CUSTOMERS_ADDRESS_BOOK("customers.addressBook", "ENH-07", true),
     ORDERS_REPEAT("orders.repeat", "ENH-07", true),
     ADMIN_DASHBOARD("admin.dashboard", "ENH-08", true),

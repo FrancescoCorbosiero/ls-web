@@ -29,8 +29,9 @@ import org.springframework.test.web.servlet.MockMvc;
  * ADM-01 / CUS-01: {@code dev-seed} exists only under the local and test profiles, creates the
  * two seed staff accounts with random passwords printed once (the ADMIN can log in with the
  * printed password), synthetic customers with their login identity in every state on
- * {@code .example} addresses and one order per order/tracking state for the ACTIVE one; a second
- * run rotates the passwords and leaves customers and orders alone.
+ * {@code .example} addresses, one order per order/tracking state for the ACTIVE one and three
+ * website requests (ENH-06); a second run rotates the passwords and leaves customers, orders and
+ * requests alone.
  */
 @Tag("ADM-01")
 @Tag("CUS-01")
@@ -117,6 +118,12 @@ class DevSeedCommandIT extends AbstractPostgresIT {
                 .containsPattern(
                         "ordini del cliente ACTIVE: (già presenti|TEMP-[A-Z2-9]{8} \\(PENDING\\), TEST-0002 \\(APPROVED, PRESA\\).*"
                                 + "|TEMP-[A-Z2-9]{8} \\(CANCELLED\\))");
+        // ENH-06: three website requests through the form's validation, one already contacted
+        assertThat(jdbc.queryForList(
+                        "select form || '/' || status from lead where email like 'richiesta.%@cliente.example' order by id",
+                        String.class))
+                .containsExactly("PREVENTIVO/NEW", "CONTATTI/NEW", "PREVENTIVO/CONTACTED");
+        assertThat(out).containsPattern("richieste dal sito: (già presenti|3 \\(2 nuove, 1 contattata\\))");
         assertThat(customerUsers(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(customerUsers(DevSeedCommand.PENDING_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL).endsWith(".example");
@@ -136,6 +143,7 @@ class DevSeedCommandIT extends AbstractPostgresIT {
                 .andExpect(redirectedUrl("/gestione/?errore=1"));
         assertThat(customerUsers(DevSeedCommand.ACTIVE_CUSTOMER_EMAIL)).isEqualTo(1);
         assertThat(again).contains("ordini del cliente ACTIVE: già presenti");
+        assertThat(again).contains("richieste dal sito: già presenti");
         assertThat(jdbc.queryForObject(
                         "select count(*) from customer where email in (?, ?)",
                         Integer.class,

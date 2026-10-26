@@ -8,6 +8,10 @@ import it.logisticasanchez.web.orders.LineKind;
 import it.logisticasanchez.web.orders.OrderDraft;
 import it.logisticasanchez.web.orders.OrderService;
 import it.logisticasanchez.web.orders.OrderView;
+import it.logisticasanchez.web.site.forms.FormSubmission;
+import it.logisticasanchez.web.site.forms.FormValidator;
+import it.logisticasanchez.web.site.forms.LeadService;
+import it.logisticasanchez.web.site.forms.LeadStatus;
 import it.logisticasanchez.web.tracking.TrackingState;
 import java.io.PrintStream;
 import java.math.BigDecimal;
@@ -15,9 +19,13 @@ import java.security.SecureRandom;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.ExitCodeGenerator;
@@ -34,8 +42,10 @@ import org.springframework.transaction.annotation.Transactional;
  * PENDING_APPROVAL, PENDING_VERIFICATION, DECLINED) on {@code .example} addresses; and, for the
  * ACTIVE customer, one order per order and tracking state (pending, approved in PRESA, approved
  * and delivered, declined, cancelled) through the real services, so their e-mails land in the local mail
- * directory. Re-running it sets new passwords on the seed accounts and leaves existing customers
- * and orders alone (it only adds a seed order that is missing). Run as {@code java -jar app.jar dev-seed
+ * directory; three website requests (ENH-06: a quote and a message, new, and a quote already
+ * contacted) through the form's own validation. Re-running it sets new passwords on the seed
+ * accounts and leaves existing customers, orders and requests alone (it only adds a seed order
+ * that is missing). Run as {@code java -jar app.jar dev-seed
  * --spring.profiles.active=local}; the bean does not exist outside local and test.
  */
 @Component
@@ -57,6 +67,8 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
     private final JdbcTemplate jdbc;
     private final CustomerService customers;
     private final OrderService orders;
+    private final FormValidator forms;
+    private final LeadService leads;
     private final Clock clock;
     private volatile int exitCode;
 
@@ -66,12 +78,16 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
             JdbcTemplate jdbc,
             CustomerService customers,
             OrderService orders,
+            FormValidator forms,
+            LeadService leads,
             Clock clock) {
         this.users = users;
         this.encoder = encoder;
         this.jdbc = jdbc;
         this.customers = customers;
         this.orders = orders;
+        this.forms = forms;
+        this.leads = leads;
         this.clock = clock;
     }
 
@@ -104,9 +120,77 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
                 + customer(UNVERIFIED_CUSTOMER_EMAIL, "Ditta Da Verificare S.r.l.", "PENDING_VERIFICATION"));
         out.println("  cliente DECLINED          e-mail: " + DECLINED_CUSTOMER_EMAIL
                 + customer(DECLINED_CUSTOMER_EMAIL, "Ditta Rifiutata S.r.l.", "DECLINED"));
-        out.println("  ordini del cliente ACTIVE: "
-                + orders(users.findByUsername(ADMIN_USERNAME).orElseThrow().getId()));
+        long adminId = users.findByUsername(ADMIN_USERNAME).orElseThrow().getId();
+        out.println("  ordini del cliente ACTIVE: " + orders(adminId));
+        out.println("  richieste dal sito: " + leads(adminId));
         return 0;
+    }
+
+    /** ENH-06: two new requests (a quote, a message) and a quote already contacted, unless seeded before. */
+    private String leads(long staffId) {
+        Integer seeded = jdbc.queryForObject(
+                "select count(*) from lead where email like 'richiesta.%@cliente.example'", Integer.class);
+        if (seeded != null && seeded > 0) {
+            return "già presenti";
+        }
+        String pickupDay = LocalDate.now(clock.withZone(ZoneId.of("Europe/Rome")))
+                .plusDays(7)
+                .toString();
+        Map<String, String> quote = new LinkedHashMap<>();
+        quote.put("servizio", "pallet");
+        quote.put("data_ritiro", pickupDay);
+        quote.put("ritiro_cap", "20831");
+        quote.put("ritiro_localita", "Seregno");
+        quote.put("consegna_cap", "10121");
+        quote.put("consegna_localita", "Torino");
+        quote.put("destinatario", "azienda");
+        quote.put("tipo_pallet", "eur");
+        quote.put("numero", "2");
+        quote.put("peso", "600");
+        quote.put("altezza", "150");
+        quote.put("descrizione_merce", "Ricambi meccanici");
+        quote.put("servizi_extra[]", "Sponda idraulica");
+        quote.put("nome", "Mario Prova");
+        quote.put("azienda", "Officina Prova S.r.l.");
+        quote.put("email", "richiesta.preventivo@cliente.example");
+        quote.put("telefono", "+39 333 000 0001");
+        quote.put("contatto_preferito", "telefono");
+        quote.put("note", "Ritiro preferibilmente al mattino.");
+        quote.put("privacy", "accettata");
+        lead(FormSubmission.Form.PREVENTIVO, quote);
+        Map<String, String> contact = new LinkedHashMap<>();
+        contact.put("nome", "Lucia Esempio");
+        contact.put("email", "richiesta.contatti@cliente.example");
+        contact.put("oggetto", "Informazioni sul magazzino");
+        contact.put("messaggio", "Vorrei sapere se offrite lo stoccaggio di 20 pallet per due mesi.");
+        contact.put("privacy", "accettata");
+        lead(FormSubmission.Form.CONTATTI, contact);
+        Map<String, String> contacted = new LinkedHashMap<>(quote);
+        contacted.put("servizio", "groupage");
+        contacted.remove("data_ritiro");
+        contacted.put("ritiro_cap", "20900");
+        contacted.put("ritiro_localita", "Monza");
+        contacted.put("consegna_cap", "40121");
+        contacted.put("consegna_localita", "Bologna");
+        contacted.put("destinatario", "privato");
+        contacted.put("tipo_pallet", "industriale");
+        contacted.put("numero", "1");
+        contacted.put("peso", "300");
+        contacted.remove("servizi_extra[]");
+        contacted.put("nome", "Paolo Test");
+        contacted.put("azienda", "Bottega Test S.n.c.");
+        contacted.put("email", "richiesta.contattata@cliente.example");
+        contacted.put("telefono", "+39 333 000 0002");
+        contacted.put("contatto_preferito", "email");
+        contacted.remove("note");
+        leads.changeStatus(lead(FormSubmission.Form.PREVENTIVO, contacted), staffId, LeadStatus.CONTACTED);
+        return "3 (2 nuove, 1 contattata)";
+    }
+
+    private long lead(FormSubmission.Form form, Map<String, String> fields) {
+        Map<String, String[]> parameters = new LinkedHashMap<>();
+        fields.forEach((name, value) -> parameters.put(name, new String[] {value}));
+        return leads.store(forms.validate(form, parameters), "127.0.0.1", "dev-seed");
     }
 
     /**

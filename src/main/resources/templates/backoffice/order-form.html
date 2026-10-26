@@ -36,6 +36,7 @@
       <button th:replace="~{orders/form :: defaultSubmit(${order == null} ? #{backoffice.orderForm.create} : #{orders.form.save})}">Salva</button>
       <input type="hidden" name="versione" th:if="${order != null}" th:value="${version}">
       <input type="hidden" name="chiave" th:if="${order == null}" th:value="${formKey}">
+      <input type="hidden" name="richiesta" th:if="${order == null and extra['richiesta'] != null}" th:value="${extra['richiesta']}">
       <div class="stack">
         <section class="panel" id="cliente-mittente" aria-labelledby="cliente-title">
           <div class="form-step"><span class="form-step-num" aria-hidden="true">

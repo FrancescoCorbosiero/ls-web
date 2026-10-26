@@ -3,13 +3,18 @@ package it.logisticasanchez.web.backoffice;
 import it.logisticasanchez.web.customers.CustomerService;
 import it.logisticasanchez.web.customers.CustomerView;
 import it.logisticasanchez.web.customers.RegistrationValidator;
+import it.logisticasanchez.web.platform.flags.FeatureFlags;
+import it.logisticasanchez.web.platform.flags.FlagKey;
 import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
+import it.logisticasanchez.web.site.forms.LeadService;
+import it.logisticasanchez.web.site.forms.LeadView;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.stereotype.Controller;
@@ -25,7 +30,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * e-mail («Nuovo cliente»: active at once, optionally with the welcome e-mail EML-03) and correct
  * a customer's registration data («Modifica dati») with the rules of the registration form
  * (CUS-02, {@link RegistrationValidator}). The login e-mail is never changed here (CUS-06); an
- * anonymised customer cannot be edited; the page carries the version it showed.
+ * anonymised customer cannot be edited; the page carries the version it showed. ENH-06 (ADR 0036):
+ * with {@code leads.inbox} on, «Crea cliente» of a website request opens «Nuovo cliente» filled
+ * from it ({@code ?richiesta=<id>}) and the new customer is linked to the request.
  */
 @Controller
 public class BackofficeCustomerChangesController {
@@ -35,17 +42,28 @@ public class BackofficeCustomerChangesController {
 
     private final CustomerService customers;
     private final RegistrationValidator validator;
+    private final LeadService leads;
+    private final FeatureFlags flags;
 
-    public BackofficeCustomerChangesController(CustomerService customers, RegistrationValidator validator) {
+    public BackofficeCustomerChangesController(
+            CustomerService customers, RegistrationValidator validator, LeadService leads, FeatureFlags flags) {
         this.customers = customers;
         this.validator = validator;
+        this.leads = leads;
+        this.flags = flags;
     }
 
     @GetMapping(BackofficeRoutes.CUSTOMER_NEW)
-    public String newCustomer(Model model) {
+    public String newCustomer(@RequestParam(name = "richiesta", required = false) String request, Model model) {
         Map<String, String> values = blank();
         values.put("email", "");
         values.put("benvenuto", "on");
+        Optional<LeadView> lead = lead(request);
+        if (lead.isPresent()) {
+            values.putAll(LeadDrafts.customer(lead.get()));
+            values.put("email", ItalianFormats.normaliseEmail(lead.get().email()));
+            values.put("richiesta", Long.toString(lead.get().id()));
+        }
         return formPage(model, null, values, Map.of(), null);
     }
 
@@ -58,6 +76,8 @@ public class BackofficeCustomerChangesController {
         Map<String, String> values = typed(form);
         values.put("email", ItalianFormats.normaliseEmail(form.get("email")));
         values.put("benvenuto", form.containsKey("benvenuto") ? "on" : "");
+        Optional<LeadView> lead = lead(form.get("richiesta"));
+        lead.ifPresent(l -> values.put("richiesta", Long.toString(l.id())));
         RegistrationValidator.Result result = validator.validate(form);
         Map<String, String> errors = new LinkedHashMap<>(result.errors());
         if (values.get("email").isEmpty()) {
@@ -78,10 +98,15 @@ public class BackofficeCustomerChangesController {
         } catch (RuleViolationException e) {
             return formPage(model, null, values, Map.of(), e.detail());
         }
-        redirect.addFlashAttribute(
-                "flash",
-                "Cliente «" + created.companyName() + "» creato e attivo"
-                        + (values.get("benvenuto").isEmpty() ? "." : ": gli abbiamo inviato l'e-mail di benvenuto."));
+        String done = "Cliente «" + created.companyName() + "» creato e attivo"
+                + (values.get("benvenuto").isEmpty() ? "." : ": gli abbiamo inviato l'e-mail di benvenuto.");
+        if (lead.isPresent()) {
+            // ENH-06: back to the request, where «Crea ordine» is now offered
+            leads.linkCustomer(lead.get().id(), StaffSession.of(authentication).requireId(), created.id());
+            redirect.addFlashAttribute("flash", done + " La richiesta è collegata al nuovo cliente.");
+            return "redirect:" + BackofficeRoutes.lead(lead.get().id());
+        }
+        redirect.addFlashAttribute("flash", done);
         return "redirect:" + BackofficeRoutes.customer(created.id());
     }
 
@@ -133,6 +158,15 @@ public class BackofficeCustomerChangesController {
             model.addAttribute("version", customer == null ? null : customer.version());
         }
         return "backoffice/customer-form";
+    }
+
+    /** ENH-06: the website request named by {@code ?richiesta=}, while {@code leads.inbox} is on. */
+    private Optional<LeadView> lead(String id) {
+        String raw = ItalianFormats.trim(id);
+        if (!flags.isEnabled(FlagKey.LEADS_INBOX) || !raw.matches("^[0-9]{1,18}$")) {
+            return Optional.empty();
+        }
+        return leads.find(Long.parseLong(raw));
     }
 
     private static String anonymised(CustomerView customer, RedirectAttributes redirect) {

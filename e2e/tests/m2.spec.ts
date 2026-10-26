@@ -5,7 +5,7 @@ import { linkIn, waitForMail } from '../support/mail';
 import { PageProblems, expectNoHorizontalScroll, offline } from '../support/browser';
 
 /**
- * M2.1 end to end (ADR 0025, 0033, 0034, 0035): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033, 0034, 0035, 0036): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -108,8 +108,8 @@ test('[ENH-07] the admin finds the address book and «Ordina di nuovo» availabl
   }
   // built flags first; one not built yet keeps its toggle disabled
   await expect(rows.first()).toContainText('Disponibile');
-  await expect(staffPage.locator('tr[data-flag="leads.inbox"]')).toContainText('Non ancora sviluppata');
-  await expect(staffPage.locator('tr[data-flag="leads.inbox"]').getByRole('button')).toBeDisabled();
+  await expect(staffPage.locator('tr[data-flag="pricing.lists"]')).toContainText('Non ancora sviluppata');
+  await expect(staffPage.locator('tr[data-flag="pricing.lists"]').getByRole('button')).toBeDisabled();
 
   await setFlag('customers.addressBook', true);
   await setFlag('orders.repeat', true);
@@ -297,6 +297,43 @@ test('[ENH-08] the order and customer lists download as CSV files', async () => 
   expect(customersCsv).toContain('"Ditta Attiva S.r.l."');
 });
 
+test('[ENH-06] the admin turns on the website requests', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="leads.inbox"]')).toContainText('Disponibile');
+  await setFlag('leads.inbox', true);
+});
+
+test('[ENH-06] a quote request from the website becomes a customer and then an order', async () => {
+  await staffPage.goto('/gestione/richieste/');
+  await expect(staffPage.locator('[data-count="leads"]')).toBeVisible();
+  await staffPage.locator('tr[data-lead]', { hasText: 'Mario Prova' }).getByRole('link', { name: 'Mario Prova' }).click();
+  await expect(staffPage.getByRole('heading', { level: 1, name: 'Mario Prova' })).toBeVisible();
+  await expect(staffPage.locator('[data-section="goods"]')).toContainText('2 × EPAL 120×80 cm');
+  await expectAccessible(staffPage);
+
+  await staffPage.getByRole('button', { name: 'Segna come contattata' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Contattata');
+
+  await staffPage.getByRole('link', { name: 'Crea cliente' }).click();
+  await expect(staffPage.locator('[data-from-lead]')).toBeVisible();
+  await expect(staffPage.locator('#companyName')).toHaveValue('Officina Prova S.r.l.');
+  await staffPage.locator('#addressLine').fill('Via delle Prove 1');
+  await staffPage.locator('#province').fill('MB');
+  await staffPage.getByRole('button', { name: 'Crea il cliente' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('La richiesta è collegata al nuovo cliente');
+
+  await staffPage.getByRole('link', { name: 'Crea ordine' }).click();
+  await expect(staffPage.locator('[name="line.0.heightCm"]')).toHaveValue('150');
+  await expect(staffPage.locator('[name="line.0.weightKg"]')).toHaveValue('300');
+  await expect(staffPage.locator('#city')).toHaveValue('Torino');
+  await staffPage.locator('#name').fill('Ricevente Torino S.r.l.');
+  await staffPage.locator('#addressLine').fill('Corso Francia 10');
+  await staffPage.locator('#province').fill('TO');
+  await staffPage.locator('#transportDocumentCode').fill(`DDT-RICHIESTA-${stamp}`);
+  await staffPage.getByRole('button', { name: "Inserisci l'ordine" }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('La richiesta del sito è segnata come vinta');
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
@@ -308,6 +345,7 @@ test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
     [staffPage, '/gestione/tracking/'],
     [staffPage, '/gestione/ordini/'],
     [staffPage, '/gestione/clienti/'],
+    [staffPage, '/gestione/richieste/'],
   ];
   for (const [page, path] of screens) {
     await page.emulateMedia({ reducedMotion: 'reduce' });

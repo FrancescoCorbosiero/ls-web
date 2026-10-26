@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!-- «Richieste» (ENH-06, leads.inbox, ADR 0036): the quote and contact requests of the website, newest first, by state (the tabs, «Nuove» first) with a search; rows as cards on a phone (ADR 0029). -->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.leads.title} + ' · ' + #{layout.private.backoffice}">Richieste dal sito · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('leads')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <h1 th:text="#{backoffice.leads.title}">Richieste dal sito</h1>
+        <p class="lede" th:text="#{backoffice.leads.lead}">Le richieste di preventivo e i messaggi arrivati dai moduli del sito, le più recenti in alto.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+
+    <ul class="status-tabs" role="list" th:aria-label="#{backoffice.leads.tabs}">
+      <li th:each="s : ${statuses}"><a th:href="@{/gestione/richieste/(stato=${s.name()}, q=${q})}" th:attr="aria-current=${tab == s.name() ? 'page' : null}" th:text="#{'backoffice.leads.tab.' + ${s.name()}}">Nuove</a></li>
+      <li><a th:href="@{/gestione/richieste/(stato='', q=${q})}" th:attr="aria-current=${tab == '' ? 'page' : null}" th:text="#{backoffice.leads.tab.all}">Tutte</a></li>
+    </ul>
+
+    <form method="get" th:action="@{/gestione/richieste/}" class="search-bar" role="search">
+      <input type="hidden" name="stato" th:value="${tab}">
+      <label class="visually-hidden" for="q" th:text="#{backoffice.leads.search}">Cerca</label>
+      <input class="input" id="q" name="q" type="search" maxlength="100" th:value="${q}" th:placeholder="#{backoffice.leads.searchHint}">
+      <button type="submit" class="btn btn-light"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-search"/></svg><span th:text="#{backoffice.search}">Cerca</span></button>
+    </form>
+    <th:block th:replace="~{backoffice/layout :: pageInfo(${page})}"></th:block>
+    <div class="empty" th:if="${page.totalElements == 0}" data-empty>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-inbox"/></svg>
+      <h2 th:text="#{backoffice.leads.empty}">Nessuna richiesta.</h2>
+    </div>
+    <div class="data-table-wrap" th:if="${page.totalElements > 0}">
+      <table class="data-table stacked" data-table="leads">
+        <thead><tr>
+          <th scope="col" th:text="#{backoffice.leads.col.date}">Arrivata il</th>
+          <th scope="col" th:text="#{backoffice.leads.col.form}">Modulo</th>
+          <th scope="col" th:text="#{backoffice.leads.col.from}">Da</th>
+          <th scope="col" th:text="#{backoffice.leads.col.summary}">Richiesta</th>
+          <th scope="col" th:text="#{backoffice.leads.col.status}">Stato</th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="l : ${page.content}" th:attr="data-lead=${l.id}">
+            <td th:attr="data-label=#{backoffice.leads.col.date}" th:text="${fmt.dateTime(l.createdAt)}">01/01/2026 10:00</td>
+            <td th:attr="data-label=#{backoffice.leads.col.form}" th:text="${l.formLabel()}">Preventivo</td>
+            <td class="strong" th:attr="data-label=#{backoffice.leads.col.from}"><div class="cell-block"><a th:href="@{/gestione/richieste/{id}/(id=${l.id})}" th:text="${l.name}">Nome</a><span class="sub" th:if="${l.company != null}" th:text="${l.company}">Azienda</span></div></td>
+            <td th:attr="data-label=#{backoffice.leads.col.summary}"><div class="cell-block" th:text="${l.summary()}">Servizio · tratta</div></td>
+            <td th:attr="data-label=#{backoffice.leads.col.status}"><span th:replace="~{backoffice/layout :: leadStatus(${l.status})}">Nuova</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: pager(${page}, @{/gestione/richieste/(stato=${tab}, q=${q}, pagina=${page.number})}, @{/gestione/richieste/(stato=${tab}, q=${q}, pagina=${page.number + 2})})}"></th:block>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

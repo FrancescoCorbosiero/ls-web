@@ -77,6 +77,11 @@ POST	/gestione/tracking/	403	403	403	403
 POST	/gestione/tracking/in-blocco	403	403	403	403
 GET	/gestione/report/	302	403	200	200
 POST	/gestione/report/	403	403	403	403
+# ADR 0036 website requests: 404 for staff while leads.inbox is off, as in this run.
+GET	/gestione/richieste/	302	403	404	404
+GET	/gestione/richieste/{id}/	302	403	404	404
+POST	/gestione/richieste/{id}/stato	403	403	403	403
+POST	/gestione/richieste/{id}/collega	403	403	403	403
 GET	/gestione/impostazioni/	302	403	403	200
 POST	/gestione/impostazioni/flag	403	403	403	403
 POST	/gestione/impostazioni/destinatari	403	403	403	403

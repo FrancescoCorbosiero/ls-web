@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!--
+  One website request (ENH-06, leads.inbox, ADR 0036): what the public form sent (the rows of the
+  office e-mail EML-08), how to reach the person, the customer it belongs to (linked, or registered
+  with the same e-mail: «Collega la richiesta»), the order made from it, the moves of its state
+  (chapter 08 §2.4) and «Crea cliente» / «Crea ordine», which open the staff forms filled from it.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.leads.detailTitle(${lead.name})} + ' · ' + #{layout.private.backoffice}">Richiesta · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('leads')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/gestione/richieste/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.leads.back}">Torna alle richieste</span></a>
+        <h1 th:text="${lead.name}">Nome</h1>
+        <p class="page-meta">
+          <span th:replace="~{backoffice/layout :: leadStatus(${lead.status})}">Nuova</span>
+          <span th:text="#{backoffice.leads.receivedAt(${lead.formLabel()}, ${fmt.dateTime(lead.createdAt)})}">Modulo «Preventivo», arrivata il</span>
+        </p>
+      </div>
+      <div class="page-actions">
+        <a class="btn" th:if="${canCreateOrder}" th:href="@{/gestione/ordini/nuovo(cliente=${customer.id}, richiesta=${lead.id})}" data-create-order><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-plus"/></svg><span th:text="#{backoffice.leads.createOrder}">Crea ordine</span></a>
+        <a class="btn btn-light" th:if="${canCreateCustomer}" th:href="@{/gestione/clienti/nuovo(richiesta=${lead.id})}" data-create-customer><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-plus"/></svg><span th:text="#{backoffice.leads.createCustomer}">Crea cliente</span></a>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+    <div class="app-grid main-aside">
+      <div class="stack">
+        <section class="panel" th:if="${lead.quote()}" data-section="shipment">
+          <h2 th:text="#{backoffice.leads.shipment}">Spedizione</h2>
+          <dl class="facts">
+            <div class="span-all"><dt th:text="#{backoffice.leads.service}">Servizio</dt><dd th:text="${lead.serviceLabel() ?: '-'}">-</dd></div>
+            <div><dt th:text="#{backoffice.leads.pickup}">Ritiro</dt><dd th:text="${lead.pickup() ?: '-'}">-</dd></div>
+            <div><dt th:text="#{backoffice.leads.delivery}">Consegna</dt><dd th:text="${lead.delivery() ?: '-'}">-</dd></div>
+            <div><dt th:text="#{backoffice.leads.pickupDate}">Data di ritiro</dt><dd th:text="${lead.pickupDate != null} ? ${fmt.day(lead.pickupDate)} : #{backoffice.leads.toAgree}">-</dd></div>
+            <div><dt th:text="#{backoffice.leads.recipientType}">Destinatario</dt><dd th:text="${lead.recipientTypeLabel() ?: '-'}">-</dd></div>
+          </dl>
+        </section>
+        <section class="panel" th:if="${lead.quote()}" data-section="goods">
+          <h2 th:text="#{backoffice.leads.goods}">Merce</h2>
+          <dl class="facts">
+            <div class="span-all"><dt th:text="#{backoffice.leads.quantity}">Quantità</dt><dd th:text="${lead.goods() ?: '-'}">-</dd></div>
+            <div><dt th:text="#{backoffice.leads.weight}">Peso totale</dt><dd th:text="${lead.weightText() ?: '-'}">-</dd></div>
+            <div><dt th:text="#{backoffice.leads.height}">Altezza</dt><dd th:text="${lead.heightText() ?: '-'}">-</dd></div>
+            <div class="span-all"><dt th:text="#{backoffice.leads.description}">Descrizione</dt><dd th:text="${lead.goodsDescription ?: '-'}">-</dd></div>
+            <div class="span-all"><dt th:text="#{backoffice.leads.extras}">Servizi extra</dt><dd th:text="${lead.extras.isEmpty()} ? '-' : ${#strings.listJoin(lead.extras, ', ')}">-</dd></div>
+            <div class="span-all"><dt th:text="#{backoffice.leads.notes}">Note</dt><dd class="facts-note" th:text="${lead.message ?: '-'}">-</dd></div>
+          </dl>
+        </section>
+        <section class="panel" th:if="${!lead.quote()}" data-section="message">
+          <h2 th:text="#{backoffice.leads.message}">Messaggio</h2>
+          <dl class="facts">
+            <div class="span-all"><dt th:text="#{backoffice.leads.subject}">Oggetto</dt><dd th:text="${lead.subject ?: '-'}">-</dd></div>
+            <div class="span-all"><dt th:text="#{backoffice.leads.text}">Testo</dt><dd class="facts-note" th:text="${lead.message ?: '-'}">-</dd></div>
+          </dl>
+        </section>
+      </div>
+      <div class="stack">
+        <section class="panel" data-section="contact">
+          <h2 th:text="#{backoffice.leads.contact}">Contatti</h2>
+          <dl class="facts">
+            <div class="span-all"><dt th:text="#{backoffice.leads.name}">Nome</dt><dd th:text="${lead.name}">-</dd></div>
+            <div class="span-all" th:if="${lead.company != null}"><dt th:text="#{backoffice.leads.company}">Azienda</dt><dd th:text="${lead.company}">-</dd></div>
+            <div class="span-all"><dt th:text="#{customers.field.email}">Email</dt><dd><a th:href="'mailto:' + ${lead.email}" th:text="${lead.email}">email</a></dd></div>
+            <div><dt th:text="#{customers.field.phone}">Telefono</dt><dd><a th:if="${lead.phone != null}" th:href="'tel:' + ${#strings.replace(lead.phone, ' ', '')}" th:text="${lead.phone}">tel</a><span th:if="${lead.phone == null}">-</span></dd></div>
+            <div th:if="${lead.preferredContactLabel() != null}"><dt th:text="#{backoffice.leads.preferred}">Preferisce</dt><dd th:text="${lead.preferredContactLabel()}">Email</dd></div>
+          </dl>
+        </section>
+        <section class="panel" data-section="customer">
+          <h2 th:text="#{backoffice.leads.customer}">Cliente</h2>
+          <p th:if="${customer != null and customerLinked}" data-linked-customer><span th:text="#{backoffice.leads.linkedTo}">Collegata al cliente</span> <a class="strong" th:href="@{/gestione/clienti/{id}/(id=${customer.id})}" th:text="${customer.companyName}">Ditta</a></p>
+          <div th:if="${customer != null and !customerLinked}" data-same-email>
+            <p><span th:text="#{backoffice.leads.sameEmail}">C'è già un cliente registrato con questa e-mail:</span> <a class="strong" th:href="@{/gestione/clienti/{id}/(id=${customer.id})}" th:text="${customer.companyName}">Ditta</a></p>
+            <form method="post" th:action="@{/gestione/richieste/{id}/collega(id=${lead.id})}"><button type="submit" class="btn btn-light btn-sm" th:text="#{backoffice.leads.link}">Collega la richiesta al cliente</button></form>
+          </div>
+          <p class="muted" th:if="${customer == null}" th:text="#{backoffice.leads.noCustomer}">Nessun cliente registrato con questa e-mail: con «Crea cliente» lo registri con i dati della richiesta.</p>
+          <p th:if="${order != null}" data-converted-order><span th:text="#{backoffice.leads.order}">Ordine creato dalla richiesta:</span> <a class="strong" th:href="@{/gestione/ordini/{id}/(id=${order.id})}" th:text="${order.displayCode()}">TEMP-</a></p>
+          <p class="muted small mb-0" th:if="${canCreateOrder}" th:text="#{backoffice.leads.orderHint}">«Crea ordine» apre il modulo con i dati della richiesta; quando lo salvi, la richiesta diventa «Vinta».</p>
+        </section>
+        <section class="panel" th:if="${!lead.status.next().isEmpty()}" data-section="status">
+          <h2 th:text="#{backoffice.leads.statusTitle}">Stato della richiesta</h2>
+          <div class="button-row">
+            <form method="post" th:each="s : ${lead.status.next()}" th:action="@{/gestione/richieste/{id}/stato(id=${lead.id})}">
+              <input type="hidden" name="stato" th:value="${s.name()}">
+              <button type="submit" class="btn btn-sm" th:classappend="${s.name() == 'SPAM' or s.name() == 'LOST'} ? 'btn-light'" th:attr="data-move=${s.name()}" th:text="#{'backoffice.leads.move.' + ${s.name()}}">Segna come contattata</button>
+            </form>
+          </div>
+          <p class="muted small mb-0" th:text="#{backoffice.leads.statusHint}">«Vinta», «Persa» e «Spam» sono definitivi.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>
