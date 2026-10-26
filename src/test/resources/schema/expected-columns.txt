@@ -303,3 +303,7 @@ site_notice starts_at timestamptz NULL
 site_notice ends_at timestamptz NULL
 site_notice created_by int8 NOT NULL
 site_notice created_at timestamptz NOT NULL
+office_closure day date NOT NULL
+office_closure label varchar NULL
+office_closure created_by int8 NOT NULL
+office_closure created_at timestamptz NOT NULL

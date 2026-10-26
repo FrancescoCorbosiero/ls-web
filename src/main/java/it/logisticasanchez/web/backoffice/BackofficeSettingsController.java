@@ -37,7 +37,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * the set-password link, EML-S1; with {@code security.adminTotp} on, whether each has two-factor
  * set up and «Azzera» for a lost phone, ENH-09), the privacy tools of NFR-03 (export as JSON,
  * erasure by anonymisation behind a confirmation page) and, with {@code admin.audit} on, the links to
- * the audit log viewer (ENH-13) and the site notices (ENH-17). Every action is audited by the service it calls.
+ * the audit log viewer (ENH-13), the site notices (ENH-17) and the office closures (ENH-18). Every action is audited by the service it calls.
  */
 @Controller
 public class BackofficeSettingsController {
@@ -250,6 +250,7 @@ public class BackofficeSettingsController {
         model.addAttribute("error", error);
         model.addAttribute("auditEnabled", flags.isEnabled(FlagKey.ADMIN_AUDIT)); // ENH-13
         model.addAttribute("noticesEnabled", flags.isEnabled(FlagKey.SITE_NOTICE_BANNER)); // ENH-17
+        model.addAttribute("closuresEnabled", flags.isEnabled(FlagKey.SITE_OPEN_NOW)); // ENH-18
         return "backoffice/settings";
     }
 

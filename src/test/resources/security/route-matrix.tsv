@@ -112,6 +112,10 @@ GET	/gestione/impostazioni/avvisi/	302	403	403	404
 POST	/gestione/impostazioni/avvisi/	403	403	403	403
 POST	/gestione/impostazioni/avvisi/{id}/chiudi	403	403	403	403
 POST	/gestione/impostazioni/avvisi/{id}/elimina	403	403	403	403
+# ENH-18 the closure days of the office (ADR 0042): ADMIN only, 404 while site.openNow is off, as in this run.
+GET	/gestione/impostazioni/chiusure/	302	403	403	404
+POST	/gestione/impostazioni/chiusure/	403	403	403	403
+POST	/gestione/impostazioni/chiusure/{giorno}/rimuovi	403	403	403	403
 # ENH-09 an ADMIN resets a user's two-factor secret (ADR 0039); POST only, CSRF first.
 POST	/gestione/impostazioni/utenti/{id}/doppia-verifica	403	403	403	403
 GET	/gestione/impostazioni/privacy/	302	403	403	200

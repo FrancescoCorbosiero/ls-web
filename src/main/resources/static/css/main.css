@@ -4654,3 +4654,24 @@ html.has-motion .is-offscreen * {
   font-weight: 600;
   text-decoration: underline;
 }
+/* ENH-18 (ADR 0042): «Aperto ora / Chiuso ora» after the office hours of the top bar. */
+.open-now {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.open-now::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.55;
+}
+.open-now.is-open::before {
+  background: var(--lime-400);
+  opacity: 1;
+}

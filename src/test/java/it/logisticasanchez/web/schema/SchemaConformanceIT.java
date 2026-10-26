@@ -38,6 +38,7 @@ class SchemaConformanceIT extends AbstractPostgresIT {
             "quote",
             "quote_line",
             "site_notice",
+            "office_closure",
             "login_token",
             "remembered_sign_in",
             "tracking_state",

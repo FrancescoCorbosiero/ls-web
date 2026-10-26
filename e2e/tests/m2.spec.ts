@@ -6,7 +6,7 @@ import { PageProblems, expectNoHorizontalScroll, offline } from '../support/brow
 import { base32Decode, currentStep, totpCode } from '../support/totp';
 
 /**
- * M2 end to end (ADR 0025, 0033…0041): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033…0042): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -553,6 +553,43 @@ test('[ENH-17] the admin publishes a notice that the public pages show until it 
   await expect(customerPage.locator('[data-site-notice]')).toHaveCount(0);
 });
 
+test('[ENH-18] «Aperto ora / Chiuso ora» follows the hours and the closures the admin keeps', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="site.openNow"]')).toContainText('Disponibile');
+  await setFlag('site.openNow', true);
+
+  // the state the page must show, from the openings it carries and the browser's clock
+  const expected = async (): Promise<string> => {
+    const intervals: Array<[number, number]> = JSON.parse(
+      (await customerPage.locator('.topbar [data-open-now]').getAttribute('data-intervals')) ?? '[]',
+    );
+    const now = Date.now();
+    return intervals.some(([start, end]) => start <= now && now < end) ? 'Aperto ora' : 'Chiuso ora';
+  };
+  await customerPage.setViewportSize({ width: 1280, height: 900 });
+  await customerPage.emulateMedia({ reducedMotion: 'reduce' });
+  await customerPage.goto('/contatti/');
+  const badge = customerPage.locator('.topbar [data-open-now]');
+  await expect(badge).toBeVisible();
+  await expect(badge).toHaveText(await expected());
+  await expectAccessible(customerPage);
+
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Rome' }).format(new Date());
+  await staffPage.getByRole('link', { name: "Chiusure dell'ufficio" }).click();
+  await staffPage.locator('#dal').fill(today);
+  await staffPage.locator('#motivo').fill(`Prova E2E ${stamp}`);
+  await expectAccessible(staffPage);
+  await staffPage.getByRole('button', { name: 'Aggiungi' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Chiusura aggiunta');
+  await expect(staffPage.locator('[data-open-state]')).toContainText('Chiuso ora');
+
+  await customerPage.goto('/servizi/');
+  await expect(customerPage.locator('.topbar [data-open-now]')).toHaveText('Chiuso ora');
+
+  await staffPage.locator(`tr[data-closure="${today}"]`).getByRole('button').click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Chiusura rimossa');
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
@@ -568,6 +605,7 @@ test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
     [staffPage, '/gestione/richieste/'],
     [staffPage, '/gestione/impostazioni/registro/'],
     [staffPage, '/gestione/impostazioni/avvisi/'],
+    [staffPage, '/gestione/impostazioni/chiusure/'],
   ];
   for (const [page, path] of screens) {
     await page.emulateMedia({ reducedMotion: 'reduce' });

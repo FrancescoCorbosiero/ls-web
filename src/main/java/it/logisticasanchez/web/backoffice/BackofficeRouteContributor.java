@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * reports for every staff session, with the office tools of ADR 0035 (CSV exports, bulk tracking)
  * the website requests of ADR 0036, the saved quotes of ADR 0037 and the customers' data changes of ADR 0038 (404 while their
  * flag is off); settings, staff users, the privacy tools, the audit log viewer of ADR 0040 and the
- * site notices of ADR 0041 for ADMIN only.
+ * site notices of ADR 0041 and the office closures of ADR 0042 for ADMIN only.
  * Every one is a line of {@code route-matrix.tsv}.
  */
 @Component
@@ -72,7 +72,8 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.STAFF_USERS,
                         BackofficeRoutes.PRIVACY,
                         BackofficeRoutes.AUDIT,
-                        BackofficeRoutes.NOTICES)
+                        BackofficeRoutes.NOTICES,
+                        BackofficeRoutes.CLOSURES)
                 .admin(
                         HttpMethod.POST,
                         BackofficeRoutes.SETTINGS_FLAG,
@@ -83,6 +84,8 @@ public class BackofficeRouteContributor implements SecurityRouteContributor {
                         BackofficeRoutes.NOTICES,
                         BackofficeRoutes.NOTICE_END,
                         BackofficeRoutes.NOTICE_DELETE,
+                        BackofficeRoutes.CLOSURES,
+                        BackofficeRoutes.CLOSURE_REMOVE,
                         BackofficeRoutes.PRIVACY_LOOKUP,
                         BackofficeRoutes.PRIVACY_EXPORT,
                         BackofficeRoutes.PRIVACY_ANONYMISE);
