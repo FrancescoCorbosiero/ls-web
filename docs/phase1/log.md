@@ -2407,3 +2407,29 @@ browser for the idle case.
 ### New Italian texts for the owner's review
 
 None.
+
+## Step U — A plan for API v1, ready for a mobile client (2026-10-26)
+
+Owner questions: can the back end and the front end be decoupled, and what could an iOS/Android
+app reuse? Then the request: «scrivi l'ADR con il piano per l'API v1. E' tutto solo teorico ma
+facciamo bene a prepararci in vista di un eventuale client per mobile». ADR 0046 (Proposed).
+
+### What was written
+
+* ADR 0046: `/api/v1/**` next to the HTML pages over the same module services (module `api`, flag
+  `api.v1` off), bearer tokens of `auth` modelled on `remembered_sign_in` (hashed, 15-minute access
+  tokens, refresh tokens rotated at every use, revoked by `endAllSessions`), a stateless chain that
+  ignores the session cookie (the web chain ignores bearer tokens), the contract (UTF-8 JSON, UTC
+  instants, money as decimal strings, `ApiError` with an optional `fields` map, `ETag`/`If-Match`
+  → 409 `stale_data`, `Idempotency-Key` on new orders, paging, flags and minimum app version in
+  `meta`, additive v1, OpenAPI snapshot in CI), the resources of v1, the mobile items (links that
+  open the app, push, offline, account deletion) and the order of work: seams in the services
+  first (`submit` with a key and an `OrderContent`, the order groups in `OrderService`, a version
+  exception of its own), then tokens, reading, writing, the client.
+* Chapter 11: Q-57 (which client), Q-58 (push processors), Q-59 (store accounts), Q-60 (how long
+  the app stays signed in), Q-61 (account deletion from the app), each with its default.
+* Nothing built: no code, migration or flag seed.
+
+### New Italian texts for the owner's review
+
+None.

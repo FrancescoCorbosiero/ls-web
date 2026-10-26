@@ -124,3 +124,16 @@ applies behind the named seam until the owner answers (for example «PD-03: ok»
 | Q-32 | Pricing rules of chapter 07 §8 (PR-01…PR-14): cheapest fitting class, inclusive limits, list validity, odd prices, volumetric weight, rounding, parcels, excluded areas, monthly discounts, accessory services, oversize pallets, contacts in the lists, the RKS cost model, storage. | The defaults written in chapter 07 §8. | 07 §8 | |
 | Q-33 | May the pallet class names and limits be shown on public pages? | Yes, without prices. | 07 §3 | |
 | Q-44 | Same-day pick-up cut-off times per weekday (ENH-19)? | No countdown until you give them. | ENH-19 | |
+
+## Later — a mobile client and API v1 (ADR 0046)
+
+ADR 0046 is a plan: nothing of it is built until the owner asks. These answers are useful
+before a mobile client is started.
+
+| ID | Question | Recommended default | Ref | Decision (owner, date) |
+|---|---|---|---|---|
+| Q-57 | Which mobile client, for whom, and when? The web customer area installable on the phone (PWA: no store, every screen reused), a store app that wraps the web pages, or a native app on API v1? | Customers: keep the web customer area and make it installable first; a store app only if being in the stores matters. Drivers: a native app on API v1 when the driver app of chapter 09 «Later» is built. Nothing is built before the answer. | ADR 0046, 09 «Later» | |
+| Q-58 | May Apple (APNs) and Google (Firebase Cloud Messaging) carry push notifications? They become processors of the customers' data (device tokens, the texts of the notices). | No push until decided; e-mail stays the channel. With a yes: minimal texts (order code and state, no names or addresses), a flag of its own, `/privacy/` updated. | ADR 0046, ADR 0024 | |
+| Q-59 | Store accounts: Apple Developer Program (about 99 USD a year; an organisation account needs the company's D-U-N-S number) and Google Play Console (about 25 USD once). Who opens them, in whose name? | Organisation accounts in the name of Logistica Sanchez S.r.l., opened by the owner; agents never create accounts or spend money. Not needed for an installable web app. | ADR 0046 | |
+| Q-60 | How long does the app stay signed in? | As «Resta connesso»: 60 days from the sign-in, then the e-mail link or the password again; access tokens of 15 minutes, refresh tokens rotated at every use. Seam `ls.security.api.*`. | ADR 0046, ADR 0031, PD-10 | |
+| Q-61 | The App Store asks that an app which creates accounts lets people start their deletion inside it. May a customer start the anonymisation of ADR 0024 from the app? | v1 registers customers on the web only. When the app registers them, «Elimina il mio account» in the app starts the anonymisation after a confirmation by e-mail; the orders stay for the legal period (ADR 0024). | ADR 0046, ADR 0024, NFR-03 | |
