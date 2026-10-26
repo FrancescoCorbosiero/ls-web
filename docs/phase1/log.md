@@ -1799,3 +1799,33 @@ aspettare l'e-mail.», «Imposta la password».
 
 * No e-mail notice when the password changes; add one (a new EML entry) if the owner wants it.
 * M2.1 still waits for the owner's pick (proposal in the chat of 2026-10-25).
+
+## Step G — M2.1 item 0: the flags screen (2026-10-26)
+
+The owner's message of 2026-10-26 picked the scope of M2.1 and the order of the work: «0.
+Flags screen (/gestione/impostazioni/): show for each flag a one-line Italian description of
+what it does and its state: «Disponibile» when built, «Non ancora sviluppata» otherwise, with
+the toggle disabled for flags not yet built. Built flags go first.» Then ENH-07, ENH-05 and the
+office tools, one PR each.
+
+### What was built
+
+* `FlagKey.built()`: whether the feature behind the flag exists, set in the code by the change
+  that builds it (all false in this step).
+* «Funzionalità in prova» lists, per flag, its description (`backoffice.settings.flag.<key>`),
+  the key, the ENH id, «Sviluppo» («Disponibile» / «Non ancora sviluppata»), «Stato»
+  («Attiva» / «Spenta») and the toggle; built flags first, then the others, each group in ENH
+  order. The toggle of a flag not built is disabled; the controller refuses a crafted request
+  to turn one on («La funzionalità «…» non è ancora sviluppata: non si può attivare.») and lets
+  a flag left on be turned off. ADR 0025 has the dated line.
+* Tests: `FlagDescriptionsTest` (every flag has a one-line description, no leftover key; order
+  and toggles of the rows), `BackofficeSettingsIT` (descriptions and order on the page,
+  disabled toggles, refusal without an audit row, turning off with the audit entry).
+
+### New Italian texts for the owner's review
+
+«Con una funzionalità spenta l'applicazione si comporta come oggi. Attiva quelle disponibili
+solo quando l'ufficio è pronto a usarle; le altre non sono ancora sviluppate.», «Funzionalità»,
+«Sviluppo», «Disponibile», «Non ancora sviluppata», «Non ancora sviluppata: non si può
+attivare.», «La funzionalità «{chiave}» non è ancora sviluppata: non si può attivare.», and the
+25 one-line descriptions under `backoffice.settings.flag.*` in `messages.properties`.
