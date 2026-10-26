@@ -126,6 +126,7 @@
         </table>
       </div>
     </th:block>
+    <th:block th:replace="~{layout/private :: installHint(${passwordMissing})}"></th:block>
   </div>
 </main>
 <th:block th:replace="~{layout/private :: siteFooter}"></th:block>

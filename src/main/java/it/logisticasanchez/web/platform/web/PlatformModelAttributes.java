@@ -3,6 +3,7 @@ package it.logisticasanchez.web.platform.web;
 import it.logisticasanchez.web.platform.config.BusinessProperties;
 import it.logisticasanchez.web.platform.security.CspNonce;
 import it.logisticasanchez.web.platform.security.RouteRegistry;
+import it.logisticasanchez.web.platform.security.SecurityRoutes;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Clock;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -12,8 +13,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 /**
  * Model attributes every template may use: {@code business} (ADR 0027), {@code layout}, {@code fmt} (Italian
  * dates and numbers), {@code cspNonce} (the
- * private-area nonce, null on public pages), {@code htmxConfig} (the meta content) and
- * {@code hxHeaders} (the {@code hx-headers} JSON carrying the CSRF token, for {@code <body>}).
+ * private-area nonce, null on public pages), {@code htmxConfig} (the meta content),
+ * {@code hxHeaders} (the {@code hx-headers} JSON carrying the CSRF token, for {@code <body>}) and
+ * {@code customerArea} (true under {@code /area-clienti/}, whose pages link the manifest that
+ * makes the area installable on a phone, ADR 0047).
  */
 @ControllerAdvice
 public class PlatformModelAttributes {
@@ -51,6 +54,11 @@ public class PlatformModelAttributes {
     @ModelAttribute("htmxConfig")
     public String htmxConfig() {
         return HtmxConfig.META_CONTENT;
+    }
+
+    @ModelAttribute("customerArea")
+    public boolean customerArea(HttpServletRequest request) {
+        return request.getRequestURI().startsWith(SecurityRoutes.CUSTOMER_AREA);
     }
 
     /**

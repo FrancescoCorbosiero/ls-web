@@ -1065,6 +1065,31 @@ body:has(.site-header[data-area="staff"]) {
 }
 
 /* ---------- Feedback ---------- */
+/* «Usa l'area clienti come un'app» (ADR 0047): the FAQ card of main.css, shown on a touch screen
+   only and never inside the installed app. */
+.app-install {
+  display: none;
+  margin-top: 28px;
+}
+@media (pointer: coarse) {
+  .app-install {
+    display: grid;
+  }
+}
+@media (display-mode: standalone) {
+  .app-install {
+    display: none;
+  }
+}
+.app-install .faq-q {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.app-install .faq-q .icon {
+  flex: none;
+  color: var(--teal-600);
+}
 .flash {
   display: flex;
   align-items: flex-start;

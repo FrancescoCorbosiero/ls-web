@@ -1,6 +1,7 @@
 # 0046 · API v1: a second door for a mobile client (plan)
 
-* **Status:** Proposed (a plan: nothing is built until the owner answers Q-57 and asks for it)
+* **Status:** Proposed (a plan: nothing is built until the owner answers Q-57 and asks for it; for customers the
+  installable web area came first, ADR 0047)
 * **Date:** 2026-10-26
 * **Requirement IDs:** CUS-01…CUS-07 and the customer M2 items (the use cases the API serves),
   NFR-02 (security baseline), NFR-03 (erasure) · chapter 09 «Later»: «an API for large

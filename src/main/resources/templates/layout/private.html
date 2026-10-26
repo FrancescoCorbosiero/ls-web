@@ -14,6 +14,8 @@
     </body>
   siteHeader(area, user, logoutUrl): area is 'customer' or 'staff'; user and logoutUrl may be null (sign-in pages).
   The header carries the area as data-area: app.css gives the back office its own tint (ADR 0045).
+  Customer-area pages (customerArea, set by PlatformModelAttributes) link /area-clienti.webmanifest
+  and the iPhone metas, so the area installs on a phone as an app (ADR 0047); installHint explains how.
   Pages with the order form add ~{layout/private :: appScript} (the only script of the private areas).
 -->
 <html lang="it" xmlns:th="http://www.thymeleaf.org">
@@ -31,6 +33,13 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="theme-color" content="#04233b">
   <meta name="format-detection" content="telephone=no">
+  <th:block th:if="${customerArea}">
+  <link rel="manifest" href="/area-clienti.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="LS Clienti">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  </th:block>
   <th:block th:replace="~{fragments/htmx :: meta}"></th:block>
 </th:block>
 </head>
@@ -70,6 +79,21 @@
     </ul>
   </div>
 </nav>
+
+<!-- installHint(passwordMissing): «Usa l'area clienti come un'app» (ADR 0047), shown by app.css on a touch screen only and never inside the installed app. -->
+<div class="faq app-install" th:fragment="installHint(passwordMissing)" data-install-hint>
+  <details>
+    <summary><span class="faq-q"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-smartphone"/></svg><span th:text="#{layout.private.install.title}">Usa l'area clienti come un'app</span></span></summary>
+    <div class="faq-a">
+      <p th:text="#{layout.private.install.lead}">Aggiungila alla schermata Home del telefono: si apre a tutto schermo, con la sua icona.</p>
+      <ul>
+        <li th:text="#{layout.private.install.ios}">iPhone: in Safari tocca Condividi, poi «Aggiungi alla schermata Home».</li>
+        <li th:text="#{layout.private.install.android}">Android: in Chrome apri il menu e tocca «Installa app».</li>
+      </ul>
+      <p><span th:text="#{layout.private.install.signIn}">Nell'app accedi con la tua e-mail e la password.</span> <a th:if="${passwordMissing}" href="/area-clienti/profilo/#password" th:text="#{layout.private.install.setPassword}">Imposta la password</a></p>
+    </div>
+  </details>
+</div>
 
 <!-- flash: the message after an action (redirect attribute «flash»; «flashError» when the action could not be done). -->
 <th:block th:fragment="flash">

@@ -24,6 +24,7 @@ public class PlatformRouteContributor implements SecurityRouteContributor {
         "/favicon.ico",
         "/favicon.svg",
         "/site.webmanifest",
+        "/area-clienti.webmanifest",
         "/robots.txt",
         "/sitemap.xml",
         "/security.txt",

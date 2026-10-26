@@ -2433,3 +2433,38 @@ facciamo bene a prepararci in vista di un eventuale client per mobile». ADR 004
 ### New Italian texts for the owner's review
 
 None.
+
+## Step V — The customer area installs on a phone as an app (2026-10-26)
+
+Owner request: «Rendi l'area clienti installabile sul telefono» (Q-57 for customers). ADR 0047.
+
+### What was built
+
+* `/area-clienti.webmanifest` (public, `application/manifest+json`, route matrix): `id`,
+  `start_url` and `scope` `/area-clienti/`, `display: standalone`, «Logistica Sanchez – Area
+  clienti» / «LS Clienti», theme `#04233b`, background `#f4f7fa`, the site's icons (192, 512,
+  maskable 512).
+* `customerArea` (`PlatformModelAttributes`): the customer-area pages link the manifest with the
+  iPhone metas from `layout/private :: htmlHead`; the back office and the public site do not.
+* «Usa l'area clienti come un'app» (`layout/private :: installHint`) at the bottom of «I miei
+  ordini»: the FAQ card, on touch screens only, hidden inside the installed app, no JavaScript;
+  iPhone and Android steps, the password line and «Imposta la password» when none is set; icon
+  `i-smartphone` (Lucide).
+* No service worker: not needed to install; the offline page and push come with it later (Q-58).
+* Checked on the local app: Chromium's manifest parser (DevTools `Page.getAppManifest`) reads the
+  customer manifest without errors (standalone, 3 icons, id `/area-clienti/`) from the customer
+  pages only. `Page.getInstallabilityErrors` answers an empty list even for a page without a
+  manifest in current Chromium, so the tests do not rely on it.
+* Tests: `InstallableCustomerAreaIT` (NFR-01: the manifest, the icons at their declared sizes, the
+  links and metas per area, the card on the orders page), `LayoutIT` and the route matrix (the new
+  static resource), `e2e/tests/install.spec.ts` (Chromium's manifest parser on the three areas; the
+  card on a Pixel 7, not on a desktop).
+
+### New Italian texts for the owner's review
+
+App name «LS Clienti» and «Logistica Sanchez – Area clienti»; description «Invia gli ordini e
+segui le tue spedizioni con Logistica Sanchez.»; the card: «Usa l'area clienti come un'app»,
+«Aggiungila alla schermata Home del telefono: si apre a tutto schermo, con la sua icona, come
+un'app.», «iPhone: in Safari tocca Condividi, poi «Aggiungi alla schermata Home».», «Android: in
+Chrome apri il menu con i tre puntini e tocca «Installa app» o «Aggiungi a schermata Home».»,
+«Nell'app accedi con la tua e-mail e la password.», «Imposta la password».
