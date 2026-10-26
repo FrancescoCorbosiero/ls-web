@@ -52,10 +52,10 @@ class MigrationsIT extends AbstractPostgresIT {
             assertThat(first.success).isTrue();
             assertThat(first.migrationsExecuted)
                     .as("versioned migrations applied to a clean schema")
-                    .isEqualTo(22);
-            assertThat(applied).hasSize(22);
+                    .isEqualTo(23);
+            assertThat(applied).hasSize(23);
             assertThat(applied[0].getVersion().getVersion()).isEqualTo("001");
-            assertThat(applied[21].getVersion().getVersion()).isEqualTo("022");
+            assertThat(applied[22].getVersion().getVersion()).isEqualTo("023");
             assertThat(flyway.info().pending()).isEmpty();
 
             MigrateResult second = flyway.migrate();
@@ -65,7 +65,8 @@ class MigrationsIT extends AbstractPostgresIT {
             assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
 
             assertThat(countRows(CLEAN_SCHEMA + ".tracking_state")).isEqualTo(6);
-            assertThat(countRows(CLEAN_SCHEMA + ".accessory_service")).isEqualTo(6);
+            // the six legacy services of the order, then the six of the public lists only (V023, ENH-14)
+            assertThat(countRows(CLEAN_SCHEMA + ".accessory_service")).isEqualTo(12);
             assertThat(countRows(CLEAN_SCHEMA + ".feature_flag")).isEqualTo(25);
             assertThat(countRows(CLEAN_SCHEMA + ".staff_user")).isZero();
             assertThat(countRows(CLEAN_SCHEMA + ".customer")).isZero();

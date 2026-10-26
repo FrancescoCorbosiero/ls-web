@@ -687,6 +687,26 @@ body {
   flex: none;
   accent-color: var(--navy-900);
 }
+/* A group of checkboxes in a form grid, its legend as a field label (ENH-14 «Dove compare») */
+.check-group {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.check-group legend {
+  margin-bottom: 2px;
+  padding: 0;
+}
+.app-main .check-group > .check-field {
+  display: flex;
+  margin-bottom: 0;
+  color: inherit;
+  font-size: 0.95rem;
+  font-weight: inherit;
+}
 /* «Resta connesso» under the sign-in button's form (ADR 0031) */
 .remember {
   margin: 0 0 18px;

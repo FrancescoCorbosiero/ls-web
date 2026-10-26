@@ -208,7 +208,7 @@ public class OrderWizardController {
     private String formPage(Model model, OrderForm.Model form, CustomerView customer) {
         model.addAttribute("addressBook", addressBook.entries(customer.id()));
         model.addAttribute("form", form);
-        model.addAttribute("services", catalog.activeServices());
+        model.addAttribute("services", catalog.activeServices(form.value("accessoryServiceId")));
         model.addAttribute("kinds", LineKind.values());
         model.addAttribute("mode", "new");
         return "orders/order-form";

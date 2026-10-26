@@ -6,6 +6,12 @@ accessory_service label varchar NOT NULL
 accessory_service is_none bool NOT NULL
 accessory_service active bool NOT NULL
 accessory_service sort_order int4 NOT NULL
+accessory_service in_orders bool NOT NULL
+accessory_service on_site bool NOT NULL
+accessory_service in_quote bool NOT NULL
+accessory_service description varchar NULL
+accessory_service icon varchar NULL
+accessory_service quote_hint varchar NULL
 audit_log id int8 NOT NULL
 audit_log occurred_at timestamptz NOT NULL
 audit_log actor_type varchar NOT NULL

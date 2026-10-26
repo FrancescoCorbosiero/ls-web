@@ -187,7 +187,7 @@ public class BackofficeQuotesController {
         model.addAttribute("form", form);
         model.addAttribute("values", values);
         model.addAttribute("error", error);
-        model.addAttribute("services", catalog.activeServices());
+        model.addAttribute("services", catalog.activeServices(values.get("accessoryServiceId")));
         model.addAttribute("kinds", LineKind.values());
         return "backoffice/quote-form";
     }

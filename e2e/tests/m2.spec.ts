@@ -590,6 +590,55 @@ test('[ENH-18] «Aperto ora / Chiuso ora» follows the hours and the closures th
   await expect(staffPage.locator('[data-flash]')).toContainText('Chiusura rimossa');
 });
 
+test('[ENH-14] the admin adds an accessory service that the site, the quote wizard and the order show', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="admin.enumerations"]')).toContainText('Disponibile');
+  await setFlag('admin.enumerations', true);
+
+  // the seeded list reads as the ported page did
+  await customerPage.emulateMedia({ reducedMotion: 'reduce' });
+  await customerPage.goto('/servizi/');
+  const cards = customerPage.locator('#accessori [data-accessories] h3');
+  await expect(cards).toHaveText([
+    'Sponda idraulica',
+    'Consegna su appuntamento',
+    'Preavviso al destinatario',
+    'Ritiri programmati',
+    'Prova di consegna digitale',
+    'Copertura assicurativa integrativa',
+  ]);
+
+  const name = `Consegna al piano ${stamp}`;
+  await staffPage.getByRole('link', { name: 'Servizi accessori' }).click();
+  await staffPage.locator('#nome').fill(name);
+  await staffPage.getByLabel("Nell'ordine (area clienti e gestione)").check();
+  await staffPage.getByLabel('Nella pagina Servizi del sito').check();
+  await staffPage.getByLabel('Tra i servizi del preventivo').check();
+  await staffPage.locator('#descrizione').fill('Portiamo la merce fino al piano del destinatario, con o senza ascensore.');
+  await staffPage.locator('#icona').selectOption('i-boxes');
+  await staffPage.locator('#suggerimento').fill('Fino alla porta del destinatario');
+  await expectAccessible(staffPage);
+  await staffPage.getByRole('button', { name: 'Aggiungi il servizio' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('aggiunto in fondo');
+
+  await customerPage.goto('/servizi/');
+  await expect(cards.last()).toHaveText(name);
+  await expectAccessible(customerPage);
+  await customerPage.goto('/preventivo/');
+  await expect(customerPage.locator('input[name="servizi_extra[]"]').last()).toHaveAttribute('value', name);
+  await customerPage.goto('/area-clienti/ordini/nuovo/');
+  await expect(customerPage.locator('#accessoryServiceId option').last()).toHaveText(name);
+
+  // switched off it leaves the pages; deleted it leaves the list
+  await staffPage.locator('tr', { hasText: name }).getByRole('button', { name: `Disattiva «${name}»` }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('disattivato');
+  await customerPage.goto('/servizi/');
+  await expect(cards).toHaveCount(6);
+  await staffPage.locator('tr', { hasText: name }).getByRole('button', { name: `Elimina «${name}»` }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('eliminato');
+  await expect(staffPage.locator('tr', { hasText: name })).toHaveCount(0);
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
@@ -606,6 +655,8 @@ test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
     [staffPage, '/gestione/impostazioni/registro/'],
     [staffPage, '/gestione/impostazioni/avvisi/'],
     [staffPage, '/gestione/impostazioni/chiusure/'],
+    [staffPage, '/gestione/impostazioni/servizi-accessori/'],
+    [staffPage, '/gestione/impostazioni/servizi-accessori/2/'],
   ];
   for (const [page, path] of screens) {
     await page.emulateMedia({ reducedMotion: 'reduce' });

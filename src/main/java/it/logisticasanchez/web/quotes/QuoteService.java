@@ -126,7 +126,7 @@ public class QuoteService {
         }
         Integer service = draft.accessoryServiceId() == null
                 ? null
-                : catalog.service(draft.accessoryServiceId())
+                : catalog.orderService(draft.accessoryServiceId())
                         .filter(s -> !s.none())
                         .map(TrackingCatalog.ServiceView::id)
                         .orElse(null);

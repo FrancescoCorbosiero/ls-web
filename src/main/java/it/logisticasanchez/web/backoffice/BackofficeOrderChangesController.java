@@ -332,7 +332,7 @@ public class BackofficeOrderChangesController {
         if (!model.containsAttribute("customerError")) {
             model.addAttribute("customerError", null);
         }
-        model.addAttribute("services", catalog.activeServices());
+        model.addAttribute("services", catalog.activeServices(form.value("accessoryServiceId")));
         model.addAttribute("kinds", LineKind.values());
         Long bookOwner = order == null ? id(extra.get("cliente")) : Long.valueOf(order.customerId());
         model.addAttribute("addressBook", addressBook.entries(bookOwner));

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!--
+  «Servizi accessori» (ENH-14, admin.enumerations, ADR 0043), ADMIN only: the one list of the order,
+  /servizi/ and the quote wizard with where each service shows, and the form of a new service; with
+  ${editing}, the form of that service.
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="(${editing == null} ? #{backoffice.accessories.title} : #{backoffice.accessories.editTitle(${editing.label})}) + ' · ' + #{layout.private.backoffice}">Servizi accessori · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" th:if="${editing == null}" href="/gestione/impostazioni/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.settings.back}">Torna alle impostazioni</span></a>
+        <a class="back-link" th:if="${editing != null}" href="/gestione/impostazioni/servizi-accessori/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.accessories.back}">Torna ai servizi accessori</span></a>
+        <h1 th:text="${editing == null} ? #{backoffice.accessories.title} : #{backoffice.accessories.editTitle(${editing.label})}">Servizi accessori</h1>
+        <p class="lede" th:if="${editing == null}" th:text="#{backoffice.accessories.lead}">Un solo elenco per l'ordine, la pagina Servizi del sito e il preventivo.</p>
+        <p class="muted" th:if="${editing != null}" th:text="#{backoffice.accessories.code(${editing.name})}">Codice SPONDA_IDR</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+
+    <th:block th:if="${editing == null}">
+      <div class="data-table-wrap mb-m">
+        <table class="data-table stacked" data-table="accessory-services">
+          <thead><tr>
+            <th scope="col" th:text="#{backoffice.accessories.col.service}">Servizio</th>
+            <th scope="col" th:text="#{backoffice.accessories.col.places}">Dove compare</th>
+            <th scope="col" th:text="#{backoffice.accessories.col.state}">Stato</th>
+            <th scope="col"><span class="visually-hidden" th:text="#{backoffice.col.actions}">Azioni</span></th>
+          </tr></thead>
+          <tbody>
+            <tr th:each="s, it : ${services}" th:attr="data-service=${s.name},data-active=${s.active}">
+              <td th:attr="data-label=#{backoffice.accessories.col.service}">
+                <div class="cell-block">
+                  <strong th:text="${s.label}">Sponda idraulica</strong>
+                  <div class="muted small" th:text="#{backoffice.accessories.code(${s.name})}">Codice SPONDA_IDR</div>
+                  <div class="muted small" th:if="${s.onSite and s.iconName() != null}" th:text="#{backoffice.accessories.icon(${s.iconName()})}">Icona sul sito: Camion</div>
+                </div>
+              </td>
+              <td th:attr="data-label=#{backoffice.accessories.col.places}"><span>
+                <span class="pill pill-soft" th:if="${s.inOrders}" data-place="ordini" th:text="#{backoffice.accessories.place.ordini}">Ordine</span>
+                <span class="pill pill-soft" th:if="${s.onSite}" data-place="sito" th:text="#{backoffice.accessories.place.sito}">Sito</span>
+                <span class="pill pill-soft" th:if="${s.inQuote}" data-place="preventivo" th:text="#{backoffice.accessories.place.preventivo}">Preventivo</span>
+              </span></td>
+              <td th:attr="data-label=#{backoffice.accessories.col.state}"><span class="pill" th:classappend="${s.active} ? 'pill-active' : 'pill-neutral'" th:text="${s.active} ? #{backoffice.accessories.active} : #{backoffice.accessories.inactive}">Attivo</span></td>
+              <td class="row-actions">
+                <p class="muted small mb-0" th:if="${s.locked()}" th:text="#{backoffice.accessories.locked}">Sempre la prima scelta dell'ordine: non si modifica.</p>
+                <th:block th:unless="${s.locked()}">
+                  <form class="inline-form" method="post" th:action="@{/gestione/impostazioni/servizi-accessori/{id}/sposta(id=${s.id})}">
+                    <button type="submit" name="verso" value="su" class="btn btn-light btn-xs" th:disabled="${it.index <= 1}" th:attr="aria-label=#{backoffice.accessories.upNamed(${s.label})}" th:text="#{backoffice.accessories.up}">Su</button>
+                    <button type="submit" name="verso" value="giu" class="btn btn-light btn-xs" th:disabled="${it.last}" th:attr="aria-label=#{backoffice.accessories.downNamed(${s.label})}" th:text="#{backoffice.accessories.down}">Giù</button>
+                  </form>
+                  <a class="btn btn-light btn-xs" th:href="@{/gestione/impostazioni/servizi-accessori/{id}/(id=${s.id})}" th:attr="aria-label=#{backoffice.accessories.editNamed(${s.label})}" th:text="#{backoffice.accessories.edit}">Modifica</a>
+                  <form class="inline-form" method="post" th:action="@{/gestione/impostazioni/servizi-accessori/{id}/stato(id=${s.id})}">
+                    <input type="hidden" name="attivo" th:value="${s.active} ? 'no' : 'si'">
+                    <button type="submit" class="btn btn-light btn-xs" th:attr="aria-label=${s.active} ? #{backoffice.accessories.deactivateNamed(${s.label})} : #{backoffice.accessories.reactivateNamed(${s.label})}" th:text="${s.active} ? #{backoffice.accessories.deactivate} : #{backoffice.accessories.reactivate}">Disattiva</button>
+                  </form>
+                  <form class="inline-form" method="post" th:if="${s.deletable()}" th:action="@{/gestione/impostazioni/servizi-accessori/{id}/elimina(id=${s.id})}">
+                    <button type="submit" class="btn btn-light btn-xs" th:attr="aria-label=#{backoffice.accessories.deleteNamed(${s.label})}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-trash"/></svg><span th:text="#{backoffice.accessories.delete}">Elimina</span></button>
+                  </form>
+                </th:block>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 class="mt-m" th:text="#{backoffice.accessories.new}">Aggiungi un servizio</h2>
+    </th:block>
+
+    <div class="callout callout-error" role="alert" th:if="${!errors.isEmpty()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" th:action="${editing == null} ? @{/gestione/impostazioni/servizi-accessori/} : @{/gestione/impostazioni/servizi-accessori/{id}/(id=${editing.id})}" class="panel fields" novalidate data-service-form>
+      <div class="field span-all">
+        <label class="label" for="nome" th:text="#{backoffice.accessories.field.name}">Nome</label>
+        <input class="input" id="nome" name="nome" type="text" maxlength="120" required autocomplete="off" th:value="${values['nome']}" th:attr="aria-invalid=${errors['nome'] != null}" aria-describedby="nome-hint">
+        <p class="field-hint" id="nome-hint" th:text="#{backoffice.accessories.field.nameHint}">Compare così nell'ordine, sul sito e nel preventivo.</p>
+        <p class="field-error" th:if="${errors['nome'] != null}" th:text="${errors['nome']}">Errore</p>
+      </div>
+      <fieldset class="field span-all check-group" aria-describedby="posti-hint">
+        <legend class="label" th:text="#{backoffice.accessories.field.places}">Dove compare</legend>
+        <label class="check-field"><input type="checkbox" name="ordini" value="si" th:checked="${values['ordini'] == 'si'}" th:disabled="${editing != null and editing.legacy()}"> <span th:text="#{backoffice.accessories.field.inOrders}">Nell'ordine (area clienti e gestione)</span></label>
+        <label class="check-field"><input type="checkbox" name="sito" value="si" th:checked="${values['sito'] == 'si'}"> <span th:text="#{backoffice.accessories.field.onSite}">Nella pagina Servizi del sito</span></label>
+        <label class="check-field"><input type="checkbox" name="preventivo" value="si" th:checked="${values['preventivo'] == 'si'}"> <span th:text="#{backoffice.accessories.field.inQuote}">Tra i servizi del preventivo</span></label>
+        <p class="field-hint" id="posti-hint" th:text="${editing != null and editing.legacy()} ? #{backoffice.accessories.field.legacyHint} : #{backoffice.accessories.field.placesHint}">Almeno uno.</p>
+        <p class="field-error" th:if="${errors['posti'] != null}" th:text="${errors['posti']}">Errore</p>
+      </fieldset>
+      <div class="field span-all">
+        <label class="label" for="descrizione" th:text="#{backoffice.accessories.field.description}">Descrizione sul sito</label>
+        <textarea class="textarea" id="descrizione" name="descrizione" rows="3" maxlength="300" th:text="${values['descrizione']}" th:attr="aria-invalid=${errors['descrizione'] != null}" aria-describedby="descrizione-hint"></textarea>
+        <p class="field-hint" id="descrizione-hint" th:text="#{backoffice.accessories.field.descriptionHint}">Il testo sotto il nome nella pagina Servizi.</p>
+        <p class="field-error" th:if="${errors['descrizione'] != null}" th:text="${errors['descrizione']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="icona" th:text="#{backoffice.accessories.field.icon}">Icona sul sito</label>
+        <select class="select" id="icona" name="icona" th:attr="aria-invalid=${errors['icona'] != null}">
+          <option value="" th:text="#{backoffice.accessories.field.iconNone}">Scegli un'icona</option>
+          <option th:each="i : ${icons}" th:value="${i.key}" th:text="${i.value}" th:selected="${values['icona'] == i.key}">Camion</option>
+        </select>
+        <p class="field-error" th:if="${errors['icona'] != null}" th:text="${errors['icona']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="suggerimento" th:text="#{backoffice.accessories.field.hint}">Suggerimento nel preventivo (facoltativo)</label>
+        <input class="input" id="suggerimento" name="suggerimento" type="text" maxlength="120" autocomplete="off" th:value="${values['suggerimento']}" th:attr="aria-invalid=${errors['suggerimento'] != null}" aria-describedby="suggerimento-hint">
+        <p class="field-hint" id="suggerimento-hint" th:text="#{backoffice.accessories.field.hintHint}">La riga piccola sotto il nome.</p>
+        <p class="field-error" th:if="${errors['suggerimento'] != null}" th:text="${errors['suggerimento']}">Errore</p>
+      </div>
+      <p class="form-actions span-all">
+        <button type="submit" class="btn" data-save-service th:text="${editing == null} ? #{backoffice.accessories.save} : #{backoffice.accessories.update}">Aggiungi il servizio</button>
+        <a class="btn btn-light" th:if="${editing != null}" href="/gestione/impostazioni/servizi-accessori/" th:text="#{backoffice.accessories.cancel}">Annulla</a>
+      </p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

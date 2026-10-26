@@ -26,7 +26,7 @@ public enum FlagKey {
     PRICING_MARGIN_VIEW("pricing.marginView", "ENH-11", false),
     DOCUMENTS("documents", "ENH-12", false),
     ADMIN_AUDIT("admin.audit", "ENH-13", true),
-    ADMIN_ENUMERATIONS("admin.enumerations", "ENH-14", false),
+    ADMIN_ENUMERATIONS("admin.enumerations", "ENH-14", true),
     ORDERS_BULK_TRACKING("orders.bulkTracking", "ENH-15", true),
     CUSTOMERS_PROFILE_EDIT("customers.profileEdit", "ENH-16", true),
     SITE_NOTICE_BANNER("site.noticeBanner", "ENH-17", true),

@@ -123,20 +123,23 @@ public class OrderValidator {
         if (value.isEmpty()) {
             return null;
         }
-        return catalog.service(Integer.parseInt(value))
+        return catalog.orderService(Integer.parseInt(value))
                 .filter(s -> !s.none())
                 .map(TrackingCatalog.ServiceView::id)
                 .orElse(null);
     }
 
-    /** True when the raw value is empty (none) or names a seeded, active service (item 0 included). */
+    /**
+     * True when the raw value is empty (none) or names a service of the order (item 0 included);
+     * never one shown only on the public pages (ENH-14).
+     */
     public boolean isService(String raw) {
         String value = ItalianFormats.trim(raw);
         if (value.isEmpty()) {
             return true;
         }
         return value.matches("^[0-9]{1,6}$")
-                && catalog.service(Integer.parseInt(value)).isPresent();
+                && catalog.orderService(Integer.parseInt(value)).isPresent();
     }
 
     public RecipientResult recipient(Map<String, String> input) {
