@@ -1991,3 +1991,47 @@ Provincia, Cap, Telefono, Email destinatario, Peso (kg), Volume (m³), Importo, 
 Stato, Tracking, Tracking aggiornato il; customers: ID, Ragione sociale, Email, Indirizzo,
 Provincia, Città, Cap, Telefono, Partita IVA, Codice fiscale, Email confermata, Stato,
 Registrato il.
+
+## Step K — M2: ENH-06, the website requests in the back office (2026-10-26)
+
+The owner asked to build the M2 items that need nothing from them («procedi con quelli che puoi
+fare ora»): ENH-06, ENH-20, ENH-16, ENH-09, ENH-13, ENH-14, ENH-17, ENH-18, one PR each. First
+ENH-06. ADR 0036.
+
+### What was built
+
+* `leads.inbox`: «Richieste» (`/gestione/richieste/`): the stored website requests, newest
+  first, tabs by state, search; the page of a request with the form's data, `mailto:`/`tel:`
+  links, the moves of chapter 08 §2.4 (`LeadStatus`), the customer (linked, or registered with the
+  same e-mail: «Collega la richiesta al cliente»), «Crea cliente» and «Crea ordine» filled from
+  the request (`LeadDrafts`, `OrderForm.prefilled`); the order made marks the request WON.
+  `LeadService` (site.forms) holds the rules and the audit (`lead.status`, `lead.customer`,
+  `lead.convert`); `WorkQueue.leads` counts the new requests for the navigation. No migration.
+* Privacy: a request linked to a customer is exported and anonymised with the customer even
+  when its e-mail differs (`PrivacyService` → `LeadService.exportFor`, `anonymiseByCustomer`).
+* `dev-seed`: three synthetic requests (`richiesta.preventivo@`, `richiesta.contatti@`,
+  `richiesta.contattata@cliente.example`) through `FormValidator` and `LeadService.store`.
+* Tests: `LeadStatusTest`, `LeadDraftsTest`, `LeadsInboxIT` (5), `LeadsInboxOffIT`,
+  `DevSeedCommandIT`, route matrix; E2E `m2.spec.ts`: the ADMIN turns the flag on, the seeded
+  quote becomes «Contattata», then a customer and an order; axe on the request page and the list.
+
+### New Italian texts for the owner's review
+
+Navigation «Richieste»; page «Richieste dal sito» («Le richieste di preventivo e i messaggi
+arrivati dai moduli del sito, le più recenti in alto.»), tabs «Nuove», «Contattate», «Vinte»,
+«Perse», «Spam», «Tutte»; search «Nome, azienda, e-mail, telefono o città»; columns «Arrivata
+il», «Modulo», «Da», «Richiesta», «Stato»; states «Nuova», «Contattata», «Vinta», «Persa»,
+«Spam». The page of a request: «Modulo «Preventivo», arrivata il …»; sections «Spedizione»,
+«Merce», «Messaggio», «Contatti», «Cliente», «Stato della richiesta»; «Da concordare»; «Collegata
+al cliente»; «C'è già un cliente registrato con questa e-mail:» with «Collega la richiesta al
+cliente»; «Nessun cliente registrato con questa e-mail: con «Crea cliente» lo registri con i
+dati della richiesta.»; «Ordine creato dalla richiesta:»; ««Crea ordine» apre il modulo con i
+dati della richiesta: quando lo salvi, la richiesta diventa «Vinta».»; buttons «Crea cliente»,
+«Crea ordine», «Segna come contattata / vinta / persa / spam»; ««Vinta», «Persa» e «Spam» sono
+definitivi.». Messages: «Richiesta segnata come «Contattata».», «Questo passaggio di stato non è
+previsto per la richiesta.», «Scegli il nuovo stato della richiesta.», «Richiesta collegata al
+cliente «…».», «Nessun cliente registrato con l'e-mail della richiesta.», «La richiesta è
+collegata al nuovo cliente.», «La richiesta del sito è segnata come vinta.», «Il modulo riporta i
+dati della richiesta del sito: completa il destinatario, il documento di trasporto e le righe che
+mancano.»; on «Nuovo cliente»: «I dati vengono dalla richiesta del sito: controllali e completa
+indirizzo e provincia.».

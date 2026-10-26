@@ -2,8 +2,8 @@
 <!--
   Fragments shared by the back-office pages (ADR 0017, ADR 0029): the section navigation of chapter
   10 §2 (the legacy CMS names «In Approvazione», «Registrati», «Ordini da approvare», «Ordini»,
-  «Tracking», «Report», «Impostazioni» for ADMIN) grouped by customers and shipments, with the
-  number of records waiting in each queue; the flash message after an action, the refused-rule
+  «Tracking», «Report», «Impostazioni» for ADMIN; «Richieste» while leads.inbox is on, ADR 0036)
+  grouped by customers and shipments, with the number of records waiting in each queue; the flash message after an action, the refused-rule
   callout, the row-count line and the pager. Pages include layout/private for head, header and
   footer. Model attributes `staff` (StaffSession) and `queue` (WorkQueue) come from
   BackofficeModelAttributes (and BackofficeHome for the home).
@@ -23,12 +23,16 @@
       <li class="nav-split" aria-hidden="true"></li>
       <li><a href="/gestione/clienti/in-approvazione/" th:attr="aria-current=${active == 'customersPending' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-user-check"/></svg><span th:text="#{backoffice.nav.customersPending}">In Approvazione</span><span class="count" th:if="${queue != null and queue.customers() > 0}" th:text="${queue.customers()}" th:title="#{backoffice.nav.waiting(${queue.customers()})}" data-count="customers">2</span></a></li>
       <li><a href="/gestione/clienti/" th:attr="aria-current=${active == 'customers' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-users"/></svg><span th:text="#{backoffice.nav.customers}">Registrati</span></a></li>
+      <li th:if="${queue != null and queue.leads() != null}"><a href="/gestione/richieste/" th:attr="aria-current=${active == 'leads' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-clipboard-list"/></svg><span th:text="#{backoffice.nav.leads}">Richieste</span><span class="count" th:if="${queue.leads() > 0}" th:text="${queue.leads()}" th:title="#{backoffice.nav.newLeads(${queue.leads()})}" data-count="leads">2</span></a></li>
       <li class="nav-split" aria-hidden="true"></li>
       <li><a href="/gestione/report/" th:attr="aria-current=${active == 'reports' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-file-text"/></svg><span th:text="#{backoffice.nav.reports}">Report</span></a></li>
       <li th:if="${staff.admin}"><a href="/gestione/impostazioni/" th:attr="aria-current=${active == 'settings' ? 'page' : null}"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-sliders"/></svg><span th:text="#{backoffice.nav.settings}">Impostazioni</span></a></li>
     </ul>
   </div>
 </nav>
+
+<!-- leadStatus(status): the state of a website request (ENH-06, ADR 0036). -->
+<span th:fragment="leadStatus(status)" class="pill" th:classappend="${status.name() == 'NEW'} ? 'pill-pending' : (${status.name() == 'CONTACTED'} ? 'pill-track' : (${status.name() == 'WON'} ? 'pill-active' : 'pill-neutral'))" th:text="#{'leads.status.' + ${status.name()}}" th:attr="data-lead-status=${status.name()}">Nuova</span>
 
 <th:block th:fragment="flash">
   <th:block th:replace="~{layout/private :: flash}"></th:block>

@@ -14,6 +14,8 @@ import it.logisticasanchez.web.platform.validation.ItalianFormats;
 import it.logisticasanchez.web.platform.web.error.ClientErrorException;
 import it.logisticasanchez.web.platform.web.error.ErrorCode;
 import it.logisticasanchez.web.platform.web.error.RuleViolationException;
+import it.logisticasanchez.web.site.forms.LeadService;
+import it.logisticasanchez.web.site.forms.LeadView;
 import it.logisticasanchez.web.tracking.TrackingCatalog;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -39,7 +41,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * absence of e-mails live in {@link OrderService}. ENH-07 (ADR 0033): with
  * {@code customers.addressBook} on, the form offers the chosen customer's address book and can
  * save the recipient there; with {@code orders.repeat} on, «Ripeti ordine» opens «Nuovo ordine»
- * filled from an existing order ({@code ?ripeti=<id>}).
+ * filled from an existing order ({@code ?ripeti=<id>}). ENH-06 (ADR 0036): with {@code leads.inbox}
+ * on, «Crea ordine» of a website request opens it filled from the request ({@code ?richiesta=<id>},
+ * {@link LeadDrafts}); the order made marks the request WON.
  */
 @Controller
 public class BackofficeOrderChangesController {
@@ -53,6 +57,7 @@ public class BackofficeOrderChangesController {
     private final TrackingCatalog catalog;
     private final OrderAddressBook addressBook;
     private final FeatureFlags flags;
+    private final LeadService leads;
 
     public BackofficeOrderChangesController(
             OrderService orders,
@@ -60,19 +65,22 @@ public class BackofficeOrderChangesController {
             CustomerService customers,
             TrackingCatalog catalog,
             OrderAddressBook addressBook,
-            FeatureFlags flags) {
+            FeatureFlags flags,
+            LeadService leads) {
         this.orders = orders;
         this.forms = forms;
         this.customers = customers;
         this.catalog = catalog;
         this.addressBook = addressBook;
         this.flags = flags;
+        this.leads = leads;
     }
 
     @GetMapping(BackofficeRoutes.ORDER_NEW)
     public String newOrder(
             @RequestParam(name = "cliente", required = false) String customer,
             @RequestParam(name = "ripeti", required = false) String repeat,
+            @RequestParam(name = "richiesta", required = false) String request,
             Model model) {
         Map<String, String> extra = new LinkedHashMap<>();
         extra.put("cliente", id(customer) == null ? "" : id(customer).toString());
@@ -88,6 +96,26 @@ public class BackofficeOrderChangesController {
                     "Il modulo riporta i dati dell'ordine " + source.get().displayCode()
                             + ": inserisci il nuovo documento di trasporto e controlla il resto.");
         }
+        Optional<LeadView> lead = source.isPresent() ? Optional.empty() : lead(request);
+        if (lead.isPresent()) {
+            // ENH-06 «Crea ordine»: what the website request says; the rest is typed by staff
+            LeadView l = lead.get();
+            form = forms.prefilled(
+                    LeadDrafts.line(l),
+                    LeadDrafts.accessoryService(l, catalog.activeServices()),
+                    LeadDrafts.notes(l),
+                    LeadDrafts.recipient(l));
+            extra.put("richiesta", Long.toString(l.id()));
+            if (extra.get("cliente").isEmpty()) {
+                Optional<CustomerView> owner =
+                        l.customerId() != null ? customers.find(l.customerId()) : customers.findByEmail(l.email());
+                owner.ifPresent(c -> extra.put("cliente", Long.toString(c.id())));
+            }
+            model.addAttribute(
+                    "flash",
+                    "Il modulo riporta i dati della richiesta del sito: completa il destinatario, il documento di"
+                            + " trasporto e le righe che mancano.");
+        }
         return formPage(model, null, form, extra, null, UUID.randomUUID().toString(), null);
     }
 
@@ -97,7 +125,10 @@ public class BackofficeOrderChangesController {
             @CurrentSecurityContext(expression = "authentication") Authentication authentication,
             Model model,
             RedirectAttributes redirect) {
-        Map<String, String> extra = Map.of("cliente", ItalianFormats.trim(form.get("cliente")));
+        Map<String, String> extra = new LinkedHashMap<>();
+        extra.put("cliente", ItalianFormats.trim(form.get("cliente")));
+        Optional<LeadView> lead = lead(form.get("richiesta"));
+        lead.ifPresent(l -> extra.put("richiesta", Long.toString(l.id())));
         String key = formKey(form);
         OrderForm.Model typed = forms.read(form);
         switch (addressBook.action(form)) {
@@ -132,10 +163,17 @@ public class BackofficeOrderChangesController {
                 } catch (RuleViolationException e) {
                     return formPage(model, null, submission.model(), extra, null, key, e.detail());
                 }
-                redirect.addFlashAttribute(
-                        "flash",
-                        "Ordine inserito con il codice provvisorio " + created.tempCode()
-                                + ": controlla i dati e approvalo con codice e importo.");
+                String done = "Ordine inserito con il codice provvisorio " + created.tempCode()
+                        + ": controlla i dati e approvalo con codice e importo.";
+                if (lead.isPresent()
+                        && leads.converted(
+                                lead.get().id(),
+                                StaffSession.of(authentication).requireId(),
+                                customerId,
+                                created.id())) {
+                    done += " La richiesta del sito è segnata come vinta.";
+                }
+                redirect.addFlashAttribute("flash", done);
                 rememberIfAsked(typed, customerId, authentication, submission, redirect);
                 return "redirect:" + BackofficeRoutes.order(created.id());
             }
@@ -269,6 +307,12 @@ public class BackofficeOrderChangesController {
         }
         redirect.addFlashAttribute("flash", "Ordine " + order.displayCode() + " annullato.");
         return "redirect:" + BackofficeRoutes.order(order.id());
+    }
+
+    /** ENH-06: the website request named by {@code ?richiesta=}, while {@code leads.inbox} is on. */
+    private Optional<LeadView> lead(String id) {
+        Long raw = id(id);
+        return raw == null || !flags.isEnabled(FlagKey.LEADS_INBOX) ? Optional.empty() : leads.find(raw);
     }
 
     private String formPage(

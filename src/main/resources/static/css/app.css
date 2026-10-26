@@ -125,6 +125,20 @@ body {
     top: var(--header-h);
     z-index: 40;
   }
+  /* every section in sight on a desktop: the items wrap instead of scrolling (ADR 0036) */
+  .app-nav ul {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+@media (min-width: 1024px) {
+  .app-nav a {
+    gap: 6px;
+    padding: 9px 8px;
+  }
+  .app-nav .nav-split {
+    margin: 6px 2px;
+  }
 }
 
 /* ---------- Page head ---------- */
@@ -1358,4 +1372,14 @@ a.tile:hover {
   .summary-panel {
     display: none !important;
   }
+}
+/* ADR 0036: a row of small forms, one button each (the moves of a website request). */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+.button-row form {
+  margin: 0;
 }

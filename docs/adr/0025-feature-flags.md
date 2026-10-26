@@ -116,6 +116,11 @@ are added by stage 3 with the publisher and a test that each named event is publ
   checked before it is set; «Oggi» on the Panoramica and the free-text order search; the CSV of
   «Ordini» and «Registrati», every cell as text. Flag-on tests `OfficeToolsIT`, «flag off = M1»
   `OfficeToolsOffIT`, `OfficeToolsTest`, E2E `m2.spec.ts`.
+* **2026-10-26 — ENH-06, `leads.inbox` built** (owner's request «procedi con quelli che puoi fare
+  ora»; ADR 0036): «Richieste» with the states of chapter 08 §2.4, «Crea cliente» and «Crea
+  ordine» filled from a request, the request WON when its order is saved. Flag-on tests
+  `LeadsInboxIT`, «flag off = M1» `LeadsInboxOffIT`, `LeadStatusTest`, `LeadDraftsTest`, E2E
+  `m2.spec.ts`.
 
 ## Consequences
 

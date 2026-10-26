@@ -256,6 +256,25 @@ public class OrderForm {
         return model(rowValues(stored), values, Map.of());
     }
 
+    /**
+     * ENH-06 (ADR 0036): a new order filled from data typed elsewhere — a website request: one line
+     * with the fields it knows ({@link #LINE_FIELDS}; the others stay empty for staff to fill), the
+     * accessory service, the notes and the recipient. Nothing is checked here: the form validates
+     * on submission, as when typed.
+     */
+    public Model prefilled(
+            Map<String, String> line, Integer accessoryServiceId, String notes, OrderDraft.Recipient recipient) {
+        Map<String, String> row = emptyRowValues();
+        for (String field : LINE_FIELDS) {
+            row.put(field, nullToEmpty(line.get(field)));
+        }
+        Map<String, String> values = defaults();
+        values.put("accessoryServiceId", accessoryServiceId == null ? "" : accessoryServiceId.toString());
+        values.put("notes", nullToEmpty(notes));
+        recipientValues(values, recipient);
+        return model(List.of(row), values, Map.of());
+    }
+
     public Model withRowAdded(Model form) {
         List<Map<String, String>> rows = rowValues(form);
         if (rows.size() < MAX_LINES) {

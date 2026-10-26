@@ -134,7 +134,11 @@ public class PrivacyService {
                         book.stream().map(AddressView::fields).toList());
             }
         });
-        document.put("richiesteDalSito", leads.exportByEmail(subject.email()));
+        document.put(
+                "richiesteDalSito",
+                leads.exportFor(
+                        subject.email(),
+                        subject.customer().map(CustomerView::id).orElse(null)));
         audit.record(AuditEntry.of(AuditActorType.STAFF, adminId, "privacy.export")
                 .entity("customer", subject.customer().map(CustomerView::id).orElse(null), null)
                 .change(
@@ -195,6 +199,9 @@ public class PrivacyService {
             customers.anonymise(customerId, adminId, placeholder);
         }
         int leadRows = leads.anonymiseByEmail(address);
+        if (customerId != null) {
+            leadRows += leads.anonymiseByCustomer(customerId); // ENH-06: linked with another e-mail
+        }
         auditDetails += audit.deletePersonalDetailsMentioning(address);
         Outcome outcome = new Outcome(customerId, leadRows, outboxRows, notes, reportRuns, auditDetails, addresses);
         audit.record(AuditEntry.of(AuditActorType.STAFF, adminId, "privacy.anonymise")

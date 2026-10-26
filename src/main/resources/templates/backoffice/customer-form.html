@@ -27,8 +27,10 @@
       <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
       <p th:text="#{customers.error.summary}">Controlla i campi evidenziati.</p>
     </div>
+    <p class="callout callout-info" th:if="${values['richiesta'] != null}" data-from-lead th:text="#{backoffice.leads.customerFromLead}">I dati vengono dalla richiesta del sito: controllali e completa indirizzo e provincia.</p>
     <form method="post" novalidate th:action="${customer == null} ? @{/gestione/clienti/nuovo} : @{/gestione/clienti/{id}/modifica(id=${customer.id})}">
       <input type="hidden" name="versione" th:if="${customer != null}" th:value="${version}">
+      <input type="hidden" name="richiesta" th:if="${values['richiesta'] != null}" th:value="${values['richiesta']}">
       <section class="panel mb-m">
         <h2 th:text="#{backoffice.customerForm.access}">Accesso all'area clienti</h2>
         <div class="fields">
