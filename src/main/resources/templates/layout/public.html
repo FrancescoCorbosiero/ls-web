@@ -36,6 +36,13 @@
 
 <th:block th:fragment="siteHeader(nav)">
 <a class="skip-link" href="#main" th:text="#{layout.skip}">Vai al contenuto</a>
+<!-- ENH-17 (site.noticeBanner, ADR 0041): the notice in force, rendered here; nothing while the flag is off. -->
+<div class="site-notice" th:if="${siteNotice != null}" th:classappend="${siteNotice.warning()} ? 'site-notice-warning'" role="region" th:aria-label="#{layout.notice.label}" data-site-notice>
+  <div class="container site-notice-row">
+    <svg class="icon" aria-hidden="true"><use th:href="${siteNotice.warning()} ? '/img/icons.svg#i-triangle-alert' : '/img/icons.svg#i-calendar-clock'" href="/img/icons.svg#i-calendar-clock"/></svg>
+    <p><span th:text="${siteNotice.message}">Il 24 dicembre l'ufficio chiude alle 12.</span><th:block th:if="${siteNotice.linkUrl != null}"> <a th:href="${siteNotice.linkUrl}" th:text="${siteNotice.linkLabel}">Scopri di più</a></th:block></p>
+  </div>
+</div>
 <div class="topbar">
   <div class="container topbar-row">
     <ul class="topbar-list" role="list">

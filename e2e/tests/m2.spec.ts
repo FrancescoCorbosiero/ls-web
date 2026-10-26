@@ -6,7 +6,7 @@ import { PageProblems, expectNoHorizontalScroll, offline } from '../support/brow
 import { base32Decode, currentStep, totpCode } from '../support/totp';
 
 /**
- * M2 end to end (ADR 0025, 0033…0040): the seeded ADMIN turns each feature on from «Impostazioni»,
+ * M2 end to end (ADR 0025, 0033…0041): the seeded ADMIN turns each feature on from «Impostazioni»,
  * the seeded ACTIVE customer and the staff use it, and every flag is turned off again at the end
  * so that the specs after this one see M1. Serial; the accounts are dev-seed's (run.sh).
  */
@@ -525,6 +525,34 @@ test('[ENH-13] the admin reads who turned the features on in the audit log', asy
   await expectAccessible(staffPage);
 });
 
+test('[ENH-17] the admin publishes a notice that the public pages show until it is closed', async () => {
+  await staffPage.goto('/gestione/impostazioni/');
+  await expect(staffPage.locator('tr[data-flag="site.noticeBanner"]')).toContainText('Disponibile');
+  await setFlag('site.noticeBanner', true);
+  await staffPage.getByRole('link', { name: 'Avvisi sul sito' }).click();
+  await staffPage.locator('#testo').fill(`Il 24 dicembre l'ufficio chiude alle 12 (${stamp})`);
+  await staffPage.locator('#link').fill('/contatti/');
+  await staffPage.locator('#etichetta').fill('Orari e contatti');
+  await expectAccessible(staffPage);
+  await staffPage.getByRole('button', { name: "Pubblica l'avviso" }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Avviso salvato');
+
+  // the public pages reveal their sections on scroll: axe reads them settled, as public.spec does
+  await customerPage.emulateMedia({ reducedMotion: 'reduce' });
+  for (const path of ['/servizi/', '/contatti/']) {
+    await customerPage.goto(path);
+    const banner = customerPage.locator('[data-site-notice]');
+    await expect(banner).toContainText(stamp);
+    await expect(banner.getByRole('link', { name: 'Orari e contatti' })).toHaveAttribute('href', '/contatti/');
+  }
+  await expectAccessible(customerPage);
+
+  await staffPage.locator('tr[data-notice]', { hasText: stamp }).getByRole('button', { name: 'Chiudi ora' }).click();
+  await expect(staffPage.locator('[data-flash]')).toContainText('Avviso chiuso');
+  await customerPage.goto('/servizi/');
+  await expect(customerPage.locator('[data-site-notice]')).toHaveCount(0);
+});
+
 test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
   const screens: Array<[Page, string]> = [
     [customerPage, '/area-clienti/profilo/'],
@@ -539,6 +567,7 @@ test('[NFR-01] the M2.1 screens pass axe and fit a phone', async () => {
     [staffPage, '/gestione/clienti/'],
     [staffPage, '/gestione/richieste/'],
     [staffPage, '/gestione/impostazioni/registro/'],
+    [staffPage, '/gestione/impostazioni/avvisi/'],
   ];
   for (const [page, path] of screens) {
     await page.emulateMedia({ reducedMotion: 'reduce' });

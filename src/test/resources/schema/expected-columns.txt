@@ -294,3 +294,12 @@ report_recipient email varchar NOT NULL
 report_recipient label varchar NULL
 report_recipient added_by int8 NOT NULL
 report_recipient created_at timestamptz NOT NULL
+site_notice id int8 NOT NULL
+site_notice message varchar NOT NULL
+site_notice link_url varchar NULL
+site_notice link_label varchar NULL
+site_notice level varchar NOT NULL
+site_notice starts_at timestamptz NULL
+site_notice ends_at timestamptz NULL
+site_notice created_by int8 NOT NULL
+site_notice created_at timestamptz NOT NULL

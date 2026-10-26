@@ -4618,3 +4618,39 @@ html.has-motion .is-offscreen,
 html.has-motion .is-offscreen * {
   animation-play-state: paused;
 }
+/* ENH-17 (ADR 0041): the notice of the public site, above the top bar. */
+.site-notice {
+  border-bottom: 1px solid var(--teal-100);
+  background: var(--teal-50);
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.site-notice-warning {
+  border-bottom-color: #f3d39b;
+  background: #fff7e8;
+}
+.site-notice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-block: 10px;
+}
+.site-notice .icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--teal-600);
+}
+.site-notice-warning .icon {
+  color: #7a4200;
+}
+.site-notice p {
+  margin: 0;
+}
+.site-notice a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}

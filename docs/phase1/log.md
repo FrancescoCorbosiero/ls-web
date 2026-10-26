@@ -2218,3 +2218,39 @@ azione vedi gli identificativi e i campi cambiati, mai i dati personali.»; filt
 dell'oggetto», «dal», «al»; columns «Quando», «Chi», «Azione», «Oggetto», «Modifica»; «Cliente ·
 accesso N», «Staff n. N», «Dati personali registrati a parte: non si mostrano.», «Nessuna attività
 registrata con questi filtri.».
+
+## Step P — M2: ENH-17, the notice banner of the public site (2026-10-26)
+
+Sixth of the M2 items of the owner's request «procedi con quelli che puoi fare ora». ADR 0041.
+
+### What was built
+
+* Migration `V021__site_notices.sql` (`site_notice`); package `site.notices`: `SiteNoticeService`
+  (the notice in force, cached 30 seconds and forgotten at every change; create with the rules of
+  the form, end, delete; audited), `SiteNoticeRepository`, `SiteNoticeView`, `NoticeLevel`,
+  `SiteNoticeModelAttributes` (`siteNotice` for the site module's pages).
+* `layout/public :: siteHeader` draws the notice above the top bar (classes `site-notice`,
+  `site-notice-warning` in `main.css`); «Avvisi sul sito» (`BackofficeNoticesController`,
+  `/gestione/impostazioni/avvisi/`, ADMIN only) and its link on «Impostazioni».
+* Tests: `SiteNoticesIT` (3: published and shown on every public page, not in the customer area,
+  no inline style or script; only within its Rome period, closed and deleted; unsafe links and
+  impossible periods refused, OPERATOR refused), `SiteNoticesOffIT`; schema expectations and
+  migration counts (21), route matrix; E2E `m2.spec.ts`: the ADMIN publishes a notice, the public
+  pages show it with its link (axe), «Chiudi ora» takes it away.
+
+### New Italian texts for the owner's review
+
+«Avvisi sul sito», «Un messaggio in cima a tutte le pagine del sito: chiusure, ritardi, novità. Si
+vede un avviso alla volta, quello iniziato per ultimo.»; columns «Avviso», «Periodo», «Stato»
+(«Sul sito ora», «Programmato», «Concluso»), «dal …», «al …», «finché non lo chiudi»; levels
+«Informazione», «Attenzione»; «Chiudi ora», «Elimina», «Nessun avviso: il sito non mostra nulla in
+cima alle pagine.»; form «Nuovo avviso», «Testo dell'avviso», «Link (facoltativo)», «Una pagina del
+sito, per esempio /contatti/, o un indirizzo https://.», «Testo del link», «Tipo», «Dal
+(facoltativo)», «Al (facoltativo)», «Pubblica l'avviso»; errors «Scrivi il testo dell'avviso.»,
+«Il testo può avere al massimo 300 caratteri.», «Inserisci l'indirizzo del link, oppure togli il
+testo del link.», «Il link è una pagina del sito (per esempio /contatti/) o un indirizzo
+https://.», «Scrivi il testo del link, per esempio «Scopri di più».», «Il testo del link può avere
+al massimo 60 caratteri.», «La fine deve venire dopo l'inizio.», «La fine è già passata: scegli
+una data futura.», «Inserisci data e ora (giorno, mese, anno, ore e minuti).»; flashes «Avviso
+salvato: le pagine del sito lo mostrano nel periodo scelto.», «Avviso chiuso: non compare più sul
+sito.», «L'avviso era già concluso.», «Avviso eliminato.»; the banner's region label «Avviso».

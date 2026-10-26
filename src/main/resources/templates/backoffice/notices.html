@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<!--
+  «Avvisi sul sito» (ENH-17, site.noticeBanner, ADR 0041), ADMIN only: the notices of the public
+  site (in force, to come, ended) with «Chiudi ora» and «Elimina», and the form of a new one —
+  text, optional link, level, optional period (Europe/Rome).
+-->
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title th:text="#{backoffice.notices.title} + ' · ' + #{layout.private.backoffice}">Avvisi sul sito · Gestione</title>
+  <th:block th:replace="~{layout/private :: htmlHead}"></th:block>
+</head>
+<body th:attr="hx-headers=${hxHeaders}">
+<th:block th:replace="~{layout/private :: siteHeader('staff', ${staff.displayName}, '/gestione/logout')}"></th:block>
+<th:block th:replace="~{backoffice/layout :: nav('settings')}"></th:block>
+<main id="main" class="app-main">
+  <div class="container">
+    <div class="page-head">
+      <div>
+        <a class="back-link" href="/gestione/impostazioni/"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-arrow-left"/></svg><span th:text="#{backoffice.settings.back}">Torna alle impostazioni</span></a>
+        <h1 th:text="#{backoffice.notices.title}">Avvisi sul sito</h1>
+        <p class="lede" th:text="#{backoffice.notices.lead}">Un messaggio in cima a tutte le pagine del sito: chiusure, ritardi, novità. Si vede un avviso alla volta, quello iniziato per ultimo.</p>
+      </div>
+    </div>
+    <th:block th:replace="~{backoffice/layout :: flash}"></th:block>
+
+    <div class="data-table-wrap mb-m" th:if="${!notices.isEmpty()}">
+      <table class="data-table stacked" data-table="notices">
+        <thead><tr>
+          <th scope="col" th:text="#{backoffice.notices.col.message}">Avviso</th>
+          <th scope="col" th:text="#{backoffice.notices.col.period}">Periodo</th>
+          <th scope="col" th:text="#{backoffice.notices.col.state}">Stato</th>
+          <th scope="col"><span class="visually-hidden" th:text="#{backoffice.col.actions}">Azioni</span></th>
+        </tr></thead>
+        <tbody>
+          <tr th:each="n : ${notices}" th:attr="data-notice=${n.id}">
+            <td th:attr="data-label=#{backoffice.notices.col.message}">
+              <div class="cell-block">
+                <span><span class="pill" th:classappend="${n.warning()} ? 'pill-pending' : 'pill-soft'" th:text="#{'backoffice.notices.level.' + ${n.level.name()}}">Informazione</span> <span th:text="${n.message}">Testo</span></span>
+                <span class="sub" th:if="${n.linkUrl != null}" th:text="${n.linkLabel} + ' → ' + ${n.linkUrl}">Scopri di più → /contatti/</span>
+              </div>
+            </td>
+            <td th:attr="data-label=#{backoffice.notices.col.period}">
+              <div class="cell-block">
+                <span th:text="#{backoffice.notices.from(${n.startsAt != null} ? ${fmt.dateTime(n.startsAt)} : ${fmt.dateTime(n.createdAt)})}">dal 01/12/2026 08:00</span>
+                <span class="sub" th:text="${n.endsAt != null} ? #{backoffice.notices.to(${fmt.dateTime(n.endsAt)})} : #{backoffice.notices.noEnd}">finché non lo chiudi</span>
+              </div>
+            </td>
+            <td th:attr="data-label=#{backoffice.notices.col.state}" th:text="#{'backoffice.notices.state.' + ${n.state(now)}}">In corso</td>
+            <td class="row-actions">
+              <form class="inline-form" method="post" th:if="${n.state(now) != 'CONCLUSO'}" th:action="@{/gestione/impostazioni/avvisi/{id}/chiudi(id=${n.id})}">
+                <button type="submit" class="btn btn-light btn-xs" th:text="#{backoffice.notices.end}">Chiudi ora</button>
+              </form>
+              <form class="inline-form" method="post" th:action="@{/gestione/impostazioni/avvisi/{id}/elimina(id=${n.id})}">
+                <button type="submit" class="btn btn-light btn-xs"><svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-trash"/></svg><span th:text="#{backoffice.notices.delete}">Elimina</span></button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted" th:if="${notices.isEmpty()}" data-empty th:text="#{backoffice.notices.empty}">Nessun avviso: il sito non mostra nulla in cima alle pagine.</p>
+
+    <h2 class="mt-m" th:text="#{backoffice.notices.new}">Nuovo avviso</h2>
+    <div class="callout callout-error" role="alert" th:if="${!errors.isEmpty()}" data-form-errors>
+      <svg class="icon" aria-hidden="true"><use href="/img/app-icons.svg#i-triangle-alert"/></svg>
+      <p th:text="#{orders.error.summary}">Controlla i campi evidenziati.</p>
+    </div>
+    <form method="post" th:action="@{/gestione/impostazioni/avvisi/}" class="panel fields" novalidate data-notice-form>
+      <div class="field span-all">
+        <label class="label" for="testo" th:text="#{backoffice.notices.field.message}">Testo dell'avviso</label>
+        <textarea class="textarea" id="testo" name="testo" rows="2" maxlength="300" required th:text="${values['testo']}" th:attr="aria-invalid=${errors['testo'] != null}"></textarea>
+        <p class="field-error" th:if="${errors['testo'] != null}" th:text="${errors['testo']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="link" th:text="#{backoffice.notices.field.link}">Link (facoltativo)</label>
+        <input class="input" id="link" name="link" type="text" maxlength="300" autocomplete="off" th:value="${values['link']}" th:attr="aria-invalid=${errors['link'] != null}" aria-describedby="link-hint">
+        <p class="field-hint" id="link-hint" th:text="#{backoffice.notices.field.linkHint}">Una pagina del sito, per esempio /contatti/, o un indirizzo https://.</p>
+        <p class="field-error" th:if="${errors['link'] != null}" th:text="${errors['link']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="etichetta" th:text="#{backoffice.notices.field.label}">Testo del link</label>
+        <input class="input" id="etichetta" name="etichetta" type="text" maxlength="60" autocomplete="off" th:value="${values['etichetta']}" th:attr="aria-invalid=${errors['etichetta'] != null}">
+        <p class="field-error" th:if="${errors['etichetta'] != null}" th:text="${errors['etichetta']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="livello" th:text="#{backoffice.notices.field.level}">Tipo</label>
+        <select class="select" id="livello" name="livello">
+          <option value="INFO" th:selected="${values['livello'] != 'WARNING'}" th:text="#{backoffice.notices.level.INFO}">Informazione</option>
+          <option value="WARNING" th:selected="${values['livello'] == 'WARNING'}" th:text="#{backoffice.notices.level.WARNING}">Attenzione</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="label" for="dal" th:text="#{backoffice.notices.field.from}">Dal (facoltativo)</label>
+        <input class="input" id="dal" name="dal" type="datetime-local" th:value="${values['dal']}" th:attr="aria-invalid=${errors['dal'] != null}">
+        <p class="field-error" th:if="${errors['dal'] != null}" th:text="${errors['dal']}">Errore</p>
+      </div>
+      <div class="field">
+        <label class="label" for="al" th:text="#{backoffice.notices.field.to}">Al (facoltativo)</label>
+        <input class="input" id="al" name="al" type="datetime-local" th:value="${values['al']}" th:attr="aria-invalid=${errors['al'] != null}">
+        <p class="field-error" th:if="${errors['al'] != null}" th:text="${errors['al']}">Errore</p>
+      </div>
+      <p class="form-actions span-all"><button type="submit" class="btn" data-save-notice th:text="#{backoffice.notices.save}">Pubblica l'avviso</button></p>
+    </form>
+  </div>
+</main>
+<th:block th:replace="~{layout/private :: siteFooter}"></th:block>
+</body>
+</html>

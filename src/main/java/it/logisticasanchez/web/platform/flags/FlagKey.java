@@ -29,7 +29,7 @@ public enum FlagKey {
     ADMIN_ENUMERATIONS("admin.enumerations", "ENH-14", false),
     ORDERS_BULK_TRACKING("orders.bulkTracking", "ENH-15", true),
     CUSTOMERS_PROFILE_EDIT("customers.profileEdit", "ENH-16", true),
-    SITE_NOTICE_BANNER("site.noticeBanner", "ENH-17", false),
+    SITE_NOTICE_BANNER("site.noticeBanner", "ENH-17", true),
     SITE_OPEN_NOW("site.openNow", "ENH-18", false),
     SITE_PICKUP_CUTOFF("site.pickupCutoff", "ENH-19", false),
     QUOTES_SAVED("quotes.saved", "ENH-20", true),

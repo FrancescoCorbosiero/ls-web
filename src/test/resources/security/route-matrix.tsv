@@ -107,6 +107,11 @@ GET	/gestione/impostazioni/utenti/	302	403	403	200
 POST	/gestione/impostazioni/utenti/	403	403	403	403
 # ENH-13 the audit log viewer (ADR 0040): ADMIN only, 404 while admin.audit is off, as in this run.
 GET	/gestione/impostazioni/registro/	302	403	403	404
+# ENH-17 the notices of the public site (ADR 0041): ADMIN only, 404 while site.noticeBanner is off, as in this run.
+GET	/gestione/impostazioni/avvisi/	302	403	403	404
+POST	/gestione/impostazioni/avvisi/	403	403	403	403
+POST	/gestione/impostazioni/avvisi/{id}/chiudi	403	403	403	403
+POST	/gestione/impostazioni/avvisi/{id}/elimina	403	403	403	403
 # ENH-09 an ADMIN resets a user's two-factor secret (ADR 0039); POST only, CSRF first.
 POST	/gestione/impostazioni/utenti/{id}/doppia-verifica	403	403	403	403
 GET	/gestione/impostazioni/privacy/	302	403	403	200
