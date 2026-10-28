@@ -19,7 +19,12 @@ registrata con data ed esito in `docs/rehearsals/`).
    `(required)`: `LS_ACME_EMAIL`, `POSTGRES_PASSWORD`, `LS_SECURITY_IP_HASH_KEY`,
    `LS_TOKEN_ENCRYPTION_KEY` (`openssl rand -base64 32`), le credenziali SES
    (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` di un utente IAM limitato a
-   `ses:SendEmail`/`ses:SendRawEmail`), `LS_IMAGE_TAG` (un tag `sha-…` preciso, non `latest`).
+   `ses:SendEmail`/`ses:SendRawEmail`), `LS_IMAGE_TAG` (un tag `sha-…` preciso, non `latest`),
+   `LS_BACKUP_AGE_RECIPIENT` (chiave pubblica `age1…` per `backup.sh`). Regole del file: i commenti
+   solo su righe proprie (con `CHIAVE=   # testo` il commento diventerebbe il valore) e i valori con
+   spazi tra virgolette doppie; una variabile facoltativa che non usi resta commentata, mai vuota
+   (`LS_BUSINESS_OFFICEEMAIL=` vuota blocca l'avvio). Tutte le righe del file arrivano all'app
+   (`env_file` in `compose.yml`).
    In staging: `SPRING_PROFILES_ACTIVE=staging`, `LS_NOTIFICATIONS_SINK=directory` oppure `ses`
    **con** `LS_NOTIFICATIONS_ALLOW_LIST` (senza allow-list nessuna e-mail parte).
 4. DNS: record A/AAAA di `logisticasanchez.com`, `www.`, `app.`, `ordini.`, `dashboard.` verso il

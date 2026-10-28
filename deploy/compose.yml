@@ -28,6 +28,9 @@ services:
   app:
     image: ghcr.io/francescocorbosiero/ls-web:${LS_IMAGE_TAG:-latest}
     restart: unless-stopped
+    # Every variable of .env reaches the app, so the optional LS_* settings of .env.example take
+    # effect; the list below fixes the ones compose itself derives or defaults.
+    env_file: .env
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       SERVER_PORT: "8080"
@@ -45,7 +48,6 @@ services:
       AWS_REGION: ${LS_NOTIFICATIONS_SES_REGION:-eu-north-1}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
-      LS_BUSINESS_OFFICEEMAIL: ${LS_BUSINESS_OFFICEEMAIL:-}
       LS_BUSINESS_SITEURL: ${LS_BUSINESS_SITEURL:-https://logisticasanchez.com}
     expose:
       - "8080"
