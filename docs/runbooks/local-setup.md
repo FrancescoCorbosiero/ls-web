@@ -66,7 +66,7 @@ docker compose up --build                  # l'app su http://localhost:8080
 
 * Stampa la password di `admin.seed` / `operatore.seed` e una password comune per i clienti
   importati (solo in locale). Il database resta tra un avvio e l'altro; per nuove password:
-  `docker compose run --rm app dev-seed --staff-only --customers-password`.
+  `docker compose run --rm app dev-seed --staff-only --customers-password --logging.level.root=warn --logging.level.it.logisticasanchez=warn --spring.main.banner-mode=off`.
 * Un secondo caricamento sullo stesso database viene rifiutato: per ricaricare da capo,
   `docker compose down -v` e di nuovo `run --rm --build legacy`. Un dump diverso dal più recente:
   `LEGACY_DUMP=<nome del file> docker compose run --rm --build legacy`.
