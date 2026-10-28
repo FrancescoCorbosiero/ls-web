@@ -13,7 +13,12 @@ never paste its values anywhere. The report printed on stdout holds counts and l
 
     python3 -I tools/legacy-import/generate_import_sql.py \
         .local/legacy/lsdb_full_<date>.sql.gz .local/legacy/import_legacy.sql \
-        [--cutoff '2026-04-28 00:00:00']
+        [--months 6 | --cutoff '2026-04-28 00:00:00'] [--exclude-emails .local/legacy/exclude.txt]
+
+The orders are those of the last --months months (default 6: from 00:00 UTC of today's date six
+months ago), or from --cutoff. --exclude-emails names a file with one e-mail per line (blank lines
+and lines starting with # ignored, case and spaces ignored): those customers and all their orders
+are left out. Keep that file under .local/ too: it holds personal data.
 
 The SQL file runs in one transaction, takes every id from the identity sequences, refuses to
 run twice (audit_log action legacy.import) and needs an ADMIN staff user when orders carry a
@@ -727,13 +732,44 @@ COMMIT;
 """
 
 
+def months_ago(today, months):
+    """The same day `months` calendar months earlier (the last day of a shorter month)."""
+    total = today.year * 12 + today.month - 1 - months
+    year, month = divmod(total, 12)
+    month += 1
+    for day in (today.day, 30, 29, 28):
+        try:
+            return today.replace(year=year, month=month, day=day)
+        except ValueError:
+            continue
+    raise AssertionError("unreachable")
+
+
+def read_exclusions(path):
+    out = set()
+    with open(path, encoding="utf-8") as fh:
+        for line in fh:
+            value = line.strip().lower()
+            if value and not value.startswith("#"):
+                out.add(value)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("dump")
     ap.add_argument("out")
-    ap.add_argument("--cutoff", default="2026-04-28 00:00:00", help="first create_tms of the imported orders, UTC")
+    window = ap.add_mutually_exclusive_group()
+    window.add_argument("--cutoff", help="first create_tms of the imported orders, UTC ('YYYY-MM-DD HH:MM:SS')")
+    window.add_argument("--months", type=int, default=6, help="orders of the last N months (default 6)")
+    ap.add_argument("--exclude-emails", help="file with the e-mails of the customers to leave out, one per line")
     args = ap.parse_args()
-    cutoff = datetime.datetime.strptime(args.cutoff, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+    if args.cutoff:
+        cutoff = datetime.datetime.strptime(args.cutoff, "%Y-%m-%d %H:%M:%S").strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        today = datetime.datetime.now(datetime.timezone.utc).date()
+        cutoff = months_ago(today, args.months).strftime("%Y-%m-%d 00:00:00")
+    exclusions = read_exclusions(args.exclude_emails) if args.exclude_emails else set()
 
     tables = read_dump(args.dump)
     report = Report()
@@ -742,6 +778,18 @@ def main():
             report.count(f"source {name} (not imported)", len(tables[name]["rows"]))
     soggetti = tables["soggetti"]["rows"]
     spedizioni = tables["spedizioni"]["rows"]
+    if exclusions:
+        # Customers the owner leaves out (their own and test accounts), with all their orders.
+        excluded = {s["id"] for s in soggetti if s["email"].strip().lower() in exclusions}
+        matched = {s["email"].strip().lower() for s in soggetti if s["id"] in excluded}
+        report.count("customers excluded by --exclude-emails", len(excluded))
+        report.count("exclusions matching no customer", len(exclusions - matched))
+        report.count(
+            "orders of excluded customers in the window (not imported)",
+            sum(1 for o in spedizioni if o["mittente_id"] in excluded and o["create_tms"] >= cutoff),
+        )
+        soggetti = [s for s in soggetti if s["id"] not in excluded]
+        spedizioni = [o for o in spedizioni if o["mittente_id"] not in excluded]
     orders_by_customer = collections.Counter(o["mittente_id"] for o in spedizioni)
     try:
         customers, _ = map_customers(soggetti, orders_by_customer, report)

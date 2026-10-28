@@ -14,7 +14,9 @@ registrata con data ed esito in `docs/rehearsals/`).
 
 1. VPS Ubuntu LTS con Docker e il plugin Compose; utente non root con accesso a Docker;
    firewall: 22 e, da Cloudflare soltanto, 80 e 443.
-2. `git clone` del repository (o copia della sola cartella `deploy/`) in `/opt/ls-web`.
+2. `git clone https://github.com/FrancescoCorbosiero/ls-web.git /srv/logistica-sanchez` (repository
+   pubblico). Tutti i comandi `docker compose` si lanciano da `/srv/logistica-sanchez/deploy`: Compose
+   legge da solo il file `.env` di quella cartella.
 3. `cp deploy/.env.example deploy/.env && chmod 600 deploy/.env` e compila le voci `(required)`:
    `POSTGRES_PASSWORD`, `LS_SECURITY_IP_HASH_KEY`, `LS_TOKEN_ENCRYPTION_KEY` (ognuna con
    `openssl rand -base64 32`, generate sul server) e le credenziali SES
@@ -32,15 +34,16 @@ registrata con data ed esito in `docs/rehearsals/`).
    * i record di SES (DKIM, SPF, DMARC, MAIL FROM) copiati così come sono, **solo DNS** (nuvola
      grigia).
 5. L'immagine `ghcr.io/francescocorbosiero/ls-web` è pubblica: nessun `docker login`.
-6. `docker compose --env-file .env config --quiet` (deve stare zitto), poi
-   `docker compose --env-file .env up -d`. Flyway crea lo schema al primo avvio; il database
+6. `docker compose config --quiet` (deve stare zitto), poi
+   `docker compose up -d`. Flyway crea lo schema al primo avvio; il database
    parte **vuoto**; i dati del vecchio sistema si caricano una volta sola al cut-over (§6, Q-55
    riaperta il 2026-10-28, ADR 0048).
-7. Primo amministratore: `docker compose --env-file .env run --rm app create-staff-user
-   --username=<nome> --role=ADMIN --name="Nome Cognome"` stampa un link
-   `https://<dominio>/gestione/imposta-password?t=…` valido una volta: aprilo e scegli la password.
+7. Primo amministratore, con nome utente e password scelti da te (la password si digita due volte,
+   non compare a schermo; almeno 12 caratteri): `docker compose run --rm app create-staff-user
+   --username=<nome> --role=ADMIN --name="Nome Cognome" --ask-password`. Senza `--ask-password` il
+   comando stampa invece un link `https://<dominio>/gestione/imposta-password?t=…` valido 24 ore.
    Con la verifica in due passaggi attiva (`security.adminTotp`, ADR 0039), un amministratore che
-   ha perso il telefono e non riesce a entrare: `docker compose --env-file .env run --rm app
+   ha perso il telefono e non riesce a entrare: `docker compose run --rm app
    reset-staff-totp --username=<nome>`; al prossimo accesso configura di nuovo l'app.
 8. Verifica: `curl -fsS https://<dominio>/actuator/health` → `{"status":"UP"}`; home page, un
    accesso cliente con un indirizzo di prova (in staging l'e-mail finisce nell'allow-list o nei
@@ -52,11 +55,11 @@ CI pubblica l'immagine a ogni push su `main` e `phase-*` con i tag `sha-<commit>
 (`latest` solo da `main`). Sul server:
 
 ```sh
-cd /opt/ls-web/deploy
+cd /srv/logistica-sanchez/deploy
 sed -i 's/^LS_IMAGE_TAG=.*/LS_IMAGE_TAG=sha-<commit>/' .env
-docker compose --env-file .env pull app
-docker compose --env-file .env up -d app       # riavvio della sola app; Flyway applica le migrazioni
-docker compose --env-file .env logs -f app     # fino a "Started LsWebApplication"
+docker compose pull app
+docker compose up -d app       # riavvio della sola app; Flyway applica le migrazioni
+docker compose logs -f app     # fino a "Started LsWebApplication"
 ```
 
 Prima di un aggiornamento con nuove migrazioni esegui `deploy/backup.sh` (§4).
@@ -68,7 +71,7 @@ precedente conosce lo schema corrente (migrazioni additive: sempre in M1).
 
 ```sh
 sed -i 's/^LS_IMAGE_TAG=.*/LS_IMAGE_TAG=sha-<commit precedente>/' .env
-docker compose --env-file .env up -d app
+docker compose up -d app
 ```
 
 Se lo schema non è compatibile: fermare l'app (`docker compose stop app`), ripristinare l'ultimo
@@ -85,8 +88,8 @@ del database.
   cifra il file e lo copia; senza chiave non copia nulla fuori.
 * Pianificazione (cron dell'utente che gestisce Docker):
   ```
-  15 3 * * *  /opt/ls-web/deploy/backup.sh >> /var/log/ls-web-backup.log 2>&1
-  45 8 * * *  /opt/ls-web/deploy/backup.sh --check || echo "backup ls-web in ritardo" | mail -s "ls-web backup" <ufficio>
+  15 3 * * *  /srv/logistica-sanchez/deploy/backup.sh >> /var/log/ls-web-backup.log 2>&1
+  45 8 * * *  /srv/logistica-sanchez/deploy/backup.sh --check || echo "backup ls-web in ritardo" | mail -s "ls-web backup" <ufficio>
   ```
   Rotazione: 7 giornalieri, 4 settimanali (domenica), 12 mensili (giorno 1); il controllo
   fallisce se l'ultimo backup ha più di 26 ore.
@@ -118,15 +121,23 @@ Ordine delle operazioni, tutte reversibili finché il vecchio VPS resta acceso:
 1. Staging verde con la stessa immagine e `docker compose config` pulito; prova di restore fatta.
 2. Produzione installata (§1) su un dominio tecnico; smoke test con l'allow-list e-mail.
 3. Abbassare il TTL dei record DNS a 300 s almeno un giorno prima.
-4. Finestra: nel vecchio nginx bloccare i percorsi di scrittura (chapter 10 §7); spostare i
-   record A/AAAA di apex, `www`, `app`, `ordini`, `dashboard` sul nuovo VPS; Caddy emette i
-   certificati entro pochi minuti. Subito dopo il blocco delle scritture: dump del vecchio `lsdb`,
-   `python3 -I tools/legacy-import/generate_import_sql.py <dump> import_legacy.sql` su una macchina
-   fidata, copia del file sul VPS, `deploy/backup.sh`, primo amministratore già creato (§1 punto 7),
-   poi `docker compose --env-file .env exec -T db psql -U ls -d ls_web -v ON_ERROR_STOP=1 <
-   import_legacy.sql` (una transazione; un secondo caricamento viene rifiutato); infine cancellare
-   dump e file dal VPS. Verificare `/`, `/area-clienti/`, `/gestione/`,
-   `POST /mono/api/order/trace/state`, un vecchio link `/mono/email-confirm?…` → pagina 410.
+4. Finestra: nel vecchio nginx bloccare i percorsi di scrittura (chapter 10 §7), poi il dump del
+   vecchio `lsdb` e l'importazione sul nuovo server, da `/srv/logistica-sanchez`:
+   ```sh
+   mkdir -p .local/legacy && chmod 700 .local/legacy
+   # copia qui il dump (….sql.gz) ed exclude.txt: un'e-mail per riga, i clienti da non importare
+   python3 -I tools/legacy-import/generate_import_sql.py .local/legacy/<dump>.sql.gz \
+       .local/legacy/import_legacy.sql --exclude-emails .local/legacy/exclude.txt
+   cd deploy && ./backup.sh
+   docker compose exec -T db psql -U ls -d ls_web -v ON_ERROR_STOP=1 < ../.local/legacy/import_legacy.sql
+   rm -f ../.local/legacy/*
+   ```
+   Ordini degli ultimi sei mesi a partire dal giorno del comando (`--months N` per cambiarli); il
+   primo amministratore deve già esistere (§1 punto 7); il file è un'unica transazione e un secondo
+   caricamento viene rifiutato. Poi spostare i record A/AAAA di apex, `www`, `app`, `ordini`,
+   `dashboard` sul nuovo VPS (Cloudflare, §1 punto 4). Verificare `/`, `/area-clienti/`,
+   `/gestione/`, `POST /mono/api/order/trace/state`, un vecchio link `/mono/email-confirm?…` →
+   pagina 410.
 5. Rimuovere i record DNS pendenti (`api.` e altri non più usati), poi ruotare le vecchie
    credenziali (chiave SES del vecchio backend, `JWT_KEY`, password staff; §5).
 6. Rollback: riportare i record DNS al vecchio VPS (TTL 300 s) e riaprire i percorsi di
