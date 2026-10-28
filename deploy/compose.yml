@@ -1,4 +1,4 @@
-# Logistica Sanchez web app on one VPS: Caddy (automatic HTTPS) -> app -> PostgreSQL 16.
+# Logistica Sanchez web app on one VPS: Cloudflare -> Caddy (TLS to Cloudflare) -> app -> PostgreSQL 16.
 # Settings come from a .env file next to this file (copy deploy/.env.example, fill the values,
 # chmod 600). Check:  docker compose --env-file .env config
 # Run:                docker compose --env-file .env up -d
@@ -16,7 +16,6 @@ services:
       - "443:443/udp"
     environment:
       LS_DOMAIN: ${LS_DOMAIN:-logisticasanchez.com}
-      LS_ACME_EMAIL: ${LS_ACME_EMAIL:?set the e-mail Let's Encrypt writes to}
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
