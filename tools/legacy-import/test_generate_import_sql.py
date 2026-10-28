@@ -13,7 +13,10 @@ import unittest
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+from generate_import_sql import months_ago  # noqa: E402
 from mysqldump import read_dump  # noqa: E402
+
+GENERATOR = os.path.join(HERE, "generate_import_sql.py")
 
 DDL = """
 CREATE TABLE `soggetti` (
@@ -118,7 +121,7 @@ class GenerateImportSqlTest(unittest.TestCase):
             fh.write(DDL + DATA)
         cls.out = os.path.join(cls.tmp.name, "import.sql")
         run = subprocess.run(
-            [sys.executable, "-I", os.path.join(HERE, "generate_import_sql.py"), cls.dump, cls.out],
+            [sys.executable, "-I", GENERATOR, cls.dump, cls.out, "--cutoff", "2026-04-28 00:00:00"],
             capture_output=True,
             text=True,
         )
@@ -175,6 +178,39 @@ class GenerateImportSqlTest(unittest.TestCase):
         self.assertTrue(self.sql.rstrip().endswith("COMMIT;"))
         self.assertIn("already loaded (audit_log action legacy.import)", self.sql)
         self.assertNotRegex(self.sql, r"INSERT INTO (customer|shipment_order|order_line|tracking_event|customer_user) \(id")
+
+
+class OptionsTest(unittest.TestCase):
+    def test_months_ago_keeps_the_day_or_takes_the_last_of_the_month(self):
+        import datetime
+
+        self.assertEqual(months_ago(datetime.date(2026, 10, 28), 6), datetime.date(2026, 4, 28))
+        self.assertEqual(months_ago(datetime.date(2026, 8, 31), 6), datetime.date(2026, 2, 28))
+        self.assertEqual(months_ago(datetime.date(2026, 3, 15), 6), datetime.date(2025, 9, 15))
+
+    def test_excluded_customers_and_their_orders_are_left_out(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            dump = os.path.join(tmp, "lsdb_synthetic.sql.gz")
+            with gzip.open(dump, "wt", encoding="utf-8") as fh:
+                fh.write(DDL + DATA)
+            exclude = os.path.join(tmp, "exclude.txt")
+            with open(exclude, "w", encoding="utf-8") as fh:
+                fh.write("# synthetic\n  CINQUE@cliente.example \n\nnessuno@cliente.example\n")
+            out = os.path.join(tmp, "import.sql")
+            run = subprocess.run(
+                [sys.executable, "-I", GENERATOR, dump, out, "--cutoff", "2026-04-28 00:00:00", "--exclude-emails", exclude],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertIn("customers excluded by --exclude-emails: 1", run.stdout)
+            self.assertIn("exclusions matching no customer: 1", run.stdout)
+            self.assertIn("orders of excluded customers in the window (not imported): 2", run.stdout)
+            self.assertIn('"customers": 3, "orders": 0', run.stdout)
+            with open(out, encoding="utf-8") as fh:
+                sql = fh.read()
+            self.assertNotIn("cinque@cliente.example", sql)
+            self.assertNotIn("TEST-0001", sql)
 
 
 if __name__ == "__main__":

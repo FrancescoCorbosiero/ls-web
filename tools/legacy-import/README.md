@@ -15,7 +15,8 @@ The dump and the generated file hold real personal data: keep them under `.local
 
 ```sh
 python3 -I tools/legacy-import/generate_import_sql.py \
-    .local/legacy/lsdb_full_<data>.sql.gz .local/legacy/import_legacy.sql   # --cutoff 'YYYY-MM-DD HH:MM:SS' (UTC)
+    .local/legacy/lsdb_full_<data>.sql.gz .local/legacy/import_legacy.sql \
+    [--months 6 | --cutoff 'YYYY-MM-DD HH:MM:SS'] [--exclude-emails .local/legacy/exclude.txt]
 ```
 
 Load it once, after the migrations and after creating the first ADMIN (`create-staff-user`):

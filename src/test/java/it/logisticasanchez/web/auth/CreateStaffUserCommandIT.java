@@ -14,6 +14,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -153,6 +156,81 @@ class CreateStaffUserCommandIT extends AbstractPostgresIT {
         assertThat(command.getExitCode())
                 .as("without the command word the runner does nothing")
                 .isZero();
+    }
+
+    /** {@code --ask-password}: the password typed twice at the terminal, the policy applied, no link needed. */
+    @Test
+    void thePasswordCanBeTypedAtTheTerminal() throws Exception {
+        String username = "tty-" + UUID.randomUUID().toString().substring(0, 8);
+        Deque<String> typed = new ArrayDeque<>(List.of(
+                "short", "short", // too short
+                "pallet-espresso-brianza-01", "pallet-espresso-brianza-02", // mismatch
+                "pallet-espresso-brianza-01", "pallet-espresso-brianza-01"));
+        Output output =
+                run(terminal(typed), "create-staff-user", "--username=" + username, "--role=ADMIN", "--ask-password");
+        assertThat(output.code()).isZero();
+        assertThat(output.err()).contains("almeno 12 caratteri").contains("non coincidono");
+        assertThat(output.out()).contains("Password impostata").doesNotContain("imposta-password?t=");
+        mvc.perform(post("/gestione/login")
+                        .param("username", username)
+                        .param("password", "pallet-espresso-brianza-01")
+                        .with(csrf()))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location", "/gestione/"));
+
+        // three refusals: the account keeps no password and the link is printed instead
+        String other = "tty2-" + UUID.randomUUID().toString().substring(0, 8);
+        Deque<String> common = new ArrayDeque<>(
+                List.of("passwordpassword", "passwordpassword", "passwordpassword", "passwordpassword", "x", "x"));
+        Output refused =
+                run(terminal(common), "create-staff-user", "--username=" + other, "--role=ADMIN", "--ask-password");
+        assertThat(refused.code()).isEqualTo(1);
+        assertThat(refused.err()).contains("troppo comune");
+        assertThat(LINK.matcher(refused.out()).find()).isTrue();
+        assertThat(users.findByUsername(other).orElseThrow().getPasswordHash()).isNull();
+
+        // no terminal: nothing is created
+        String none = "tty3-" + UUID.randomUUID().toString().substring(0, 8);
+        CreateStaffUserCommand.PasswordReader detached = new CreateStaffUserCommand.PasswordReader() {
+            @Override
+            public boolean available() {
+                return false;
+            }
+
+            @Override
+            public String read(String prompt) {
+                throw new AssertionError("no terminal");
+            }
+        };
+        assertThat(run(detached, "create-staff-user", "--username=" + none, "--role=ADMIN", "--ask-password")
+                        .code())
+                .isEqualTo(2);
+        assertThat(users.findByUsername(none)).isEmpty();
+    }
+
+    private static CreateStaffUserCommand.PasswordReader terminal(Deque<String> typed) {
+        return new CreateStaffUserCommand.PasswordReader() {
+            @Override
+            public boolean available() {
+                return true;
+            }
+
+            @Override
+            public String read(String prompt) {
+                return typed.poll();
+            }
+        };
+    }
+
+    private Output run(CreateStaffUserCommand.PasswordReader reader, String... args) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ByteArrayOutputStream err = new ByteArrayOutputStream();
+        int code = command.run(
+                new DefaultApplicationArguments(args),
+                new PrintStream(out, true, StandardCharsets.UTF_8),
+                new PrintStream(err, true, StandardCharsets.UTF_8),
+                reader);
+        return new Output(code, out.toString(StandardCharsets.UTF_8), err.toString(StandardCharsets.UTF_8));
     }
 
     private Output run(String... args) {
