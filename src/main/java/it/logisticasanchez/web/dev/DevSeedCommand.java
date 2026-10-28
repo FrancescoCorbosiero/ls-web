@@ -47,12 +47,20 @@ import org.springframework.transaction.annotation.Transactional;
  * accounts and leaves existing customers, orders and requests alone (it only adds a seed order
  * that is missing). Run as {@code java -jar app.jar dev-seed
  * --spring.profiles.active=local}; the bean does not exist outside local and test.
+ *
+ * <p>Two options narrow the run, for a local copy of the legacy data ({@code scripts/dev.sh
+ * --legacy}, ADR 0048): {@code --staff-only} creates or resets only the two staff accounts, with
+ * no synthetic customer, order or request; {@code --customers-password} sets one new random
+ * password, printed once, on every customer login, so each imported customer can be opened in
+ * the customer area with its e-mail. Given together, both run.
  */
 @Component
 @Profile({"local", "test"})
 public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
 
     public static final String NAME = "dev-seed";
+    public static final String STAFF_ONLY = "staff-only";
+    public static final String CUSTOMERS_PASSWORD = "customers-password";
     public static final String ADMIN_USERNAME = "admin.seed";
     public static final String OPERATOR_USERNAME = "operatore.seed";
     public static final String ACTIVE_CUSTOMER_EMAIL = "cliente.attivo@cliente.example";
@@ -99,8 +107,31 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
     @Transactional
     public void run(ApplicationArguments args) {
         if (args.getNonOptionArgs().contains(NAME)) {
-            exitCode = run(System.out);
+            exitCode = args.containsOption(STAFF_ONLY) || args.containsOption(CUSTOMERS_PASSWORD)
+                    ? runNarrowed(System.out, args.containsOption(STAFF_ONLY), args.containsOption(CUSTOMERS_PASSWORD))
+                    : run(System.out);
         }
+    }
+
+    /** {@code --staff-only} and/or {@code --customers-password}: nothing synthetic is added. */
+    @Transactional
+    public int runNarrowed(PrintStream out, boolean staff, boolean customersPassword) {
+        out.println("Solo profili local e test. Le password sono mostrate una sola volta:");
+        if (staff) {
+            out.println("  " + ADMIN_USERNAME + " (ADMIN)        password: "
+                    + staff(ADMIN_USERNAME, "Admin Seed", StaffRole.ADMIN));
+            out.println("  " + OPERATOR_USERNAME + " (OPERATOR) password: "
+                    + staff(OPERATOR_USERNAME, "Operatore Seed", StaffRole.OPERATOR));
+        }
+        if (customersPassword) {
+            String password = randomPassword();
+            int count = jdbc.update(
+                    "update customer_user set password_hash = ?, password_changed_at = ?",
+                    encoder.encode(password),
+                    Timestamp.from(Instant.now(clock)));
+            out.println("  clienti (" + count + " accessi)   password di tutti: " + password);
+        }
+        return 0;
     }
 
     /** Seeds and prints the passwords once; returns the exit code. One transaction: all or nothing. */

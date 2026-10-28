@@ -50,6 +50,29 @@ di prova, app sulla porta 8080) e stampa le password degli utenti staff a ogni a
 scripts/dev.sh             # PORT=9090 scripts/dev.sh per un'altra porta; --rebuild forza il jar
 ```
 
+### Con i dati del vecchio sistema (solo sul tuo computer)
+
+Per vedere la piattaforma con i clienti e gli ordini reali e confrontarla con il vecchio sistema,
+passa il dump di `lsdb` (lo stesso dell'importazione una tantum, ADR 0048):
+
+```sh
+scripts/dev.sh --legacy .local/legacy/lsdb_full_<data>.sql.gz   # ricrea ls_web_legacy da zero dal dump
+scripts/dev.sh --legacy                                         # riparte su ls_web_legacy com'era, modifiche incluse
+```
+
+* Usa un database a parte, `ls_web_legacy`: `ls_web` con i dati sintetici resta com'è e
+  `scripts/dev.sh` senza opzioni continua a usarlo.
+* Back office: `admin.seed` (o `operatore.seed`) con la password stampata a ogni avvio. Per
+  un altro amministratore: «Impostazioni → Utenti della gestione» (il link per la password
+  arriva in `.local/mail/`) oppure `create-staff-user` con
+  `--DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web_legacy`.
+* Area clienti: l'e-mail di un cliente importato (la trovi in «Gestione → Clienti») con la
+  password comune stampata a ogni avvio (solo in locale; in produzione i clienti entrano con il
+  link e poi scelgono la loro password).
+* Nessuna e-mail esce: finiscono in `.local/mail/*.eml`. Il dump va tenuto in `.local/legacy/`
+  (ignorata da git); il file SQL intermedio viene cancellato appena caricato. Servono `python3` e,
+  con Docker, il servizio `db` di `compose.yaml`.
+
 Passo per passo:
 
 ```sh

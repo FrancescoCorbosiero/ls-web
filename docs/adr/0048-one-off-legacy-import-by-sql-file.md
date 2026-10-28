@@ -69,6 +69,11 @@ authorised exception to CLAUDE.md, kept in `.local/legacy/` (gitignored). `users
 * The generator must be re-run on the dump taken at the cut-over: a file made from an earlier dump
   lacks the later orders and registrations.
 * The imported customers sign in with the e-mailed link the first time, then may set a password.
+* The same file gives a local copy to look at (owner request of 2026-10-28): `scripts/dev.sh
+  --legacy <dump>` rebuilds the database `ls_web_legacy` (the synthetic `ls_web` is left alone),
+  creates the seed staff with `dev-seed --staff-only`, loads the generated file and deletes it,
+  then gives every customer login one printed password (`dev-seed --customers-password`, local
+  and test profiles only); `scripts/dev.sh --legacy` restarts on that database as it was left.
 * The imported orders are ordinary rows: staff may edit, cancel or change their tracking; the
   `LEGACY-` temporary code tells them apart.
 

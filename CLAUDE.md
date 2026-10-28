@@ -38,6 +38,7 @@ phase.
 ```sh
 docker compose up --build && docker compose run --rm app dev-seed   # Docker only: database + app on :8080, synthetic data
 scripts/dev.sh                        # try the app: local database, build if needed, dev-seed, app on :8080 (PORT=…, --rebuild)
+scripts/dev.sh --legacy <dump.sql.gz> # the same on the legacy data (ADR 0048) in ls_web_legacy, rebuilt; --legacy alone reuses it
 scripts/local-db.sh start && eval "$(scripts/local-db.sh env)"   # PostgreSQL 16 in .local/pg (port 54329), TEST_DATABASE_* exports
 ./mvnw -B -ntp verify                 # Spotless check, unit tests (*Test), integration tests (*IT), jar
 ./mvnw spotless:apply                 # format Java sources and pom.xml

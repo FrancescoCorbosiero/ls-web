@@ -23,7 +23,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * ADM-01 / CUS-01: {@code dev-seed} exists only under the local and test profiles, creates the
@@ -54,6 +56,9 @@ class DevSeedCommandIT extends AbstractPostgresIT {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private PasswordEncoder encoder;
 
     @Test
     void theCommandIsLimitedToTheLocalAndTestProfiles() {
@@ -155,6 +160,60 @@ class DevSeedCommandIT extends AbstractPostgresIT {
         assertThat(command.getExitCode())
                 .as("without the command word the runner does nothing")
                 .isZero();
+    }
+
+    /**
+     * {@code --staff-only} resets the two staff accounts and adds nothing synthetic;
+     * {@code --customers-password} gives every customer login one printed password (the local copy
+     * of the legacy data, ADR 0048). Rolled back: the test database is shared.
+     */
+    @Test
+    @Transactional
+    void theNarrowedRunsTouchOnlyWhatTheyName() {
+        run();
+        Integer customersBefore = jdbc.queryForObject("select count(*) from customer", Integer.class);
+        Integer ordersBefore = jdbc.queryForObject("select count(*) from shipment_order", Integer.class);
+        String adminHashBefore = users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                .orElseThrow()
+                .getPasswordHash();
+
+        ByteArrayOutputStream staffOnly = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(new PrintStream(staffOnly, true, StandardCharsets.UTF_8), true, false))
+                .isZero();
+        Matcher staff = PASSWORD.matcher(staffOnly.toString(StandardCharsets.UTF_8));
+        assertThat(staff.find()).isTrue();
+        assertThat(encoder.matches(
+                        staff.group(3),
+                        users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                                .orElseThrow()
+                                .getPasswordHash()))
+                .isTrue();
+        assertThat(staffOnly.toString(StandardCharsets.UTF_8))
+                .doesNotContain("cliente")
+                .doesNotContain("ordini");
+
+        String adminHash = users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                .orElseThrow()
+                .getPasswordHash();
+        ByteArrayOutputStream customers = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(new PrintStream(customers, true, StandardCharsets.UTF_8), false, true))
+                .isZero();
+        Matcher shared =
+                Pattern.compile("password di tutti: (\\S+)").matcher(customers.toString(StandardCharsets.UTF_8));
+        assertThat(shared.find()).as("shared password printed: %s", customers).isTrue();
+        assertThat(jdbc.queryForList("select password_hash from customer_user", String.class))
+                .isNotEmpty()
+                .allSatisfy(hash ->
+                        assertThat(encoder.matches(shared.group(1), hash)).isTrue());
+        assertThat(users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                        .orElseThrow()
+                        .getPasswordHash())
+                .isEqualTo(adminHash)
+                .isNotEqualTo(adminHashBefore);
+        assertThat(jdbc.queryForObject("select count(*) from customer", Integer.class))
+                .isEqualTo(customersBefore);
+        assertThat(jdbc.queryForObject("select count(*) from shipment_order", Integer.class))
+                .isEqualTo(ordersBefore);
     }
 
     private String run() {
