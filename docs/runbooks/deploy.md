@@ -13,18 +13,25 @@ registrata con data ed esito in `docs/rehearsals/`).
 ## 1. Prima installazione (staging o produzione)
 
 1. VPS Ubuntu LTS con Docker e il plugin Compose; utente non root con accesso a Docker;
-   firewall: solo 22, 80, 443.
+   firewall: 22 e, da Cloudflare soltanto, 80 e 443.
 2. `git clone` del repository (o copia della sola cartella `deploy/`) in `/opt/ls-web`.
-3. `cp deploy/.env.example deploy/.env && chmod 600 deploy/.env` e compila **tutte** le voci
-   `(required)`: `LS_ACME_EMAIL`, `POSTGRES_PASSWORD`, `LS_SECURITY_IP_HASH_KEY`,
-   `LS_TOKEN_ENCRYPTION_KEY` (`openssl rand -base64 32`), le credenziali SES
-   (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` di un utente IAM limitato a
-   `ses:SendEmail`/`ses:SendRawEmail`), `LS_IMAGE_TAG` (un tag `sha-…` preciso, non `latest`).
+3. `cp deploy/.env.example deploy/.env && chmod 600 deploy/.env` e compila le voci `(required)`:
+   `POSTGRES_PASSWORD`, `LS_SECURITY_IP_HASH_KEY`, `LS_TOKEN_ENCRYPTION_KEY` (ognuna con
+   `openssl rand -base64 32`, generate sul server) e le credenziali SES
+   (`AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`). Il resto ha già il valore giusto. Regole del file:
+   i commenti solo su righe proprie (con `CHIAVE=   # testo` il commento diventerebbe il valore) e i
+   valori con spazi tra virgolette doppie; una variabile facoltativa che non usi resta commentata,
+   mai vuota. Tutte le righe del file arrivano all'app (`env_file` in `compose.yml`).
    In staging: `SPRING_PROFILES_ACTIVE=staging`, `LS_NOTIFICATIONS_SINK=directory` oppure `ses`
    **con** `LS_NOTIFICATIONS_ALLOW_LIST` (senza allow-list nessuna e-mail parte).
-4. DNS: record A/AAAA di `logisticasanchez.com`, `www.`, `app.`, `ordini.`, `dashboard.` verso il
-   VPS (in staging usa un dominio di prova e `LS_DOMAIN`). Caddy ottiene i certificati da solo.
-5. `cd deploy && docker login ghcr.io` (token GitHub con `read:packages` se il pacchetto è privato).
+4. Cloudflare (il firewall del VPS lascia entrare solo Cloudflare):
+   * record A/AAAA di `logisticasanchez.com`, `www`, `app`, `ordini`, `dashboard` verso il VPS,
+     **proxati** (nuvola arancione);
+   * SSL/TLS → modalità **Full** (Caddy cifra il tratto Cloudflare → server con un proprio
+     certificato interno: nessun certificato da copiare o rinnovare);
+   * i record di SES (DKIM, SPF, DMARC, MAIL FROM) copiati così come sono, **solo DNS** (nuvola
+     grigia).
+5. L'immagine `ghcr.io/francescocorbosiero/ls-web` è pubblica: nessun `docker login`.
 6. `docker compose --env-file .env config --quiet` (deve stare zitto), poi
    `docker compose --env-file .env up -d`. Flyway crea lo schema al primo avvio; il database
    parte **vuoto**; i dati del vecchio sistema si caricano una volta sola al cut-over (§6, Q-55
@@ -70,11 +77,12 @@ del database.
 
 ## 4. Backup e restore (NFR-05)
 
-* Chiavi: genera una coppia `age` sul computer del proprietario (`age-keygen`), copia **solo la
-  chiave pubblica** nel server (`LS_BACKUP_AGE_RECIPIENT=age1…` in `deploy/.env`); la chiave
-  privata resta fuori dal server (gestore di password).
-* Copia off-site: configura `rclone` verso uno storage esterno e imposta
-  `LS_BACKUP_RCLONE_REMOTE=offsite:ls-web-backups`.
+* Senza configurare nulla: `deploy/backup.sh` salva il database in
+  `/var/backups/ls-web/daily/ls_web-<data>.sql.gz`, leggibile solo dal proprietario del file.
+* Facoltativo, più avanti: una copia fuori dal server. Serve una coppia di chiavi `age`
+  (`age-keygen` sul tuo computer; sul server solo la pubblica, `LS_BACKUP_AGE_RECIPIENT=age1…`) e
+  `rclone` verso uno storage esterno (`LS_BACKUP_RCLONE_REMOTE=offsite:ls-web-backups`): lo script
+  cifra il file e lo copia; senza chiave non copia nulla fuori.
 * Pianificazione (cron dell'utente che gestisce Docker):
   ```
   15 3 * * *  /opt/ls-web/deploy/backup.sh >> /var/log/ls-web-backup.log 2>&1
@@ -84,8 +92,9 @@ del database.
   fallisce se l'ultimo backup ha più di 26 ore.
 * Restore (prova almeno una volta in staging e registra la data in `docs/rehearsals/`):
   ```sh
-  LS_BACKUP_AGE_IDENTITY=/path/chiave-privata.txt deploy/backup.sh --restore /var/backups/ls-web/daily/ls_web-<data>.sql.gz.age
+  deploy/backup.sh --restore /var/backups/ls-web/daily/ls_web-<data>.sql.gz
   ```
+  (un file cifrato `….sql.gz.age` chiede anche `LS_BACKUP_AGE_IDENTITY=/path/chiave-privata.txt`).
   Il comando ferma l'app, carica il dump nel database del progetto e riavvia l'app. Su un
   database non vuoto ricreare prima il volume (`docker compose stop app db`, `docker volume rm
   ls-web_pg_data`, `docker compose up -d db`).
@@ -99,7 +108,6 @@ del database.
 | `LS_TOKEN_ENCRYPTION_KEY` | nuova chiave in `.env`, `up -d app` | i link ancora in coda nell'outbox non sono più decifrabili: le righe `QUEUED` falliscono e il cliente richiede il link |
 | `LS_SECURITY_IP_HASH_KEY` | nuova chiave, `up -d app` | gli hash IP precedenti non sono più confrontabili (solo rate limit e retention) |
 | Password staff | ADMIN crea un nuovo utente da «Impostazioni → Utenti» (link imposta-password) e disattiva il vecchio | sessioni del vecchio utente chiuse |
-| Token GitHub per GHCR | nuovo token con `read:packages`, `docker login ghcr.io` | nessuno |
 
 ## 6. Cut-over dal vecchio sistema (schema; dettagli al Gate 1)
 
