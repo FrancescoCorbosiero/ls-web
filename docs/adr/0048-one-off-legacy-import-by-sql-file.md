@@ -74,6 +74,11 @@ authorised exception to CLAUDE.md, kept in `.local/legacy/` (gitignored). `users
   creates the seed staff with `dev-seed --staff-only`, loads the generated file and deletes it,
   then gives every customer login one printed password (`dev-seed --customers-password`, local
   and test profiles only); `scripts/dev.sh --legacy` restarts on that database as it was left.
+  With Docker, `docker compose run --rm --build legacy` (profile `legacy` of `compose.yaml`) does the
+  same in `ls_web`: a `python:3.13-alpine` container writes the file, then the app image runs
+  `dev-seed --staff-only --legacy-sql=<file> --customers-password`, which executes the file on its
+  own JDBC connection (psql meta-commands skipped) and deletes it. This loader exists only under the
+  local and test profiles; production keeps loading the file with psql.
 * The imported orders are ordinary rows: staff may edit, cancel or change their tracking; the
   `LEGACY-` temporary code tells them apart.
 

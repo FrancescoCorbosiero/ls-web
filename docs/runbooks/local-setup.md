@@ -52,8 +52,32 @@ scripts/dev.sh             # PORT=9090 scripts/dev.sh per un'altra porta; --rebu
 
 ### Con i dati del vecchio sistema (solo sul tuo computer)
 
-Per vedere la piattaforma con i clienti e gli ordini reali e confrontarla con il vecchio sistema,
-passa il dump di `lsdb` (lo stesso dell'importazione una tantum, ADR 0048):
+Per vedere la piattaforma con i clienti e gli ordini reali e confrontarla con il vecchio sistema
+serve il dump di `lsdb` (lo stesso dell'importazione una tantum, ADR 0048), copiato in
+`.local/legacy/` (ignorata da git).
+
+**Con Docker**, al posto di `docker compose run --rm app dev-seed`:
+
+```sh
+docker compose down -v                     # solo se vuoi un database vuoto (cancella anche i dati sintetici)
+docker compose run --rm --build legacy     # genera il file dal dump più recente di .local/legacy/, lo carica, lo cancella
+docker compose up --build                  # l'app su http://localhost:8080
+```
+
+* Stampa la password di `admin.seed` / `operatore.seed` e una password comune per i clienti
+  importati (solo in locale). Il database resta tra un avvio e l'altro; per nuove password:
+  `docker compose run --rm app dev-seed --staff-only --customers-password`.
+* Un secondo caricamento sullo stesso database viene rifiutato: per ricaricare da capo,
+  `docker compose down -v` e di nuovo `run --rm --build legacy`. Un dump diverso dal più recente:
+  `LEGACY_DUMP=<nome del file> docker compose run --rm --build legacy`.
+* Se l'app è già accesa (`docker compose up` in un altro terminale) basta il comando `run`: i dati
+  compaiono subito.
+* Un altro amministratore oltre ad `admin.seed`: «Impostazioni → Utenti della gestione» oppure
+  `docker compose run --rm app create-staff-user --username=<nome> --role=ADMIN --name="Nome Cognome"`
+  (il link per la password è stampato e arriva in `.local/mail/`).
+* Non serve altro sul computer: il file si genera in un container `python:3.13-alpine`.
+
+**Senza Docker per l'app** (database locale o Docker, app con `scripts/dev.sh`):
 
 ```sh
 scripts/dev.sh --legacy .local/legacy/lsdb_full_<data>.sql.gz   # ricrea ls_web_legacy da zero dal dump

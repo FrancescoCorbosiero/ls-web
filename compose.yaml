@@ -3,13 +3,16 @@
 #   docker compose up --build            # PostgreSQL 16 (localhost:54329, role ls/ls, databases ls_web,
 #                                        # ls_web_test, ls_web_e2e) + the app on http://localhost:8080
 #   docker compose run --rm app dev-seed # synthetic data, once per database (passwords printed once)
+#   docker compose run --rm --build legacy   # instead: the legacy dump of .local/legacy/ (ADR 0048), once per
+#                                        # database (docker compose down -v first for an empty one)
 #   docker compose down                  # stop (add -v to drop the database)
 #
 #   docker compose up -d db              # only the database, e.g. for scripts/dev.sh or the tests
 #   scripts/dev.sh                       # uses it automatically when initdb is missing
 #
 # Same port and credentials as scripts/local-db.sh, so tests, e2e/run.sh and dev.sh work unchanged.
-# Everything here is local only: no secret, no real data.
+# Everything here is local only: no secret, no real data in the repository (the legacy dump stays in
+# .local/legacy/, gitignored, and the import file made from it is deleted once loaded).
 name: ls-web-dev
 
 services:
@@ -33,12 +36,12 @@ services:
       retries: 20
 
   app:
-    build:
+    build: &app-build
       context: .
       dockerfile: Dockerfile
     ports:
       - "127.0.0.1:${PORT:-8080}:8080"
-    environment:
+    environment: &app-environment
       SPRING_PROFILES_ACTIVE: local
       DATABASE_URL: jdbc:postgresql://db:5432/ls_web
       DATABASE_USER: ls
@@ -49,6 +52,49 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  # The legacy data in ls_web, on request only (profile legacy):  docker compose run --rm --build legacy
+  # legacy-sql writes .local/legacy/dev-import.sql from the newest .local/legacy/*.sql.gz (or
+  # LEGACY_DUMP=<file name in .local/legacy>) with tools/legacy-import; legacy then creates the seed
+  # staff, loads the file, deletes it and prints one password for every customer login (dev-seed,
+  # local profile only). A second load is refused; new passwords:
+  # docker compose run --rm app dev-seed --staff-only --customers-password
+  legacy-sql:
+    image: python:3.13-alpine
+    profiles: [legacy]
+    environment:
+      LEGACY_DUMP: ${LEGACY_DUMP:-}
+    volumes:
+      - ./tools/legacy-import:/tools:ro
+      - ./.local/legacy:/data
+    command:
+      - sh
+      - -c
+      - |
+        dump="$${LEGACY_DUMP:+/data/$$LEGACY_DUMP}"
+        [ -n "$$dump" ] || dump="$$(ls -t /data/*.sql.gz 2>/dev/null | head -1)"
+        if [ -z "$$dump" ] || [ ! -f "$$dump" ]; then
+          echo "Metti il dump del vecchio sistema in .local/legacy/ (un file .sql.gz)" >&2
+          exit 1
+        fi
+        echo "Dump: $${dump#/data/}"
+        python3 -I /tools/generate_import_sql.py "$$dump" /data/dev-import.sql
+
+  legacy:
+    build: *app-build
+    profiles: [legacy]
+    # root reads and deletes the import file, which legacy-sql writes readable by its owner only
+    user: root
+    environment: *app-environment
+    volumes:
+      - ./.local/mail:/app/mail
+      - ./.local/legacy:/app/legacy
+    command: [dev-seed, --staff-only, --legacy-sql=/app/legacy/dev-import.sql, --customers-password]
+    depends_on:
+      db:
+        condition: service_healthy
+      legacy-sql:
+        condition: service_completed_successfully
 
 volumes:
   dev_pgdata:

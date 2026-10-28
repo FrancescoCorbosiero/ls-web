@@ -13,9 +13,17 @@ import it.logisticasanchez.web.site.forms.FormValidator;
 import it.logisticasanchez.web.site.forms.LeadService;
 import it.logisticasanchez.web.site.forms.LeadStatus;
 import it.logisticasanchez.web.tracking.TrackingState;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Clock;
 import java.time.Instant;
@@ -26,6 +34,8 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import javax.sql.DataSource;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.ExitCodeGenerator;
@@ -33,7 +43,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * {@code dev-seed} (local and test profiles only; ADM-01 forbids seeded staff elsewhere): two
@@ -48,11 +60,14 @@ import org.springframework.transaction.annotation.Transactional;
  * that is missing). Run as {@code java -jar app.jar dev-seed
  * --spring.profiles.active=local}; the bean does not exist outside local and test.
  *
- * <p>Two options narrow the run, for a local copy of the legacy data ({@code scripts/dev.sh
- * --legacy}, ADR 0048): {@code --staff-only} creates or resets only the two staff accounts, with
- * no synthetic customer, order or request; {@code --customers-password} sets one new random
- * password, printed once, on every customer login, so each imported customer can be opened in
- * the customer area with its e-mail. Given together, both run.
+ * <p>Three options narrow the run, for a local copy of the legacy data ({@code scripts/dev.sh
+ * --legacy}, {@code docker compose run --rm legacy}; ADR 0048), in this order when combined:
+ * {@code --staff-only} creates or resets only the two staff accounts, with no synthetic customer,
+ * order or request; {@code --legacy-sql=<file>} runs the import file written by
+ * {@code tools/legacy-import/generate_import_sql.py} (it holds its own transaction) and deletes it,
+ * since it holds real data; {@code --customers-password} sets one new random password, printed
+ * once, on every customer login, so each imported customer can be opened in the customer area with
+ * its e-mail. Production loads that file with psql, never through this command.
  */
 @Component
 @Profile({"local", "test"})
@@ -61,6 +76,7 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
     public static final String NAME = "dev-seed";
     public static final String STAFF_ONLY = "staff-only";
     public static final String CUSTOMERS_PASSWORD = "customers-password";
+    public static final String LEGACY_SQL = "legacy-sql";
     public static final String ADMIN_USERNAME = "admin.seed";
     public static final String OPERATOR_USERNAME = "operatore.seed";
     public static final String ACTIVE_CUSTOMER_EMAIL = "cliente.attivo@cliente.example";
@@ -78,6 +94,8 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
     private final FormValidator forms;
     private final LeadService leads;
     private final Clock clock;
+    private final DataSource dataSource;
+    private final TransactionTemplate transactions;
     private volatile int exitCode;
 
     public DevSeedCommand(
@@ -88,7 +106,9 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
             OrderService orders,
             FormValidator forms,
             LeadService leads,
-            Clock clock) {
+            Clock clock,
+            DataSource dataSource,
+            PlatformTransactionManager transactionManager) {
         this.users = users;
         this.encoder = encoder;
         this.jdbc = jdbc;
@@ -97,6 +117,8 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
         this.forms = forms;
         this.leads = leads;
         this.clock = clock;
+        this.dataSource = dataSource;
+        this.transactions = new TransactionTemplate(transactionManager);
     }
 
     public static boolean isRequested(String... args) {
@@ -104,34 +126,88 @@ public class DevSeedCommand implements ApplicationRunner, ExitCodeGenerator {
     }
 
     @Override
-    @Transactional
     public void run(ApplicationArguments args) {
-        if (args.getNonOptionArgs().contains(NAME)) {
-            exitCode = args.containsOption(STAFF_ONLY) || args.containsOption(CUSTOMERS_PASSWORD)
-                    ? runNarrowed(System.out, args.containsOption(STAFF_ONLY), args.containsOption(CUSTOMERS_PASSWORD))
-                    : run(System.out);
+        if (!args.getNonOptionArgs().contains(NAME)) {
+            return;
+        }
+        List<String> legacySql = args.getOptionValues(LEGACY_SQL);
+        if (args.containsOption(STAFF_ONLY) || args.containsOption(CUSTOMERS_PASSWORD) || legacySql != null) {
+            exitCode = runNarrowed(
+                    System.out,
+                    args.containsOption(STAFF_ONLY),
+                    legacySql == null || legacySql.isEmpty() ? null : Path.of(legacySql.get(0)),
+                    args.containsOption(CUSTOMERS_PASSWORD));
+        } else {
+            exitCode = transactions.execute(status -> run(System.out));
         }
     }
 
-    /** {@code --staff-only} and/or {@code --customers-password}: nothing synthetic is added. */
-    @Transactional
-    public int runNarrowed(PrintStream out, boolean staff, boolean customersPassword) {
+    /**
+     * {@code --staff-only}, {@code --legacy-sql} and {@code --customers-password}, in this order:
+     * nothing synthetic is added. The staff is committed before the import file runs on its own
+     * connection (its internal notes need an ADMIN). Returns 1 when the file is missing or fails.
+     */
+    public int runNarrowed(PrintStream out, boolean staff, Path legacySql, boolean customersPassword) {
         out.println("Solo profili local e test. Le password sono mostrate una sola volta:");
         if (staff) {
-            out.println("  " + ADMIN_USERNAME + " (ADMIN)        password: "
-                    + staff(ADMIN_USERNAME, "Admin Seed", StaffRole.ADMIN));
-            out.println("  " + OPERATOR_USERNAME + " (OPERATOR) password: "
-                    + staff(OPERATOR_USERNAME, "Operatore Seed", StaffRole.OPERATOR));
+            transactions.executeWithoutResult(status -> {
+                out.println("  " + ADMIN_USERNAME + " (ADMIN)        password: "
+                        + staff(ADMIN_USERNAME, "Admin Seed", StaffRole.ADMIN));
+                out.println("  " + OPERATOR_USERNAME + " (OPERATOR) password: "
+                        + staff(OPERATOR_USERNAME, "Operatore Seed", StaffRole.OPERATOR));
+            });
+        }
+        if (legacySql != null && !loadLegacySql(out, legacySql)) {
+            return 1;
         }
         if (customersPassword) {
-            String password = randomPassword();
-            int count = jdbc.update(
-                    "update customer_user set password_hash = ?, password_changed_at = ?",
-                    encoder.encode(password),
-                    Timestamp.from(Instant.now(clock)));
-            out.println("  clienti (" + count + " accessi)   password di tutti: " + password);
+            transactions.executeWithoutResult(status -> {
+                String password = randomPassword();
+                int count = jdbc.update(
+                        "update customer_user set password_hash = ?, password_changed_at = ?",
+                        encoder.encode(password),
+                        Timestamp.from(Instant.now(clock)));
+                out.println("  clienti (" + count + " accessi)   password di tutti: " + password);
+            });
         }
         return 0;
+    }
+
+    /**
+     * Runs the generated import file as one script on its own connection (the file has its own
+     * BEGIN/COMMIT; psql meta-commands such as {@code \set} are skipped), prints its notices and
+     * deletes the file whatever the outcome: it holds real personal data and is regenerated from
+     * the dump.
+     */
+    private boolean loadLegacySql(PrintStream out, Path file) {
+        if (!Files.isRegularFile(file)) {
+            out.println("  file di importazione non trovato: " + file);
+            return false;
+        }
+        try {
+            String script = Files.readAllLines(file, StandardCharsets.UTF_8).stream()
+                    .filter(line -> !line.startsWith("\\"))
+                    .collect(Collectors.joining("\n"));
+            try (Connection connection = dataSource.getConnection();
+                    Statement statement = connection.createStatement()) {
+                connection.setAutoCommit(true);
+                statement.execute(script);
+                for (SQLWarning w = statement.getWarnings(); w != null; w = w.getNextWarning()) {
+                    out.println("  " + w.getMessage());
+                }
+            }
+            out.println("  dati legacy caricati");
+            return true;
+        } catch (IOException | SQLException e) {
+            out.println("  importazione non riuscita: " + e.getMessage());
+            return false;
+        } finally {
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                out.println("  non riesco a cancellare " + file + ": cancellalo a mano (dati reali)");
+            }
+        }
     }
 
     /** Seeds and prints the passwords once; returns the exit code. One transaction: all or nothing. */
