@@ -58,7 +58,7 @@ services:
   # LEGACY_DUMP=<file name in .local/legacy>) with tools/legacy-import; legacy then creates the seed
   # staff, loads the file, deletes it and prints one password for every customer login (dev-seed,
   # local profile only). A second load is refused; new passwords:
-  # docker compose run --rm app dev-seed --staff-only --customers-password
+  # docker compose run --rm app dev-seed --staff-only --customers-password --logging.level.root=warn --logging.level.it.logisticasanchez=warn --spring.main.banner-mode=off
   legacy-sql:
     image: python:3.13-alpine
     profiles: [legacy]
@@ -89,7 +89,9 @@ services:
     volumes:
       - ./.local/mail:/app/mail
       - ./.local/legacy:/app/legacy
-    command: [dev-seed, --staff-only, --legacy-sql=/app/legacy/dev-import.sql, --customers-password]
+    # quiet logs: the passwords, printed once, stay readable
+    command: [dev-seed, --staff-only, --legacy-sql=/app/legacy/dev-import.sql, --customers-password,
+              --logging.level.root=warn, --logging.level.it.logisticasanchez=warn, --spring.main.banner-mode=off]
     depends_on:
       db:
         condition: service_healthy
