@@ -34,6 +34,12 @@ registrata con data ed esito in `docs/rehearsals/`).
    * i record di SES (DKIM, SPF, DMARC, MAIL FROM) copiati così come sono, **solo DNS** (nuvola
      grigia).
 5. L'immagine `ghcr.io/francescocorbosiero/ls-web` è pubblica: nessun `docker login`.
+   Reverse proxy: sul VPS di produzione le porte 80/443 sono di un **caddy-docker-proxy** condiviso
+   (container `caddy`, rete `caddy`); `compose.yml` avvia solo `app` e `db`, collega l'app a quella
+   rete e le dà le etichette `caddy.*` (i cinque domini, certificato interno verso Cloudflare, IP del
+   visitatore da `CF-Connecting-IP`): nulla da modificare nel proxy condiviso. Su un server senza
+   proxy: `docker network create caddy && docker compose --profile own-proxy up -d` usa il Caddy del
+   progetto (`deploy/caddy/Caddyfile`).
 6. `docker compose config --quiet` (deve stare zitto), poi
    `docker compose up -d`. Flyway crea lo schema al primo avvio; il database
    parte **vuoto**; i dati del vecchio sistema si caricano una volta sola al cut-over (§6, Q-55
