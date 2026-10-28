@@ -27,7 +27,8 @@ registrata con data ed esito in `docs/rehearsals/`).
 5. `cd deploy && docker login ghcr.io` (token GitHub con `read:packages` se il pacchetto è privato).
 6. `docker compose --env-file .env config --quiet` (deve stare zitto), poi
    `docker compose --env-file .env up -d`. Flyway crea lo schema al primo avvio; il database
-   parte **vuoto** (decisione Q-55: nessuna migrazione dal vecchio sistema).
+   parte **vuoto**; i dati del vecchio sistema si caricano una volta sola al cut-over (§6, Q-55
+   riaperta il 2026-10-28, ADR 0048).
 7. Primo amministratore: `docker compose --env-file .env run --rm app create-staff-user
    --username=<nome> --role=ADMIN --name="Nome Cognome"` stampa un link
    `https://<dominio>/gestione/imposta-password?t=…` valido una volta: aprilo e scegli la password.
@@ -102,17 +103,24 @@ del database.
 
 ## 6. Cut-over dal vecchio sistema (schema; dettagli al Gate 1)
 
-Database **vuoto** al via (Q-55): i clienti si registrano di nuovo dall'area clienti. Ordine
-delle operazioni, tutte reversibili finché il vecchio VPS resta acceso:
+I clienti e gli ordini degli ultimi sei mesi del vecchio sistema si caricano **una volta sola** con un
+file SQL generato dal dump (Q-55 riaperta il 2026-10-28, ADR 0048, `tools/legacy-import/README.md`).
+Ordine delle operazioni, tutte reversibili finché il vecchio VPS resta acceso:
 
 1. Staging verde con la stessa immagine e `docker compose config` pulito; prova di restore fatta.
 2. Produzione installata (§1) su un dominio tecnico; smoke test con l'allow-list e-mail.
 3. Abbassare il TTL dei record DNS a 300 s almeno un giorno prima.
 4. Finestra: nel vecchio nginx bloccare i percorsi di scrittura (chapter 10 §7); spostare i
    record A/AAAA di apex, `www`, `app`, `ordini`, `dashboard` sul nuovo VPS; Caddy emette i
-   certificati entro pochi minuti; verificare `/`, `/area-clienti/`, `/gestione/`,
+   certificati entro pochi minuti. Subito dopo il blocco delle scritture: dump del vecchio `lsdb`,
+   `python3 -I tools/legacy-import/generate_import_sql.py <dump> import_legacy.sql` su una macchina
+   fidata, copia del file sul VPS, `deploy/backup.sh`, primo amministratore già creato (§1 punto 7),
+   poi `docker compose --env-file .env exec -T db psql -U ls -d ls_web -v ON_ERROR_STOP=1 <
+   import_legacy.sql` (una transazione; un secondo caricamento viene rifiutato); infine cancellare
+   dump e file dal VPS. Verificare `/`, `/area-clienti/`, `/gestione/`,
    `POST /mono/api/order/trace/state`, un vecchio link `/mono/email-confirm?…` → pagina 410.
 5. Rimuovere i record DNS pendenti (`api.` e altri non più usati), poi ruotare le vecchie
    credenziali (chiave SES del vecchio backend, `JWT_KEY`, password staff; §5).
 6. Rollback: riportare i record DNS al vecchio VPS (TTL 300 s) e riaprire i percorsi di
-   scrittura; nulla è stato migrato, quindi nessun dato da riconciliare.
+   scrittura; gli ordini inseriti nel nuovo sistema dopo lo switch vanno ripresi a mano nel vecchio
+   (l'importazione va solo dal vecchio al nuovo).

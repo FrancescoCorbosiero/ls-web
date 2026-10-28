@@ -13,17 +13,22 @@ import it.logisticasanchez.web.support.AbstractPostgresIT;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * ADM-01 / CUS-01: {@code dev-seed} exists only under the local and test profiles, creates the
@@ -54,6 +59,9 @@ class DevSeedCommandIT extends AbstractPostgresIT {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private PasswordEncoder encoder;
 
     @Test
     void theCommandIsLimitedToTheLocalAndTestProfiles() {
@@ -155,6 +163,105 @@ class DevSeedCommandIT extends AbstractPostgresIT {
         assertThat(command.getExitCode())
                 .as("without the command word the runner does nothing")
                 .isZero();
+    }
+
+    /**
+     * {@code --staff-only} resets the two staff accounts and adds nothing synthetic;
+     * {@code --customers-password} gives every customer login one printed password (the local copy
+     * of the legacy data, ADR 0048). Rolled back: the test database is shared.
+     */
+    @Test
+    @Transactional
+    void theNarrowedRunsTouchOnlyWhatTheyName() {
+        run();
+        Integer customersBefore = jdbc.queryForObject("select count(*) from customer", Integer.class);
+        Integer ordersBefore = jdbc.queryForObject("select count(*) from shipment_order", Integer.class);
+        String adminHashBefore = users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                .orElseThrow()
+                .getPasswordHash();
+
+        ByteArrayOutputStream staffOnly = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(new PrintStream(staffOnly, true, StandardCharsets.UTF_8), true, null, false))
+                .isZero();
+        Matcher staff = PASSWORD.matcher(staffOnly.toString(StandardCharsets.UTF_8));
+        assertThat(staff.find()).isTrue();
+        assertThat(encoder.matches(
+                        staff.group(3),
+                        users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                                .orElseThrow()
+                                .getPasswordHash()))
+                .isTrue();
+        assertThat(staffOnly.toString(StandardCharsets.UTF_8))
+                .doesNotContain("cliente")
+                .doesNotContain("ordini");
+
+        String adminHash = users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                .orElseThrow()
+                .getPasswordHash();
+        ByteArrayOutputStream customers = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(new PrintStream(customers, true, StandardCharsets.UTF_8), false, null, true))
+                .isZero();
+        Matcher shared =
+                Pattern.compile("password di tutti: (\\S+)").matcher(customers.toString(StandardCharsets.UTF_8));
+        assertThat(shared.find()).as("shared password printed: %s", customers).isTrue();
+        assertThat(jdbc.queryForList("select password_hash from customer_user", String.class))
+                .isNotEmpty()
+                .allSatisfy(hash ->
+                        assertThat(encoder.matches(shared.group(1), hash)).isTrue());
+        assertThat(users.findByUsername(DevSeedCommand.ADMIN_USERNAME)
+                        .orElseThrow()
+                        .getPasswordHash())
+                .isEqualTo(adminHash)
+                .isNotEqualTo(adminHashBefore);
+        assertThat(jdbc.queryForObject("select count(*) from customer", Integer.class))
+                .isEqualTo(customersBefore);
+        assertThat(jdbc.queryForObject("select count(*) from shipment_order", Integer.class))
+                .isEqualTo(ordersBefore);
+    }
+
+    /**
+     * {@code --legacy-sql}: the import file runs as one script on its own connection, psql
+     * meta-commands skipped, its notices printed; the file is deleted whether it worked or not (it
+     * holds real data). Synthetic scripts that write nothing.
+     */
+    @Test
+    void theLegacyFileRunsOnceAndIsDeleted(@TempDir Path dir) throws Exception {
+        Path ok = dir.resolve("ok.sql");
+        Files.writeString(ok, """
+                \\set ON_ERROR_STOP on
+                BEGIN;
+                CREATE TEMP TABLE imp_probe (n integer) ON COMMIT DROP;
+                INSERT INTO imp_probe VALUES (1), (2);
+                DO $$
+                BEGIN
+                    RAISE NOTICE 'legacy import: % righe di prova', (SELECT count(*) FROM imp_probe);
+                END $$;
+                COMMIT;
+                """);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(new PrintStream(out, true, StandardCharsets.UTF_8), false, ok, false))
+                .isZero();
+        assertThat(out.toString(StandardCharsets.UTF_8))
+                .contains("legacy import: 2 righe di prova")
+                .contains("dati legacy caricati");
+        assertThat(ok).doesNotExist();
+
+        Path failing = dir.resolve("failing.sql");
+        Files.writeString(failing, "DO $$ BEGIN RAISE EXCEPTION 'legacy import: already loaded'; END $$;\n");
+        ByteArrayOutputStream refused = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(new PrintStream(refused, true, StandardCharsets.UTF_8), false, failing, true))
+                .isEqualTo(1);
+        assertThat(refused.toString(StandardCharsets.UTF_8))
+                .contains("importazione non riuscita")
+                .contains("already loaded")
+                .doesNotContain("password di tutti");
+        assertThat(failing).doesNotExist();
+
+        ByteArrayOutputStream missing = new ByteArrayOutputStream();
+        assertThat(command.runNarrowed(
+                        new PrintStream(missing, true, StandardCharsets.UTF_8), false, dir.resolve("none.sql"), false))
+                .isEqualTo(1);
+        assertThat(missing.toString(StandardCharsets.UTF_8)).contains("non trovato");
     }
 
     private String run() {

@@ -50,6 +50,53 @@ di prova, app sulla porta 8080) e stampa le password degli utenti staff a ogni a
 scripts/dev.sh             # PORT=9090 scripts/dev.sh per un'altra porta; --rebuild forza il jar
 ```
 
+### Con i dati del vecchio sistema (solo sul tuo computer)
+
+Per vedere la piattaforma con i clienti e gli ordini reali e confrontarla con il vecchio sistema
+serve il dump di `lsdb` (lo stesso dell'importazione una tantum, ADR 0048), copiato in
+`.local/legacy/` (ignorata da git).
+
+**Con Docker**, al posto di `docker compose run --rm app dev-seed`:
+
+```sh
+docker compose down -v                     # solo se vuoi un database vuoto (cancella anche i dati sintetici)
+docker compose run --rm --build legacy     # genera il file dal dump più recente di .local/legacy/, lo carica, lo cancella
+docker compose up --build                  # l'app su http://localhost:8080
+```
+
+* Stampa la password di `admin.seed` / `operatore.seed` e una password comune per i clienti
+  importati (solo in locale). Il database resta tra un avvio e l'altro; per nuove password:
+  `docker compose run --rm app dev-seed --staff-only --customers-password`.
+* Un secondo caricamento sullo stesso database viene rifiutato: per ricaricare da capo,
+  `docker compose down -v` e di nuovo `run --rm --build legacy`. Un dump diverso dal più recente:
+  `LEGACY_DUMP=<nome del file> docker compose run --rm --build legacy`.
+* Se l'app è già accesa (`docker compose up` in un altro terminale) basta il comando `run`: i dati
+  compaiono subito.
+* Un altro amministratore oltre ad `admin.seed`: «Impostazioni → Utenti della gestione» oppure
+  `docker compose run --rm app create-staff-user --username=<nome> --role=ADMIN --name="Nome Cognome"`
+  (il link per la password è stampato e arriva in `.local/mail/`).
+* Non serve altro sul computer: il file si genera in un container `python:3.13-alpine`.
+
+**Senza Docker per l'app** (database locale o Docker, app con `scripts/dev.sh`):
+
+```sh
+scripts/dev.sh --legacy .local/legacy/lsdb_full_<data>.sql.gz   # ricrea ls_web_legacy da zero dal dump
+scripts/dev.sh --legacy                                         # riparte su ls_web_legacy com'era, modifiche incluse
+```
+
+* Usa un database a parte, `ls_web_legacy`: `ls_web` con i dati sintetici resta com'è e
+  `scripts/dev.sh` senza opzioni continua a usarlo.
+* Back office: `admin.seed` (o `operatore.seed`) con la password stampata a ogni avvio. Per
+  un altro amministratore: «Impostazioni → Utenti della gestione» (il link per la password
+  arriva in `.local/mail/`) oppure `create-staff-user` con
+  `--DATABASE_URL=jdbc:postgresql://localhost:54329/ls_web_legacy`.
+* Area clienti: l'e-mail di un cliente importato (la trovi in «Gestione → Clienti») con la
+  password comune stampata a ogni avvio (solo in locale; in produzione i clienti entrano con il
+  link e poi scelgono la loro password).
+* Nessuna e-mail esce: finiscono in `.local/mail/*.eml`. Il dump va tenuto in `.local/legacy/`
+  (ignorata da git); il file SQL intermedio viene cancellato appena caricato. Servono `python3` e,
+  con Docker, il servizio `db` di `compose.yaml`.
+
 Passo per passo:
 
 ```sh
