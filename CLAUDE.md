@@ -51,6 +51,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium e2e/run.sh   # where the pre-installed C
 tools/parity-matrix.py [--check]      # regenerate docs/parity-matrix.md Status from the tags and the last reports
 python3 tools/port-ls-home-pages.py --check   # public templates still equal a fresh port of legacy/ls-home (needs the checkout)
 tools/ci/guard-tracked-files.sh       # files that must never be tracked
+python3 -I tools/legacy-import/generate_import_sql.py <dump.sql.gz> .local/legacy/import_legacy.sql   # one-off legacy import file (ADR 0048; real data: .local only)
 docker build -t ls-web:dev . && (cd deploy && docker compose --env-file .env.example config --quiet)   # image and Compose (needs a daemon)
 ```
 
