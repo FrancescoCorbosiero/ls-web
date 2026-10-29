@@ -154,9 +154,10 @@ jobs:
 
       - name: Compose file is valid
         working-directory: deploy
-        run: docker compose --env-file .env.example -f compose.yml config --quiet
+        # compose.yml reads deploy/.env (env_file): the example stands in for it, the required
+        # values come from the environment below
+        run: cp .env.example .env && docker compose -f compose.yml config --quiet
         env:
-          LS_ACME_EMAIL: ci@example.invalid
           POSTGRES_PASSWORD: ci-only
           LS_SECURITY_IP_HASH_KEY: ci-only
           LS_TOKEN_ENCRYPTION_KEY: ci-only
