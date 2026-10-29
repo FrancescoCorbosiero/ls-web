@@ -7,8 +7,13 @@
 name: ls-web
 
 services:
+  # Caddy of this project, only on a server without a reverse proxy of its own:
+  #   docker network create caddy && docker compose --profile own-proxy up -d
+  # On the production VPS a shared caddy-docker-proxy (network "caddy") already holds 80/443 and
+  # reads the caddy.* labels of the app below.
   proxy:
     image: caddy:2
+    profiles: [own-proxy]
     restart: unless-stopped
     ports:
       - "80:80"
@@ -20,6 +25,7 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+    networks: [default, proxy]
     depends_on:
       app:
         condition: service_healthy
@@ -50,6 +56,19 @@ services:
       LS_BUSINESS_SITEURL: ${LS_BUSINESS_SITEURL:-https://logisticasanchez.com}
     expose:
       - "8080"
+    networks: [default, proxy]
+    # Read by caddy-docker-proxy: the five hosts, Caddy's internal certificate towards Cloudflare
+    # (SSL mode Full), the visitor IP of CF-Connecting-IP as the only X-Forwarded-For value (the app
+    # trusts one hop; the firewall admits only Cloudflare, which sets that header). Nothing here
+    # changes the shared proxy's global settings or the other sites.
+    labels:
+      caddy: "${LS_DOMAIN:-logisticasanchez.com}, www.${LS_DOMAIN:-logisticasanchez.com}, app.${LS_DOMAIN:-logisticasanchez.com}, ordini.${LS_DOMAIN:-logisticasanchez.com}, dashboard.${LS_DOMAIN:-logisticasanchez.com}"
+      caddy.tls: internal
+      caddy.encode: zstd gzip
+      caddy.reverse_proxy: "{{upstreams 8080}}"
+      caddy.reverse_proxy.header_up_0: "X-Forwarded-For {http.request.header.CF-Connecting-IP}"
+      caddy.reverse_proxy.header_up_1: "X-Forwarded-Host {host}"
+      caddy_ingress_network: ${LS_PROXY_NETWORK:-caddy}
     depends_on:
       db:
         condition: service_healthy
@@ -76,6 +95,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 10
+
+networks:
+  # The reverse proxy's network (created by the shared caddy-docker-proxy, or by hand for own-proxy).
+  proxy:
+    external: true
+    name: ${LS_PROXY_NETWORK:-caddy}
 
 volumes:
   caddy_data:
