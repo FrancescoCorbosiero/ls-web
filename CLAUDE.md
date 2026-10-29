@@ -54,7 +54,7 @@ tools/parity-matrix.py [--check]      # regenerate docs/parity-matrix.md Status 
 python3 tools/port-ls-home-pages.py --check   # public templates still equal a fresh port of legacy/ls-home (needs the checkout)
 tools/ci/guard-tracked-files.sh       # files that must never be tracked
 python3 -I tools/legacy-import/generate_import_sql.py <dump.sql.gz> .local/legacy/import_legacy.sql   # one-off legacy import file (ADR 0048; real data: .local only)
-docker build -t ls-web:dev . && (cd deploy && docker compose --env-file .env.example config --quiet)   # image and Compose (needs a daemon)
+docker build -t ls-web:dev . && (cd deploy && cp .env.example .env && POSTGRES_PASSWORD=x LS_SECURITY_IP_HASH_KEY=x LS_TOKEN_ENCRYPTION_KEY=x docker compose config --quiet; rm .env)   # image and Compose (needs a daemon)
 ```
 
 Never run `npx playwright install` in this environment (browsers are in `/opt/pw-browsers`);
