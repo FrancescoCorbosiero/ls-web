@@ -34,7 +34,10 @@ do_backup() {
     exit 1
   fi
   umask 077
-  mkdir -p "$BACKUP_DIR"/{daily,weekly,monthly}
+  mkdir -p "$BACKUP_DIR"/{daily,weekly,monthly} 2>/dev/null || {
+    echo "backup: cannot create $BACKUP_DIR; once: sudo mkdir -p $BACKUP_DIR && sudo chown $(id -un): $BACKUP_DIR" >&2
+    exit 1
+  }
   local stamp file
   stamp="$(date +%Y%m%d-%H%M%S)"
   if [[ -n "$RECIPIENT" ]]; then

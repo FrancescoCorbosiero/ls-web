@@ -86,6 +86,8 @@ del database.
 
 ## 4. Backup e restore (NFR-05)
 
+* Una volta sola, con l'utente che gestisce Docker:
+  `sudo mkdir -p /var/backups/ls-web && sudo chown "$USER": /var/backups/ls-web`.
 * Senza configurare nulla: `deploy/backup.sh` salva il database in
   `/var/backups/ls-web/daily/ls_web-<data>.sql.gz`, leggibile solo dal proprietario del file.
 * Facoltativo, più avanti: una copia fuori dal server. Serve una coppia di chiavi `age`
