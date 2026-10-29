@@ -34,7 +34,10 @@ do_backup() {
     exit 1
   fi
   umask 077
-  mkdir -p "$BACKUP_DIR"/{daily,weekly,monthly}
+  mkdir -p "$BACKUP_DIR"/{daily,weekly,monthly} 2>/dev/null || {
+    echo "backup: cannot create $BACKUP_DIR; once: sudo mkdir -p $BACKUP_DIR && sudo chown $(id -un): $BACKUP_DIR" >&2
+    exit 1
+  }
   local stamp file
   stamp="$(date +%Y%m%d-%H%M%S)"
   if [[ -n "$RECIPIENT" ]]; then
@@ -51,9 +54,9 @@ do_backup() {
   # Rotation 7 / 4 / 12: the Sunday dump is also the weekly one, the first of the month the monthly one.
   if [[ "$(date +%u)" == "7" ]]; then cp "$file" "$BACKUP_DIR/weekly/"; fi
   if [[ "$(date +%d)" == "01" ]]; then cp "$file" "$BACKUP_DIR/monthly/"; fi
-  ls -1t "$BACKUP_DIR"/daily/ls_web-* 2>/dev/null | tail -n +8 | xargs -r rm -f
-  ls -1t "$BACKUP_DIR"/weekly/ls_web-* 2>/dev/null | tail -n +5 | xargs -r rm -f
-  ls -1t "$BACKUP_DIR"/monthly/ls_web-* 2>/dev/null | tail -n +13 | xargs -r rm -f
+  ls -1t "$BACKUP_DIR"/daily/ls_web-* 2>/dev/null | tail -n +8 | xargs -r rm -f || true
+  ls -1t "$BACKUP_DIR"/weekly/ls_web-* 2>/dev/null | tail -n +5 | xargs -r rm -f || true
+  ls -1t "$BACKUP_DIR"/monthly/ls_web-* 2>/dev/null | tail -n +13 | xargs -r rm -f || true
   if [[ -n "$REMOTE" ]]; then
     command -v rclone >/dev/null || { echo "backup: rclone is not installed" >&2; exit 1; }
     rclone copy "$file" "$REMOTE/daily/"
