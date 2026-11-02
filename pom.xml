@@ -29,7 +29,7 @@
     <awssdk.version>2.57.2</awssdk.version>
     <openpdf.version>3.0.5</openpdf.version>
     <!-- ENH-09 (ADR 0039): the QR code of the staff two-factor set-up, encoded in the app. -->
-    <zxing.version>3.5.3</zxing.version>
+    <zxing.version>3.5.4</zxing.version>
   </properties>
 
   <dependencyManagement>
