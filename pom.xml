@@ -23,7 +23,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <!-- Plugins not managed by the Spring Boot parent (pinned, see ADR 0001). -->
-    <spotless-maven-plugin.version>3.10.4</spotless-maven-plugin.version>
+    <spotless-maven-plugin.version>3.11.0</spotless-maven-plugin.version>
     <palantir-java-format.version>2.102.0</palantir-java-format.version>
     <!-- AWS SDK v2 BOM (ADR 0001): SESv2 only in M1, used by the notifications outbox worker. -->
     <awssdk.version>2.57.2</awssdk.version>
